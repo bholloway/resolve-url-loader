@@ -60,6 +60,14 @@ module.exports = {
 };
 ```
 
+### Options
+
+* `absolute` Forces the url() to be resolved to an absolute path. This is considered 
+[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) so only do it
+if you know what you are doing.
+
+* `sourceMap` Generate a source-map.
+
 ## How it works
 
 The incoming source-map is used to resolve the original file. This is necessary where there was some preceding transpile
@@ -72,11 +80,3 @@ The search will continue while within the project directory and until a `package
 encountered.
 
 If the asset is not found then the `url()` statement will not be updated.
-
-## Options
-
-* `absolute` Forces the url() to be resolved to an absolute path. This is considered 
-[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) so only do it
-if you know what you are doing.
-
-* `sourceMap` Generate a source-map.
