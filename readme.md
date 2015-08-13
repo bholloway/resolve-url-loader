@@ -4,9 +4,10 @@
 
 Webpack loader that resolves relative paths in url() statements based on the original source file
 
-Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loader) and specify your assets relative
-to the `sass` file in question. This loader will use the source-map from the `sass` compiler to locate the original file
-and write a more complete path for your asset. Subsequent build steps can then locate your asset for processing.
+Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loader) and specify your asset url()
+relative to the `scss` file in question. This loader will use the source-map from the SASS compiler to locate the
+original file and write a more complete path for your asset. Subsequent build steps can then locate your asset for
+processing.
 
 ## Usage
 
@@ -16,7 +17,7 @@ Plain CSS works fine:
 var css = require('!css!resolve-url!./file.css');
 ```
 
-or using [`sass-loader`](https://github.com/jtangelder/sass-loader):
+or using [sass-loader](https://github.com/jtangelder/sass-loader):
 
 ``` javascript
 var css = require('!css!resolve-url!sass?sourceMap!./file.scss');
