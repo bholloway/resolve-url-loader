@@ -1,0 +1,36 @@
+{
+  "name": "resolve-url-loader",
+  "version": "0.0.1",
+  "description": "Webpack loader that resolves an absolute path of url() statements based on the original file",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bholloway/resolve-url-loader.git"
+  },
+  "keywords": [
+    "webpack",
+    "loader",
+    "css",
+    "normalize",
+    "rewrite",
+    "resolve",
+    "url",
+    "sass",
+    "relative",
+    "file"
+  ],
+  "author": "bholloway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bholloway/resolve-url-loader/issues"
+  },
+  "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "dependencies": {
+    "rework": "^1.0.1",
+    "rework-visit": "^1.0.0",
+    "source-map": "^0.1.43"
+  }
+}
