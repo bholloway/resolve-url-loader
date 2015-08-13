@@ -16,7 +16,7 @@ Plain CSS works fine:
 var css = require('!css!resolve-url!./file.css');
 ```
 
-Or using [`sass-loader`](https://github.com/jtangelder/sass-loader):
+or using [`sass-loader`](https://github.com/jtangelder/sass-loader):
 
 ``` javascript
 var css = require('!css!resolve-url!sass?sourceMap!./file.scss');
@@ -28,7 +28,9 @@ rules to your document:
 ``` javascript
 require('!style!css!resolve-url!./file.css');
 ```
+
 and
+
 ``` javascript
 require('!style!css!resolve-url!sass?sourceMap!./file.scss');
 ```
@@ -59,12 +61,13 @@ module.exports = {
 
 ## How it works
 
-A [rework](https://github.com/reworkcss/rework) process is run on incoming `css`. The incoming source-map is used to
-resolve the original file where there was some preceding transpile step (such as SASS).
+The incoming source-map is used to resolve the original file where there was some preceding transpile step (such as
+SASS). A [rework](https://github.com/reworkcss/rework) process is then run on incoming `css`.
 
-Url() statements are identified and a search is begun, commencing at the original file. In some cases there is no
-immediate match (<cough>bootstrap</cough>) and we search both deeper and shallower from the starting directory. The
-search will proceed until 
+Each `url()` statement that implies an asset commences a file search using  node `fs` operations. The search begins at
+the original file and usually the asset is found immediately. In some cases there is no immediate match
+(<cough>bootstrap</cough>) and we search both deeper and shallower from the starting directory. The search will proceed
+while within the project directory and until a `package.json` or `bower.json` file is encountered.  
 
 ## Options
 
