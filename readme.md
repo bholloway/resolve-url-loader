@@ -2,10 +2,10 @@
 
 [![NPM](https://nodei.co/npm/resolve-url-loader.png)](http://github.com/bholloway/resolve-url-loader)
 
-Webpack loader that rsesolves an absolute path of url() statements based on the original file.
+Webpack loader that resolves relative paths in url() statements based on the original source file
 
 Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loader) and specify your assets relative
-to the `sass` file in question. This plugin will use the source-map from the `sass` compiler to locate the original file
+to the `sass` file in question. This loader will use the source-map from the `sass` compiler to locate the original file
 and write a more complete path for your asset. Subsequent build steps can then locate your asset for processing.
 
 ## Usage
@@ -57,7 +57,16 @@ module.exports = {
 };
 ```
 
-### Options
+## How it works
+
+A [rework](https://github.com/reworkcss/rework) process is run on incoming `css`. The incoming source-map is used to
+resolve the original file where there was some preceding transpile step (such as SASS).
+
+Url() statements are identified and a search is begun, commencing at the original file. In some cases there is no
+immediate match (<cough>bootstrap</cough>) and we search both deeper and shallower from the starting directory. The
+search will proceed until 
+
+## Options
 
 * `absolute` Forces the url() to be resolved to an absolute path. This is considered 
 [bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) so only do it
