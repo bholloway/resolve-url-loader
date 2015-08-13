@@ -2,7 +2,7 @@
 
 [![NPM](https://nodei.co/npm/resolve-url-loader.png)](http://github.com/bholloway/resolve-url-loader)
 
-Webpack loader that resolves relative paths in url() statements based on the original source file
+Webpack loader that resolves relative paths in url() statements based on the original source file.
 
 Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loader) and specify your asset url()
 relative to the `scss` file in question. This loader will use the source-map from the SASS compiler to locate the
