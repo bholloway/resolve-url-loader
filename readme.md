@@ -65,10 +65,13 @@ module.exports = {
 The incoming source-map is used to resolve the original file. This is necessary where there was some preceding transpile
 step such as SASS. A [rework](https://github.com/reworkcss/rework) process is then run on incoming `css`.
 
-Each `url()` statement that implies an asset commences a file search using  node `fs` operations. The search begins at
-the original file and usually the asset is found immediately. In some cases there is no immediate match
-(<cough>bootstrap</cough>) and we search both deeper and shallower from the starting directory. The search will proceed
-while within the project directory and until a `package.json` or `bower.json` file is encountered.  
+Each `url()` statement that implies an asset triggers a file search using  node `fs` operations. The search begins
+relative to the original file and usually the asset is found immediately. However in some cases there is no immediate
+match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory.
+The search will continue while within the project directory and until a `package.json` or `bower.json` file is 
+encountered.
+
+If the asset is not found then the `url()` statement will not be updated.
 
 ## Options
 
