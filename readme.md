@@ -61,4 +61,6 @@ module.exports = {
 
 * `absolute` Forces the url() to be resolved to an absolute path. This is considered 
 [bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) so only do it
-if you encounter problems with the 
+if you know what you are doing.
+
+* `sourceMap` Generate a source-map.
