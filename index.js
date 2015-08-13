@@ -5,7 +5,7 @@
 'use strict';
 
 var path              = require('path'),
-    utils             = require('loader-utils'),
+    loaderUtils       = require('loader-utils'),
     rework            = require('rework'),
     visit             = require('rework-visit'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
@@ -21,25 +21,32 @@ var findFile = require('./lib/find-file');
  */
 module.exports = function loader(content, sourceMap) {
   /* jshint validthis:true */
+
+  // path of the file being processed
+  var filePath = this.context,
+      options  = loaderUtils.parseQuery(this.query);
+
+  // loader result is cacheable
   this.cacheable();
 
-  // incomming source-map
+  // incoming source-map
   var sourceMapConsumer;
   if (sourceMap) {
 
     // adjust source-map
     sourceMap.sources
-      .forEach(absolutePath.bind(this));
+      .forEach(absolutePath);
 
     // prepare the adjusted sass source-map for later look-ups
     sourceMapConsumer = new SourceMapConsumer(sourceMap);
   }
 
   // process
-  var options = utils.parseQuery(this.query);
   return rework(content)
     .use(reworkPlugin)
-    .toString(options);
+    .toString({
+      sourcemap: this.sourceMap || options.sourceMap
+    });
 
   /**
    * Convert each relative file in the given array to absolute path.
@@ -48,7 +55,7 @@ module.exports = function loader(content, sourceMap) {
     var location = value
       .replace(/^\//, '')             // no leading slash
       .replace(/\b\/+\b/g, '/');      // remove duplicate slashes
-    array[i] = path.resolve(this.context, location);
+    array[i] = path.resolve(filePath, location);
   }
 
   /**
@@ -56,7 +63,6 @@ module.exports = function loader(content, sourceMap) {
    * @param {object} stylesheet AST for the CSS output from SASS
    */
   function reworkPlugin(stylesheet) {
-
 
     // visit each node (selector) in the stylesheet recursively using the official utility method
     //  each node may have multiple declarations
@@ -74,15 +80,17 @@ module.exports = function loader(content, sourceMap) {
       if (declaration.value) {
 
         // reverse the original source-map to find the original sass file
-        var cssStart  = declaration.position.start,
-            sassStart = sourceMapConsumer ? sourceMapConsumer.originalPositionFor({
-              line  : cssStart.line,
-              column: cssStart.column
-            }) : cssStart;
-        if (!sassStart.source) {
+        var startPosApparent = declaration.position.start,
+            startPosOriginal = sourceMapConsumer ? sourceMapConsumer.originalPositionFor({
+              line  : startPosApparent.line,
+              column: startPosApparent.column
+            }) : startPosApparent,
+            directory        = startPosOriginal && path.dirname(startPosOriginal.source);
+
+        // we require a valid directory for the specified file
+        if (!directory) {
           throw new Error('failed to decode source map');
         }
-        var sassDir = path.dirname(sassStart.source);
 
         // allow multiple url() values in the declaration
         //  split by url statements and process the content
@@ -111,8 +119,19 @@ module.exports = function loader(content, sourceMap) {
         if ((mod === 3) || (mod === 5)) {
 
           // remove query string or hash suffix
-          var uri = initialised.split(/[?#]/g).shift();
-          return uri && findFile(sassDir, uri) || initialised;
+          var uri      = initialised.split(/[?#]/g).shift(),
+              absolute = uri && findFile(directory, uri);
+
+          // use the absolute path (or default to initialised)
+          if (options.absolute) {
+            return absolute || initialised;
+          }
+          // module relative path (or default to initialised)
+          else {
+            var relative     = absolute && path.relative(filePath, absolute),
+                rootRelative = relative && loaderUtils.urlToRequest(relative, '~');
+            return (rootRelative) ? rootRelative : initialised;
+          }
         }
         // everything else, including parentheses and quotation (where present) and media statements
         else {

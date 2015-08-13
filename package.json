@@ -1,6 +1,6 @@
 {
   "name": "resolve-url-loader",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Webpack loader that resolves an absolute path of url() statements based on the original file",
   "main": "index.js",
   "scripts": {

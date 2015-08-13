@@ -10,8 +10,13 @@ and write a more complete path for your asset. Subsequent build steps can then l
 
 ## Usage
 
-Refer to the [`sass-loader`](https://github.com/jtangelder/sass-loader) for more information on `sass`->`css`
-compilation for Webpack.
+Plain CSS works fine:
+
+``` javascript
+var css = require('!css!resolve-url!./file.css');
+```
+
+Or using [`sass-loader`](https://github.com/jtangelder/sass-loader):
 
 ``` javascript
 var css = require('!css!resolve-url!sass?sourceMap!./file.scss');
@@ -21,12 +26,16 @@ Use in tandem with the [`style-loader`](https://github.com/webpack/style-loader)
 rules to your document:
 
 ``` javascript
+require('!style!css!resolve-url!./file.css');
+```
+and
+``` javascript
 require('!style!css!resolve-url!sass?sourceMap!./file.scss');
 ```
 
 ### Source maps required
 
-Note that `sourceMap` must be enabled on the `sass` transpiler.
+Note that **source maps** must be enabled on any preceding loader. In the above example we use `sass?sourceMap`.
 
 ### Apply via webpack config
 
@@ -37,19 +46,19 @@ module.exports = {
   module: {
     loaders: [
       {
-        test: /\.scss$/,
-        loader: 'style!css!resolve-url!sass?sourceMap'
+        test   : /\.css$/,
+        loaders: ['style', 'css', 'resolve-url']
+      }, {
+        test   : /\.scss$/,
+        loaders: ['style', 'css', 'resolve-url', 'sass?sourceMap']
       }
     ]
   }
 };
 ```
 
-## Known issues
+### Options
 
-Currently writes absolute paths for assets. This is
-[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) since they may
-appear in your bundle.
-
-More work needs to be done to make them relative to some `modules` path. However in the mean time this loader may get
-you out of a bind.
+* `absolute` Forces the url() to be resolved to an absolute path. This is considered 
+[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) so only do it
+if you encounter problems with the 
