@@ -62,8 +62,8 @@ module.exports = {
 
 ## How it works
 
-The incoming source-map is used to resolve the original file where there was some preceding transpile step (such as
-SASS). A [rework](https://github.com/reworkcss/rework) process is then run on incoming `css`.
+The incoming source-map is used to resolve the original file. This is necessary where there was some preceding transpile
+step such as SASS. A [rework](https://github.com/reworkcss/rework) process is then run on incoming `css`.
 
 Each `url()` statement that implies an asset commences a file search using  node `fs` operations. The search begins at
 the original file and usually the asset is found immediately. In some cases there is no immediate match
