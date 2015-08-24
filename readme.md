@@ -40,6 +40,9 @@ require('!style!css!resolve-url!sass?sourceMap!./file.scss');
 
 Note that **source maps** must be enabled on any preceding loader. In the above example we use `sass?sourceMap`.
 
+In some use cases (no preceding transpiler) there will be no incoming source map. Therefore we do not warn if the
+source-map is missing.
+
 ### Apply via webpack config
 
 It is preferable to adjust your `webpack.config` so to avoid having to prefix every `require()` statement:
@@ -67,6 +70,10 @@ module.exports = {
 if you know what you are doing.
 
 * `sourceMap` Generate a source-map.
+
+* `silent` Do not display warnings on CSS syntax error.
+
+* `fail` Syntax errors will result in an error.
 
 ## How it works
 

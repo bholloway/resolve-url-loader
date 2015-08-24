@@ -42,11 +42,27 @@ module.exports = function loader(content, sourceMap) {
   }
 
   // process
-  return rework(content)
-    .use(reworkPlugin)
-    .toString({
-      sourcemap: this.sourceMap || options.sourceMap
-    });
+  //  rework will throw on css syntax errors
+  var FILENAME_PLACEHOLDER = '<filename>';
+  try {
+    return rework(content, { source: FILENAME_PLACEHOLDER })
+      .use(reworkPlugin)
+      .toString({
+        sourcemap: this.sourceMap || options.sourceMap
+      });
+  }
+  //  fail gracefully
+  catch(exception) {
+    var message = ('CSS syntax error (resolve-url-loader did not operate)' + exception.message)
+        .replace(FILENAME_PLACEHOLDER, '');
+    if (options.fail) {
+      this.emitError(message);
+    }
+    else if (!options.silent) {
+      this.emitWarning(message);
+    }
+    return content; // original content unchanged
+  }
 
   /**
    * Convert each relative file in the given array to absolute path.
