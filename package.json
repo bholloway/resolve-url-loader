@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
   "dependencies": {
+    "convert-source-map": "^1.1.1",
     "loader-utils": "^0.2.11",
     "rework": "^1.0.1",
     "rework-visit": "^1.0.0",

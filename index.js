@@ -8,6 +8,7 @@ var path              = require('path'),
     loaderUtils       = require('loader-utils'),
     rework            = require('rework'),
     visit             = require('rework-visit'),
+    convert           = require('convert-source-map'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var findFile = require('./lib/find-file');
@@ -30,7 +31,8 @@ module.exports = function loader(content, sourceMap) {
   this.cacheable();
 
   // incoming source-map
-  var sourceMapConsumer;
+  var sourceMapConsumer,
+      contentWithMap;
   if (sourceMap) {
 
     // adjust source-map
@@ -39,22 +41,30 @@ module.exports = function loader(content, sourceMap) {
 
     // prepare the adjusted sass source-map for later look-ups
     sourceMapConsumer = new SourceMapConsumer(sourceMap);
+
+    // embed source-map in css
+    contentWithMap = content + convert.fromObject(sourceMap).toComment({multiline: true});
+  }
+  // absent source map
+  else {
+    contentWithMap = content;
   }
 
   // process
   //  rework will throw on css syntax errors
-  var FILENAME_PLACEHOLDER = '<filename>';
+  var useMap = this.sourceMap || options.sourceMap,
+      reworked;
   try {
-    return rework(content, { source: FILENAME_PLACEHOLDER })
+    reworked = rework(contentWithMap, {source: this.resourcePath})
       .use(reworkPlugin)
       .toString({
-        sourcemap: this.sourceMap || options.sourceMap
+        sourcemap        : useMap,
+        sourcemapAsObject: useMap
       });
   }
   //  fail gracefully
-  catch(exception) {
-    var message = ('CSS syntax error (resolve-url-loader did not operate)' + exception.message)
-        .replace(FILENAME_PLACEHOLDER, '');
+  catch (exception) {
+    var message = 'CSS syntax error (resolve-url-loader did not operate): ' + exception.message;
     if (options.fail) {
       this.emitError(message);
     }
@@ -64,14 +74,34 @@ module.exports = function loader(content, sourceMap) {
     return content; // original content unchanged
   }
 
+  // adjust source-map
+  if (reworked.map) {
+    reworked.map.sources
+      .forEach(relativePath);
+  }
+
+  // complete
+  if (useMap) {
+    this.callback(null, reworked.code, reworked.map);
+  } else {
+    return reworked;
+  }
+
   /**
    * Convert each relative file in the given array to absolute path.
    */
   function absolutePath(value, i, array) {
     var location = value
-      .replace(/^\//, '')             // no leading slash
-      .replace(/\b\/+\b/g, '/');      // remove duplicate slashes
+      .replace(/\b[\\\/]+\b/g, path.sep) // remove duplicate slashes (windows)
+      .replace(/^[\\\/]\./, '.');        // remove erroneous leading slash on relative paths
     array[i] = path.resolve(filePath, location);
+  }
+
+  /**
+   * Convert each absolute file in the given array to a relative path.
+   */
+  function relativePath(value, i, array) {
+    array[i] = path.relative(filePath, value);
   }
 
   /**
