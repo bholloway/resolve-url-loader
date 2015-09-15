@@ -20,15 +20,16 @@ var findFile = require('./lib/find-file');
  * @param {object} sourceMap The source-map
  * @returns {string|String}
  */
-module.exports = function loader(content, sourceMap) {
+module.exports = function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
-  // path of the file being processed
-  var filePath = this.context,
-      options  = loaderUtils.parseQuery(this.query);
+  // details of the file being processed
+  var loader   = this,
+      filePath = loader.context,
+      options  = loaderUtils.parseQuery(loader.query);
 
   // loader result is cacheable
-  this.cacheable();
+  loader.cacheable();
 
   // incoming source-map
   var sourceMapConsumer,
@@ -52,10 +53,10 @@ module.exports = function loader(content, sourceMap) {
 
   // process
   //  rework will throw on css syntax errors
-  var useMap = this.sourceMap || options.sourceMap,
+  var useMap = loader.sourceMap || options.sourceMap,
       reworked;
   try {
-    reworked = rework(contentWithMap, {source: this.resourcePath})
+    reworked = rework(contentWithMap, {source: loader.resourcePath})
       .use(reworkPlugin)
       .toString({
         sourcemap        : useMap,
@@ -66,10 +67,10 @@ module.exports = function loader(content, sourceMap) {
   catch (exception) {
     var message = 'CSS syntax error (resolve-url-loader did not operate): ' + exception.message;
     if (options.fail) {
-      this.emitError(message);
+      loader.emitError(message);
     }
     else if (!options.silent) {
-      this.emitWarning(message);
+      loader.emitWarning(message);
     }
     return content; // original content unchanged
   }
@@ -82,7 +83,7 @@ module.exports = function loader(content, sourceMap) {
 
   // complete
   if (useMap) {
-    this.callback(null, reworked.code, reworked.map);
+    loader.callback(null, reworked.code, reworked.map);
   } else {
     return reworked;
   }
@@ -91,10 +92,18 @@ module.exports = function loader(content, sourceMap) {
    * Convert each relative file in the given array to absolute path.
    */
   function absolutePath(value, i, array) {
-    var location = value
-      .replace(/\b[\\\/]+\b/g, path.sep) // remove duplicate slashes (windows)
-      .replace(/^[\\\/]\./, '.');        // remove erroneous leading slash on relative paths
-    array[i] = path.resolve(filePath, location);
+
+    // badly formed absolute (missing a leading slash)
+    if (value.indexOf(process.cwd().slice(1)) === 0) {
+      array[i] = '/' + value;
+    }
+    // not absolute
+    else if (value.indexOf(process.cwd()) !== 0) {
+      var location = value
+        .replace(/\b[\\\/]+\b/g, path.sep) // remove duplicate slashes (windows)
+        .replace(/^[\\\/]\./, '.');        // remove erroneous leading slash on relative paths
+      array[i] = path.resolve(filePath, location);
+    }
   }
 
   /**
@@ -109,6 +118,7 @@ module.exports = function loader(content, sourceMap) {
    * @param {object} stylesheet AST for the CSS output from SASS
    */
   function reworkPlugin(stylesheet) {
+    var hasErrored = false;
 
     // visit each node (selector) in the stylesheet recursively using the official utility method
     //  each node may have multiple declarations
@@ -134,18 +144,27 @@ module.exports = function loader(content, sourceMap) {
             directory        = startPosOriginal && path.dirname(startPosOriginal.source);
 
         // we require a valid directory for the specified file
-        if (!directory) {
-          throw new Error('failed to decode source map');
-        }
+        if (directory) {
 
-        // allow multiple url() values in the declaration
-        //  split by url statements and process the content
-        //  additional capture groups are needed to match quotations correctly
-        //  escaped quotations are not considered
-        declaration.value = declaration.value
-          .split(URL_STATEMENT_REGEX)
-          .map(eachSplitOrGroup)
-          .join('');
+          // allow multiple url() values in the declaration
+          //  split by url statements and process the content
+          //  additional capture groups are needed to match quotations correctly
+          //  escaped quotations are not considered
+          declaration.value = declaration.value
+            .split(URL_STATEMENT_REGEX)
+            .map(eachSplitOrGroup)
+            .join('');
+        }
+        // invalid source map
+        else if (!hasErrored) {
+          hasErrored = true;
+          var message = 'failed to decode source map, ensure CSS source map is present';
+          if (options.fail) {
+            loader.emitError(message);
+          } else if (!options.silent) {
+            loader.emitWarning(message);
+          }
+        }
       }
 
       /**
