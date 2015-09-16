@@ -93,7 +93,8 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
    */
   function absolutePath(value, i, array) {
 
-    // badly formed absolute (missing a leading slash)
+    // badly formed absolute (missing a leading slash) due to
+    //  https://github.com/webpack/webpack-dev-server/issues/266
     if (value.indexOf(process.cwd().slice(1)) === 0) {
       array[i] = '/' + value;
     }
