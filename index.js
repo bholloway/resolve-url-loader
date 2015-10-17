@@ -24,9 +24,10 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
   // details of the file being processed
-  var loader   = this,
-      filePath = loader.context,
-      options  = loaderUtils.parseQuery(loader.query);
+  var loader     = this,
+      filePath   = loader.context,
+      outputPath = loader.options.output.path,
+      options    = loaderUtils.parseQuery(loader.query);
 
   // loader result is cacheable
   loader.cacheable();
@@ -36,9 +37,9 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
       contentWithMap;
   if (sourceMap) {
 
-    // adjust source-map
+    // sass-loaded outputs source-map relative to output directory
     sourceMap.sources
-      .forEach(absolutePath);
+      .forEach(outputFileRelativeToAbsolute);
 
     // prepare the adjusted sass source-map for later look-ups
     sourceMapConsumer = new SourceMapConsumer(sourceMap);
@@ -78,7 +79,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
   // adjust source-map
   if (reworked.map) {
     reworked.map.sources
-      .forEach(relativePath);
+      .forEach(absoluteToFileRelative);
   }
 
   // complete
@@ -89,9 +90,9 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
   }
 
   /**
-   * Convert each relative file in the given array to absolute path.
+   * Convert each output-relative path in the given array to absolute path.
    */
-  function absolutePath(value, i, array) {
+  function outputFileRelativeToAbsolute(value, i, array) {
 
     // badly formed absolute (missing a leading slash) due to
     //  https://github.com/webpack/webpack-dev-server/issues/266
@@ -103,14 +104,14 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
       var location = value
         .replace(/\b[\\\/]+\b/g, path.sep) // remove duplicate slashes (windows)
         .replace(/^[\\\/]\./, '.');        // remove erroneous leading slash on relative paths
-      array[i] = path.resolve(filePath, location);
+      array[i] = path.resolve(outputPath, location);
     }
   }
 
   /**
    * Convert each absolute file in the given array to a relative path.
    */
-  function relativePath(value, i, array) {
+  function absoluteToFileRelative(value, i, array) {
     array[i] = path.relative(filePath, value);
   }
 
