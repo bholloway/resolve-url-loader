@@ -71,9 +71,9 @@ if you know what you are doing.
 
 * `sourceMap` Generate a source-map.
 
-* `silent` Do not display warnings on CSS syntax error.
+* `silent` Do not display warnings on CSS syntax or source-map error.
 
-* `fail` Syntax errors will result in an error.
+* `fail` Syntax or source-map errors will result in an error.
 
 ## How it works
 
@@ -87,3 +87,7 @@ The search will continue while within the project directory and until a `package
 encountered.
 
 If the asset is not found then the `url()` statement will not be updated.
+
+As a whole the plugin will not operate when:
+ * input source-map sources cannot be found relative to some consistent project path, or;
+ * input source-map does not contain filename information at url() declarations

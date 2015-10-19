@@ -11,7 +11,9 @@ var path              = require('path'),
     convert           = require('convert-source-map'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
-var findFile = require('./lib/find-file');
+var findFile           = require('./lib/find-file'),
+    absoluteToRelative = require('./lib/sources-absolute-to-relative'),
+    relativeToAbsolute = require('./lib/sources-relative-to-absolute');
 
 /**
  * A webpack loader that resolves absolute url() paths relative to their original source file.
@@ -33,18 +35,20 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
   loader.cacheable();
 
   // incoming source-map
-  var sourceMapConsumer,
-      contentWithMap;
+  var sourceMapConsumer, contentWithMap;
   if (sourceMap) {
 
-    // sass-loaded outputs source-map relative to output directory
-    sourceMap.sources
-      .forEach(outputFileRelativeToAbsolute);
+    // sass-loader outputs source-map sources relative to output directory so start our search there
+    try {
+      relativeToAbsolute(sourceMap.sources, outputPath);
+    } catch (exception) {
+      handleException('source-map error', exception.message);
+    }
 
     // prepare the adjusted sass source-map for later look-ups
     sourceMapConsumer = new SourceMapConsumer(sourceMap);
 
-    // embed source-map in css
+    // embed source-map in css for rework-css to use
     contentWithMap = content + convert.fromObject(sourceMap).toComment({multiline: true});
   }
   // absent source map
@@ -53,7 +57,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
   }
 
   // process
-  //  rework will throw on css syntax errors
+  //  rework-css will throw on css syntax errors
   var useMap = loader.sourceMap || options.sourceMap,
       reworked;
   try {
@@ -64,55 +68,39 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
         sourcemapAsObject: useMap
       });
   }
-  //  fail gracefully
+    //  fail gracefully
   catch (exception) {
-    var message = 'CSS syntax error (resolve-url-loader did not operate): ' + exception.message;
+    return handleException('CSS error', exception.message);
+  }
+
+  // complete with source-map
+  if (useMap) {
+
+    // source-map sources seem to be relative to the file being processed
+    absoluteToRelative(reworked.map.sources, filePath);
+
+    // need to use callback when there are multiple arguments
+    loader.callback(null, reworked.code, reworked.map);
+  }
+  // complete without source-map
+  else {
+    return reworked;
+  }
+
+  /**
+   * Push an error for the given exception and return the original content.
+   * @param {...string} messages
+   * @returns {string} The original CSS content
+   */
+  function handleException() {
+    var message = 'resolve-url-loader cannot operate: ' + Array.prototype.slice.call(arguments).join(' ');
     if (options.fail) {
       loader.emitError(message);
     }
     else if (!options.silent) {
       loader.emitWarning(message);
     }
-    return content; // original content unchanged
-  }
-
-  // adjust source-map
-  if (reworked.map) {
-    reworked.map.sources
-      .forEach(absoluteToFileRelative);
-  }
-
-  // complete
-  if (useMap) {
-    loader.callback(null, reworked.code, reworked.map);
-  } else {
-    return reworked;
-  }
-
-  /**
-   * Convert each output-relative path in the given array to absolute path.
-   */
-  function outputFileRelativeToAbsolute(value, i, array) {
-
-    // badly formed absolute (missing a leading slash) due to
-    //  https://github.com/webpack/webpack-dev-server/issues/266
-    if (value.indexOf(process.cwd().slice(1)) === 0) {
-      array[i] = '/' + value;
-    }
-    // not absolute
-    else if (value.indexOf(process.cwd()) !== 0) {
-      var location = value
-        .replace(/\b[\\\/]+\b/g, path.sep) // remove duplicate slashes (windows)
-        .replace(/^[\\\/]\./, '.');        // remove erroneous leading slash on relative paths
-      array[i] = path.resolve(outputPath, location);
-    }
-  }
-
-  /**
-   * Convert each absolute file in the given array to a relative path.
-   */
-  function absoluteToFileRelative(value, i, array) {
-    array[i] = path.relative(filePath, value);
+    return content;
   }
 
   /**
@@ -120,7 +108,6 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
    * @param {object} stylesheet AST for the CSS output from SASS
    */
   function reworkPlugin(stylesheet) {
-    var hasErrored = false;
 
     // visit each node (selector) in the stylesheet recursively using the official utility method
     //  each node may have multiple declarations
@@ -158,14 +145,8 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
             .join('');
         }
         // invalid source map
-        else if (!hasErrored) {
-          hasErrored = true;
-          var message = 'failed to decode source map, ensure CSS source map is present';
-          if (options.fail) {
-            loader.emitError(message);
-          } else if (!options.silent) {
-            loader.emitWarning(message);
-          }
+        else {
+          throw new Error('source-map information is not available at url() declaration');
         }
       }
 
@@ -187,7 +168,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
           // remove query string or hash suffix
           var uri      = initialised.split(/[?#]/g).shift(),
-              absolute = uri && findFile(directory, uri);
+              absolute = uri && findFile.absolute(directory, uri);
 
           // use the absolute path (or default to initialised)
           if (options.absolute) {
