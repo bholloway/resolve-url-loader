@@ -158,7 +158,8 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
        * @returns {string} Every 3 or 5 items is an encoded url everything else is as is
        */
       function eachSplitOrGroup(token, i) {
-
+        var BACKSLASH_REGEX = /\\/g;
+  
         // we can get groups as undefined under certain match circumstances
         var initialised = token || '';
 
@@ -172,13 +173,13 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
           // use the absolute path (or default to initialised)
           if (options.absolute) {
-            return absolute || initialised;
+            return absolute.replace(BACKSLASH_REGEX,'/') || initialised;
           }
           // module relative path (or default to initialised)
           else {
             var relative     = absolute && path.relative(filePath, absolute),
                 rootRelative = relative && loaderUtils.urlToRequest(relative, '~');
-            return (rootRelative) ? rootRelative : initialised;
+            return (rootRelative) ? rootRelative.replace(BACKSLASH_REGEX,'/') : initialised;
           }
         }
         // everything else, including parentheses and quotation (where present) and media statements
