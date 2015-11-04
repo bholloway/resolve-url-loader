@@ -9,11 +9,14 @@ var path              = require('path'),
     rework            = require('rework'),
     visit             = require('rework-visit'),
     convert           = require('convert-source-map'),
+    camelcase         = require('camelcase'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var findFile           = require('./lib/find-file'),
     absoluteToRelative = require('./lib/sources-absolute-to-relative'),
     relativeToAbsolute = require('./lib/sources-relative-to-absolute');
+
+var PACKAGE_NAME = require('./package.json').name;
 
 /**
  * A webpack loader that resolves absolute url() paths relative to their original source file.
@@ -26,10 +29,15 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
   // details of the file being processed
-  var loader     = this,
-      filePath   = loader.context,
-      outputPath = loader.options.output.path,
-      options    = loaderUtils.parseQuery(loader.query);
+  var loader             = this,
+      filePath           = loader.context,
+      outputPath         = loader.options.output.path,
+      programaticOptions = loader.options[camelcase(PACKAGE_NAME)] || {},
+      queryOptions       = loaderUtils.parseQuery(loader.query),
+      directories        = []
+        .concat(queryOptions.directory)
+        .concat(programaticOptions.directory)
+        .filter(Boolean);
 
   // loader result is cacheable
   loader.cacheable();
@@ -58,7 +66,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
   // process
   //  rework-css will throw on css syntax errors
-  var useMap = loader.sourceMap || options.sourceMap,
+  var useMap = loader.sourceMap || queryOptions.sourceMap || programaticOptions.sourceMap,
       reworked;
   try {
     reworked = rework(contentWithMap, {source: loader.resourcePath})
@@ -93,11 +101,11 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
    * @returns {string} The original CSS content
    */
   function handleException() {
-    var message = 'resolve-url-loader cannot operate: ' + Array.prototype.slice.call(arguments).join(' ');
-    if (options.fail) {
+    var message = '  resolve-url-loader cannot operate: ' + Array.prototype.slice.call(arguments).join(' ');
+    if (queryOptions.fail || programaticOptions.fail) {
       loader.emitError(message);
     }
-    else if (!options.silent) {
+    else if (!queryOptions.silent && !programaticOptions.silent) {
       loader.emitWarning(message);
     }
     return content;
@@ -130,7 +138,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
               line  : startPosApparent.line,
               column: startPosApparent.column
             }) : startPosApparent,
-            directory        = startPosOriginal && path.dirname(startPosOriginal.source);
+            directory        = startPosOriginal && startPosOriginal.source && path.dirname(startPosOriginal.source);
 
         // we require a valid directory for the specified file
         if (directory) {
@@ -169,10 +177,10 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
           // remove query string or hash suffix
           var uri      = initialised.split(/[?#]/g).shift(),
-              absolute = uri && findFile.absolute(directory, uri);
+              absolute = uri && findFile.absolute(directory, uri, directories);
 
           // use the absolute path (or default to initialised)
-          if (options.absolute) {
+          if (queryOptions.absolute || programaticOptions.absolute) {
             return absolute && absolute.replace(BACKSLASH_REGEX, '/') || initialised;
           }
           // module relative path (or default to initialised)

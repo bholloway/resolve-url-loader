@@ -75,6 +75,10 @@ if you know what you are doing.
 
 * `fail` Syntax or source-map errors will result in an error.
 
+* `directory` An optional directory (or Array of directories) outside which file search should not continue. Where
+omitted the `process.cwd()` is used and should be sufficient for regular use cases. Relative paths are resolved with
+respect to `process.cwd()`.
+
 ## How it works
 
 The incoming source-map is used to resolve the original file. This is necessary where there was some preceding transpile
@@ -83,8 +87,8 @@ step such as SASS. A [rework](https://github.com/reworkcss/rework) process is th
 Each `url()` statement that implies an asset triggers a file search using  node `fs` operations. The search begins
 relative to the original file and usually the asset is found immediately. However in some cases there is no immediate
 match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory.
-The search will continue while within the project directory and until a `package.json` or `bower.json` file is 
-encountered.
+The search will continue while within the project directory and until a `package.json` or `bower.json` file is
+encountered or where it breaks of all `directory` paths.
 
 If the asset is not found then the `url()` statement will not be updated.
 
