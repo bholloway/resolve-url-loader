@@ -85,7 +85,7 @@ Where `...` is a hash of any of the following options.
 
 * `fail` Syntax or source-map errors will result in an error.
 
-* `directory` An optional directory which limits file search. Relative paths are permitted. Where omitted the `process.cwd()` is used and should be sufficient for most use cases.
+* `root` An optional directory within which search may be performed. Relative paths are permitted. Where omitted `process.cwd()` is used and should be sufficient for most use cases.
 
 Note that query parameters take precedence over programmatic parameters.
 
@@ -97,8 +97,8 @@ Each `url()` statement that implies an asset triggers a file search using node `
 
 Usually the asset is found relative to the original source file. However in some cases there is no immediate match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory.
 
-The search will always continue to full depth, however shallower paths must be limited to avoid the whole file system from being considered. Shallower paths will be considered while within the `directory` path until a `package.json` or `bower.json` file is encountered.
+Shallower paths must be limited to avoid the whole file system from being considered. Progressively shallower paths within the `root` will be considered. Paths featuring a `package.json` or `bower.json` file will not be considered.
 
 If the asset is not found then the `url()` statement will not be updated with a Webpack module-relative path. However if the `url()` statement has no source-map `source` information the loader will fail.
 
-The loader will also fail when input source-map `sources` cannot all be resolved relative to some consistent path within `directory`.
+The loader will also fail when input source-map `sources` cannot all be resolved relative to some consistent path within `root`.

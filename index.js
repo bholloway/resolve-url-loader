@@ -39,18 +39,14 @@ function resolveUrlLoader(content, sourceMap) {
         sourceMap: false,
         fail     : false,
         silent   : false,
-        directory: null
+        root     : null
       });
 
-  // ensure directory is valid
-  if (options.directory) {
-    var resolvedDirectory = (typeof options.directory === 'string') && path.resolve(options.directory),
-        isValid           = !!resolvedDirectory && fs.existsSync(resolvedDirectory);
-    if (isValid) {
-      options.directory = resolvedDirectory;
-    } else {
-      return handleException('"directory" option does not resolve to a valid path');
-    }
+  // validate root directory
+  var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root),
+      isValidRoot = !!resolvedRoot && fs.existsSync(resolvedRoot);
+  if (options.root && !isValidRoot) {
+    return handleException('"root" option does not resolve to a valid path');
   }
 
   // loader result is cacheable
@@ -62,7 +58,7 @@ function resolveUrlLoader(content, sourceMap) {
 
     // sass-loader outputs source-map sources relative to output directory so start our search there
     try {
-      relativeToAbsolute(sourceMap.sources, outputPath, options.directory);
+      relativeToAbsolute(sourceMap.sources, outputPath, resolvedRoot);
     } catch (exception) {
       return handleException('source-map error', exception.message);
     }
@@ -188,7 +184,7 @@ function resolveUrlLoader(content, sourceMap) {
 
           // remove query string or hash suffix
           var uri      = initialised.split(/[?#]/g).shift(),
-              absolute = uri && findFile.absolute(directory, uri, options.directory);
+              absolute = uri && findFile.absolute(directory, uri, resolvedRoot);
 
           // use the absolute path (or default to initialised)
           if (options.absolute) {
