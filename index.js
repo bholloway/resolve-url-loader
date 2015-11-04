@@ -5,11 +5,13 @@
 'use strict';
 
 var path              = require('path'),
+    fs                = require('fs'),
     loaderUtils       = require('loader-utils'),
     rework            = require('rework'),
     visit             = require('rework-visit'),
     convert           = require('convert-source-map'),
     camelcase         = require('camelcase'),
+    defaults          = require('lodash.defaults'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var findFile           = require('./lib/find-file'),
@@ -25,19 +27,31 @@ var PACKAGE_NAME = require('./package.json').name;
  * @param {object} sourceMap The source-map
  * @returns {string|String}
  */
-module.exports = function resolveUrlLoader(content, sourceMap) {
+function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
   // details of the file being processed
-  var loader             = this,
-      filePath           = loader.context,
-      outputPath         = loader.options.output.path,
-      programaticOptions = loader.options[camelcase(PACKAGE_NAME)] || {},
-      queryOptions       = loaderUtils.parseQuery(loader.query),
-      directories        = []
-        .concat(queryOptions.directory)
-        .concat(programaticOptions.directory)
-        .filter(Boolean);
+  var loader     = this,
+      filePath   = loader.context,
+      outputPath = loader.options.output.path,
+      options    = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
+        absolute : false,
+        sourceMap: false,
+        fail     : false,
+        silent   : false,
+        directory: null
+      });
+
+  // ensure directory is valid
+  if (options.directory) {
+    var resolvedDirectory = (typeof options.directory === 'string') && path.resolve(options.directory),
+        isValid           = !!resolvedDirectory && fs.existsSync(resolvedDirectory);
+    if (isValid) {
+      options.directory = resolvedDirectory;
+    } else {
+      return handleException('"directory" option does not resolve to a valid path');
+    }
+  }
 
   // loader result is cacheable
   loader.cacheable();
@@ -48,9 +62,9 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
     // sass-loader outputs source-map sources relative to output directory so start our search there
     try {
-      relativeToAbsolute(sourceMap.sources, outputPath);
+      relativeToAbsolute(sourceMap.sources, outputPath, options.directory);
     } catch (exception) {
-      handleException('source-map error', exception.message);
+      return handleException('source-map error', exception.message);
     }
 
     // prepare the adjusted sass source-map for later look-ups
@@ -66,7 +80,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
   // process
   //  rework-css will throw on css syntax errors
-  var useMap = loader.sourceMap || queryOptions.sourceMap || programaticOptions.sourceMap,
+  var useMap = loader.sourceMap || options.sourceMap,
       reworked;
   try {
     reworked = rework(contentWithMap, {source: loader.resourcePath})
@@ -102,10 +116,10 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
    */
   function handleException() {
     var message = '  resolve-url-loader cannot operate: ' + Array.prototype.slice.call(arguments).join(' ');
-    if (queryOptions.fail || programaticOptions.fail) {
+    if (options.fail) {
       loader.emitError(message);
     }
-    else if (!queryOptions.silent && !programaticOptions.silent) {
+    else if (!options.silent) {
       loader.emitWarning(message);
     }
     return content;
@@ -134,10 +148,7 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
         // reverse the original source-map to find the original sass file
         var startPosApparent = declaration.position.start,
-            startPosOriginal = sourceMapConsumer ? sourceMapConsumer.originalPositionFor({
-              line  : startPosApparent.line,
-              column: startPosApparent.column
-            }) : startPosApparent,
+            startPosOriginal = sourceMapConsumer && sourceMapConsumer.originalPositionFor(startPosApparent),
             directory        = startPosOriginal && startPosOriginal.source && path.dirname(startPosOriginal.source);
 
         // we require a valid directory for the specified file
@@ -152,8 +163,8 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
             .map(eachSplitOrGroup)
             .join('');
         }
-        // invalid source map
-        else {
+        // source-map present but invalid entry
+        else if (sourceMapConsumer) {
           throw new Error('source-map information is not available at url() declaration');
         }
       }
@@ -177,10 +188,10 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
 
           // remove query string or hash suffix
           var uri      = initialised.split(/[?#]/g).shift(),
-              absolute = uri && findFile.absolute(directory, uri, directories);
+              absolute = uri && findFile.absolute(directory, uri, options.directory);
 
           // use the absolute path (or default to initialised)
-          if (queryOptions.absolute || programaticOptions.absolute) {
+          if (options.absolute) {
             return absolute && absolute.replace(BACKSLASH_REGEX, '/') || initialised;
           }
           // module relative path (or default to initialised)
@@ -197,4 +208,6 @@ module.exports = function resolveUrlLoader(content, sourceMap) {
       }
     }
   }
-};
+}
+
+module.exports = resolveUrlLoader;
