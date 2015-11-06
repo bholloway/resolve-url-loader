@@ -44,7 +44,7 @@ function resolveUrlLoader(content, sourceMap) {
 
   // validate root directory
   var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root),
-      isValidRoot = !!resolvedRoot && fs.existsSync(resolvedRoot);
+      isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot);
   if (options.root && !isValidRoot) {
     return handleException('"root" option does not resolve to a valid path');
   }
@@ -88,7 +88,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
     //  fail gracefully
   catch (exception) {
-    return handleException('CSS error', exception.message);
+    return handleException('CSS error', exception);
   }
 
   // complete with source-map
@@ -107,11 +107,14 @@ function resolveUrlLoader(content, sourceMap) {
 
   /**
    * Push an error for the given exception and return the original content.
-   * @param {...string} messages
+   * @param {string} label
+   * @param {string|Error} exception
    * @returns {string} The original CSS content
    */
-  function handleException() {
-    var message = '  resolve-url-loader cannot operate: ' + Array.prototype.slice.call(arguments).join(' ');
+  function handleException(label, exception) {
+    var rest = (typeof exception === 'string') ? [exception] : (exception instanceof Error) ? [exception.message,
+      exception.stack.split('\n')[1].trim()] : [];
+    var message = '  resolve-url-loader cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  ');
     if (options.fail) {
       loader.emitError(message);
     }
@@ -126,6 +129,7 @@ function resolveUrlLoader(content, sourceMap) {
    * @param {object} stylesheet AST for the CSS output from SASS
    */
   function reworkPlugin(stylesheet) {
+    var URL_STATEMENT_REGEX = /(url\s*\()\s*(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))\s*(\))/g;
 
     // visit each node (selector) in the stylesheet recursively using the official utility method
     //  each node may have multiple declarations
@@ -139,15 +143,16 @@ function resolveUrlLoader(content, sourceMap) {
      * @param declaration
      */
     function eachDeclaration(declaration) {
-      var URL_STATEMENT_REGEX = /(url\s*\()\s*(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))\s*(\))/g;
-      if (declaration.value) {
+      var isValid = declaration.value && (declaration.value.indexOf('url') >= 0),
+          directory;
+      if (isValid) {
 
         // reverse the original source-map to find the original sass file
         var startPosApparent = declaration.position.start,
-            startPosOriginal = sourceMapConsumer && sourceMapConsumer.originalPositionFor(startPosApparent),
-            directory        = startPosOriginal && startPosOriginal.source && path.dirname(startPosOriginal.source);
+            startPosOriginal = sourceMapConsumer && sourceMapConsumer.originalPositionFor(startPosApparent);
 
         // we require a valid directory for the specified file
+        directory = startPosOriginal && startPosOriginal.source && path.dirname(startPosOriginal.source);
         if (directory) {
 
           // allow multiple url() values in the declaration
