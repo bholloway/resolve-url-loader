@@ -134,8 +134,10 @@ function resolveUrlLoader(content, sourceMap) {
     // visit each node (selector) in the stylesheet recursively using the official utility method
     //  each node may have multiple declarations
     visit(stylesheet, function visitor(declarations) {
-      declarations
-        .forEach(eachDeclaration);
+      if (declarations) {
+        declarations
+          .forEach(eachDeclaration);
+      }
     });
 
     /**
