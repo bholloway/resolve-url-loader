@@ -31,9 +31,11 @@ function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
   // details of the file being processed
+  //  we would normally use compilation.getPath(options.output.path) to get the most correct outputPath,
+  //  however we need to match to the sass-loader and it does not do so
   var loader     = this,
       filePath   = loader.context,
-      outputPath = path.resolve(loader.options.output.path); // support relative path edge-case
+      outputPath = path.resolve(loader.options.output.path);
 
   // prefer loader query, else options object, else default values
   var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
