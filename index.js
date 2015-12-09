@@ -33,14 +33,16 @@ function resolveUrlLoader(content, sourceMap) {
   // details of the file being processed
   var loader     = this,
       filePath   = loader.context,
-      outputPath = path.resolve(loader.options.output.path),  // support relative path edge-case
-      options    = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
-        absolute : false,
-        sourceMap: false,
-        fail     : false,
-        silent   : false,
-        root     : null
-      });
+      outputPath = path.resolve(loader.options.output.path); // support relative path edge-case
+
+  // prefer loader query, else options object, else default values
+  var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
+    absolute : false,
+    sourceMap: false,
+    fail     : false,
+    silent   : false,
+    root     : null
+  });
 
   // validate root directory
   var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root),
