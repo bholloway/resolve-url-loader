@@ -39,11 +39,12 @@ function resolveUrlLoader(content, sourceMap) {
 
   // prefer loader query, else options object, else default values
   var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
-    absolute : false,
-    sourceMap: false,
-    fail     : false,
-    silent   : false,
-    root     : null
+    absolute        : false,
+    sourceMap       : false,
+    fail            : false,
+    silent          : false,
+    keepQueryInUrl  : false,
+    root            : null
   });
 
   // validate root directory
@@ -197,15 +198,23 @@ function resolveUrlLoader(content, sourceMap) {
           var uri      = initialised.split(/[?#]/g).shift(),
               absolute = uri && findFile.absolute(directory, uri, resolvedRoot);
 
+          var hasQuery = false, querySeperator = '';
+          var queryStr = initialised.split(/[?#]/g).pop();
+
+          hasQuery = (queryStr !== uri);
+          if (hasQuery) {
+            querySeperator = (initialised.indexOf('?#') === -1) ? ((initialised.indexOf('?') === -1) ? '#' : '?') : '?#';
+          }
+
           // use the absolute path (or default to initialised)
           if (options.absolute) {
-            return absolute && absolute.replace(BACKSLASH_REGEX, '/') || initialised;
+            return absolute && absolute.replace(BACKSLASH_REGEX, '/').concat((hasQuery && options.keepQueryInUrl) ? querySeperator + queryStr : '') || initialised;
           }
           // module relative path (or default to initialised)
           else {
             var relative     = absolute && path.relative(filePath, absolute),
                 rootRelative = relative && loaderUtils.urlToRequest(relative, '~');
-            return (rootRelative) ? rootRelative.replace(BACKSLASH_REGEX, '/') : initialised;
+            return (rootRelative) ? rootRelative.replace(BACKSLASH_REGEX, '/').concat((hasQuery && options.keepQueryInUrl) ? querySeperator + queryStr : '') : initialised;
           }
         }
         // everything else, including parentheses and quotation (where present) and media statements
