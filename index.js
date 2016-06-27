@@ -35,7 +35,7 @@ function resolveUrlLoader(content, sourceMap) {
   //  however we need to match to the sass-loader and it does not do so
   var loader     = this,
       filePath   = loader.context,
-      outputPath = path.resolve(loader.options.output.path);
+      outputPath = path.resolve(loader.options.context);
 
   // prefer loader query, else options object, else default values
   var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
@@ -57,12 +57,16 @@ function resolveUrlLoader(content, sourceMap) {
   loader.cacheable();
 
   // incoming source-map
-  var sourceMapConsumer, contentWithMap;
+  var sourceMapConsumer, contentWithMap, sourceRoot;
   if (sourceMap) {
 
     // sass-loader outputs source-map sources relative to output directory so start our search there
     try {
       relativeToAbsolute(sourceMap.sources, outputPath, resolvedRoot);
+      // There are now absolute paths in the source map so we don't need it anymore
+      // However, later when we go back to relative paths, we need to add it again
+      sourceRoot = sourceMap.sourceRoot;
+      sourceMap.sourceRoot = null;
     } catch (exception) {
       return handleException('source-map error', exception.message);
     }
@@ -100,7 +104,9 @@ function resolveUrlLoader(content, sourceMap) {
 
     // source-map sources seem to be relative to the file being processed
     absoluteToRelative(reworked.map.sources, filePath);
-
+    
+    // Set source root again
+    reworked.map.sourceRoot = sourceRoot;
     // need to use callback when there are multiple arguments
     loader.callback(null, reworked.code, reworked.map);
   }
