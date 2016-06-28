@@ -103,10 +103,11 @@ function resolveUrlLoader(content, sourceMap) {
   if (useMap) {
 
     // source-map sources seem to be relative to the file being processed
-    absoluteToRelative(reworked.map.sources, filePath);
+    absoluteToRelative(reworked.map.sources, path.resolve(filePath, sourceRoot));
     
     // Set source root again
     reworked.map.sourceRoot = sourceRoot;
+
     // need to use callback when there are multiple arguments
     loader.callback(null, reworked.code, reworked.map);
   }
