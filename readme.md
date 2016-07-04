@@ -85,6 +85,8 @@ Where `...` is a hash of any of the following options.
 
 * `fail` Syntax or source-map errors will result in an error.
 
+* `keepQuery` Keep query string and hash within url. I.e. `url('./MyFont.eot?#iefix')`, `url('./MyFont.svg#oldiosfix')`.
+
 * `root` An optional directory within which search may be performed. Relative paths are permitted. Where omitted `process.cwd()` is used and should be sufficient for most use cases.
 
 Note that query parameters take precedence over programmatic parameters.
