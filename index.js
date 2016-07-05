@@ -48,7 +48,7 @@ function resolveUrlLoader(content, sourceMap) {
   });
 
   // validate root directory
-  var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root),
+  var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
       isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot);
   if (options.root && !isValidRoot) {
     return handleException('"root" option does not resolve to a valid path');
@@ -119,8 +119,8 @@ function resolveUrlLoader(content, sourceMap) {
 
   /**
    * Push an error for the given exception and return the original content.
-   * @param {string} label
-   * @param {string|Error} exception
+   * @param {string} label Summary of the error
+   * @param {string|Error} [exception] Optional extended error details
    * @returns {string} The original CSS content
    */
   function handleException(label, exception) {
