@@ -116,7 +116,7 @@ function resolveUrlLoader(content, sourceMap) {
   if (useMap) {
 
     // source-map sources seem to be relative to the file being processed
-    absoluteToRelative(reworked.map.sources, path.resolve(filePath, sourceRoot));
+    absoluteToRelative(reworked.map.sources, path.resolve(filePath, sourceRoot || '.'));
 
     // Set source root again
     reworked.map.sourceRoot = sourceRoot;
