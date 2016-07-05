@@ -32,6 +32,7 @@
     "lodash.defaults": "^3.1.2",
     "rework": "^1.0.1",
     "rework-visit": "^1.0.0",
-    "source-map": "^0.1.43"
+    "source-map": "^0.1.43",
+    "urix": "^0.1.0"
   }
 }
