@@ -33,22 +33,23 @@ function resolveUrlLoader(content, sourceMap) {
   // details of the file being processed
   //  we would normally use compilation.getPath(options.output.path) to get the most correct outputPath,
   //  however we need to match to the sass-loader and it does not do so
-  var loader     = this,
-      filePath   = loader.context,
-      outputPath = path.resolve(loader.options.output.path);
+  var loader      = this,
+      filePath    = loader.context,
+      outputPath  = path.resolve(loader.options.output.path),
+      contextPath = path.resolve(loader.options.context);
 
   // prefer loader query, else options object, else default values
   var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
-    absolute  : false,
-    sourceMap : false,
-    fail      : false,
-    silent    : false,
-    keepQuery : false,
-    root      : null
+    absolute : false,
+    sourceMap: false,
+    fail     : false,
+    silent   : false,
+    keepQuery: false,
+    root     : null
   });
 
   // validate root directory
-  var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root),
+  var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
       isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot);
   if (options.root && !isValidRoot) {
     return handleException('"root" option does not resolve to a valid path');
@@ -58,15 +59,30 @@ function resolveUrlLoader(content, sourceMap) {
   loader.cacheable();
 
   // incoming source-map
-  var sourceMapConsumer, contentWithMap;
+  var sourceMapConsumer, contentWithMap, sourceRoot;
   if (sourceMap) {
 
-    // sass-loader outputs source-map sources relative to output directory so start our search there
+    // expect sass-loader@>=4.0.0
+    //  sourcemap sources relative to context path
     try {
-      relativeToAbsolute(sourceMap.sources, outputPath, resolvedRoot);
-    } catch (exception) {
-      return handleException('source-map error', exception.message);
+      relativeToAbsolute(sourceMap.sources, contextPath, resolvedRoot);
     }
+    catch (unused) {
+
+      // fallback to sass-loader@<4.0.0
+      //  sourcemap sources relative to output path
+      try {
+        relativeToAbsolute(sourceMap.sources, outputPath, resolvedRoot);
+      }
+      catch (exception) {
+        return handleException('source-map error', exception.message);
+      }
+    }
+
+    // There are now absolute paths in the source map so we don't need it anymore
+    // However, later when we go back to relative paths, we need to add it again
+    sourceRoot = sourceMap.sourceRoot;
+    sourceMap.sourceRoot = undefined;
 
     // prepare the adjusted sass source-map for later look-ups
     sourceMapConsumer = new SourceMapConsumer(sourceMap);
@@ -100,7 +116,10 @@ function resolveUrlLoader(content, sourceMap) {
   if (useMap) {
 
     // source-map sources seem to be relative to the file being processed
-    absoluteToRelative(reworked.map.sources, filePath);
+    absoluteToRelative(reworked.map.sources, path.resolve(filePath, sourceRoot || '.'));
+
+    // Set source root again
+    reworked.map.sourceRoot = sourceRoot;
 
     // need to use callback when there are multiple arguments
     loader.callback(null, reworked.code, reworked.map);
@@ -112,13 +131,14 @@ function resolveUrlLoader(content, sourceMap) {
 
   /**
    * Push an error for the given exception and return the original content.
-   * @param {string} label
-   * @param {string|Error} exception
+   * @param {string} label Summary of the error
+   * @param {string|Error} [exception] Optional extended error details
    * @returns {string} The original CSS content
    */
   function handleException(label, exception) {
-    var rest = (typeof exception === 'string') ? [exception] : (exception instanceof Error) ? [exception.message,
-      exception.stack.split('\n')[1].trim()] : [];
+    var rest = (typeof exception === 'string') ? [exception] :
+               (exception instanceof Error) ? [exception.message, exception.stack.split('\n')[1].trim()] :
+               [];
     var message = '  resolve-url-loader cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  ');
     if (options.fail) {
       loader.emitError(message);
