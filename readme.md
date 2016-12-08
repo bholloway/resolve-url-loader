@@ -40,7 +40,7 @@ Note that **source maps** must be enabled on any preceding loader. In the above 
 
 In some use cases (no preceding transpiler) there will be no incoming source map. Therefore we do not warn if the source-map is missing.
 
-However if there is an incomming source-map then it must imply `source` information at each CSS `url()` statement.
+However if there is an incoming source-map then it must imply `source` information at each CSS `url()` statement.
 
 ### Apply via webpack config
 
@@ -95,7 +95,7 @@ Note that query parameters take precedence over programmatic parameters.
 
 A [rework](https://github.com/reworkcss/rework) process is run on incoming CSS.
 
-Each `url()` statement that implies an asset triggers a file search using node `fs` operations. The asset should be relative to the original source file that was transpiled. This file is determined by consulting the incomming source-map at the point of the `url()` statement.
+Each `url()` statement that implies an asset triggers a file search using node `fs` operations. The asset should be relative to the original source file that was transpiled. This file is determined by consulting the incoming source-map at the point of the `url()` statement.
 
 Usually the asset is found relative to the original source file. However in some cases there is no immediate match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory.
 
