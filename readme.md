@@ -13,13 +13,13 @@ This loader will use the source-map from the SASS compiler to locate the origina
 Plain CSS works fine:
 
 ``` javascript
-var css = require('!css!resolve-url!./file.css');
+var css = require('!css-loader!resolve-url-loader!./file.css');
 ```
 
 or using [sass-loader](https://github.com/jtangelder/sass-loader):
 
 ``` javascript
-var css = require('!css!resolve-url!sass?sourceMap!./file.scss');
+var css = require('!css-loader!resolve-url-loader!sass-loader?sourceMap!./file.scss');
 ```
 
 Use in tandem with the [`style-loader`](https://github.com/webpack/style-loader) to compile sass and to add the css rules to your document:
@@ -31,16 +31,8 @@ require('!style!css!resolve-url!./file.css');
 and
 
 ``` javascript
-require('!style!css!resolve-url!sass?sourceMap!./file.scss');
+require('!style-loader!css-loader!resolve-url-loader!sass-loader?sourceMap!./file.scss');
 ```
-
-### Source maps required
-
-Note that **source maps** must be enabled on any preceding loader. In the above example we use `sass?sourceMap`.
-
-In some use cases (no preceding transpiler) there will be no incoming source map. Therefore we do not warn if the source-map is missing.
-
-However if there is an incoming source-map then it must imply `source` information at each CSS `url()` statement.
 
 ### Apply via webpack config
 
@@ -52,15 +44,35 @@ module.exports = {
     loaders: [
       {
         test   : /\.css$/,
-        loaders: ['style', 'css', 'resolve-url']
+        loaders: ['style-loader', 'css-loader', 'resolve-url-loader']
       }, {
         test   : /\.scss$/,
-        loaders: ['style', 'css', 'resolve-url', 'sass?sourceMap']
+        loaders: ['style-loader', 'css-loader', 'resolve-url-loader', 'sass-loader?sourceMap']
       }
     ]
   }
 };
 ```
+
+### IMPORTANT
+
+#### Source maps required
+
+Note that **source maps** must be enabled on any preceding loader. In the above example we use `sass?sourceMap`.
+
+In some use cases (no preceding transpiler) there will be no incoming source map. Therefore we do not warn if the source-map is missing.
+
+However if there is an incoming source-map then it must imply `source` information at each CSS `url()` statement.
+
+#### Don't omit `-loader`
+
+> Your `Webpack.config.js` should **always** use the long-form of the loader name (i.e. the `-loader` suffix).
+
+There is another package called `resolve-url` which Webpack can confuse with `resolve-url-loader`.
+
+There are other common examples. Such as `jshint` and `jshint-loader` packages being confused.
+
+These conflicts are **very hard to debug** and will send you crazy. Your `Webpack.config.js` should **always** use the long-form of the loader name (i.e. the `-loader` suffix)
 
 ### Options
 
@@ -104,3 +116,42 @@ Shallower paths must be limited to avoid the whole file system from being consid
 If the asset is not found then the `url()` statement will not be updated with a Webpack module-relative path. However if the `url()` statement has no source-map `source` information the loader will fail.
 
 The loader will also fail when input source-map `sources` cannot all be resolved relative to some consistent path within `root`.
+
+## Limitations
+
+### Mixins
+
+Where `url()` statements are created in a SASS mixin the file may be expected to be relative to the mixin. Obviously this is **not** the desired behaviour.
+
+This may be beacuse [rework](https://github.com/reworkcss/rework) is limited in how it works with the `sass-loader` source maps.
+
+Unfortunately you need to work around this until we can investigate other solutions.
+
+## Getting help
+
+Webpack is difficult to configure but extremely rewarding.
+
+I am happy for you to **raise an issue** to ask a question regarding this package. However ensure you follow the check-list first.
+
+Currently I am **not** [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) this loader in my own work. I may rely on you being able to isolate the problem in a simple example project and to help debug.
+
+I am happy this loader helps so many people. Open-source is provided as-is so please try not project your frustrations. There are some really great people who follow this project who can help.
+
+### Issues
+
+Before raising a new issue:
+
+* remove this loader and make sure it is not a problem with a different loader in your config (most often the case)
+* check [stack overflow](http://stackoverflow.com/search?q=resolve-url-loader) for an answer
+* review [previous issues](/issues?utf8=%E2%9C%93&q=is%3Aissue) that may be similar
+* be prepared to create a **simple open-source project** that exhibits your problem, should the solution not be immediately obvious to me
+* (ideally) debug some code and let me know where the problem sits
+
+### Pull requests
+
+I am happy to take **pull requests**, however:
+
+* Ensure your change is **backwards compatible** - not all users will be using the same version of Webpack or SASS that you do.
+* Follow the **existing code style**.
+* Do **not** overwrite existing variables with new values. I would prefer your change variable names elsewhere if necessary.
+* Add **comments** that describe why the code is necessary - i.e. what edge case are we solving. Otherwise we may rewrite later and break your use-case.
