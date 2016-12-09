@@ -62,6 +62,9 @@ function resolveUrlLoader(content, sourceMap) {
   var sourceMapConsumer, contentWithMap, sourceRoot;
   if (sourceMap) {
 
+    //when use less-loader the incoming sourceMap is string,need to parse it
+    sourceMap = typeof sourceMap == 'string' ? JSON.parse(sourceMap) : sourceMap;
+
     // expect sass-loader@>=4.0.0
     //  sourcemap sources relative to context path
     try {
