@@ -35,8 +35,7 @@ function resolveUrlLoader(content, sourceMap) {
   //  however we need to match to the sass-loader and it does not do so
   var loader      = this,
       filePath    = loader.context,
-      outputPath  = path.resolve(loader.options.output.path),
-      contextPath = path.resolve(loader.options.context);
+      outputPath  = path.resolve(loader.options.output.path);
 
   // prefer loader query, else options object, else default values
   var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
@@ -63,9 +62,9 @@ function resolveUrlLoader(content, sourceMap) {
   if (sourceMap) {
 
     // expect sass-loader@>=4.0.0
-    //  sourcemap sources relative to context path
+    //  sourcemap sources relative to sourceMap.sourceRoot
     try {
-      relativeToAbsolute(sourceMap.sources, contextPath, resolvedRoot);
+      relativeToAbsolute(sourceMap.sources, sourceMap.sourceRoot, resolvedRoot);
     }
     catch (unused) {
 
