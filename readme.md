@@ -99,6 +99,8 @@ Where `...` is a hash of any of the following options.
 
 * `keepQuery` Keep query string and hash within url. I.e. `url('./MyFont.eot?#iefix')`, `url('./MyFont.svg#oldiosfix')`.
 
+* `debug` Show verbose information on the file paths being searched.
+
 * `root` An optional directory within which search may be performed. Relative paths are permitted. Where omitted `process.cwd()` is used and should be sufficient for most use cases.
 
 Note that query parameters take precedence over programmatic parameters.

@@ -16,7 +16,7 @@ var path              = require('path'),
 
 var findFile           = require('./lib/find-file'),
     absoluteToRelative = require('./lib/sources-absolute-to-relative'),
-    relativeToAbsolute = require('./lib/sources-relative-to-absolute');
+    adjustSourceMap    = require('adjust-sourcemap-loader/lib/process');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -31,12 +31,8 @@ function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
   // details of the file being processed
-  //  we would normally use compilation.getPath(options.output.path) to get the most correct outputPath,
-  //  however we need to match to the sass-loader and it does not do so
-  var loader      = this,
-      filePath    = loader.context,
-      outputPath  = path.resolve(loader.options.output.path),
-      contextPath = path.resolve(loader.options.context);
+  var loader   = this,
+      filePath = path.dirname(loader.resourcePath);
 
   // prefer loader query, else options object, else default values
   var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
@@ -45,6 +41,7 @@ function resolveUrlLoader(content, sourceMap) {
     fail     : false,
     silent   : false,
     keepQuery: false,
+    debug    : false,
     root     : null
   });
 
@@ -62,33 +59,35 @@ function resolveUrlLoader(content, sourceMap) {
   var sourceMapConsumer, contentWithMap, sourceRoot;
   if (sourceMap) {
 
-    // expect sass-loader@>=4.0.0
-    //  sourcemap sources relative to context path
-    try {
-      relativeToAbsolute(sourceMap.sources, contextPath, resolvedRoot);
-    }
-    catch (unused) {
-
-      // fallback to sass-loader@<4.0.0
-      //  sourcemap sources relative to output path
+    // support non-standard string encoded source-map (per less-loader)
+    if (typeof sourceMap === 'string') {
       try {
-        relativeToAbsolute(sourceMap.sources, outputPath, resolvedRoot);
+        sourceMap = JSON.parse(sourceMap);
       }
       catch (exception) {
-        return handleException('source-map error', exception.message);
+        return handleException('source-map error', 'cannot parse source-map string (from less-loader?)');
       }
     }
 
-    // There are now absolute paths in the source map so we don't need it anymore
-    // However, later when we go back to relative paths, we need to add it again
+    // Note the current sourceRoot before it is removed
+    //  later when we go back to relative paths, we need to add it again
     sourceRoot = sourceMap.sourceRoot;
-    sourceMap.sourceRoot = undefined;
+
+    // leverage adjust-sourcemap-loader's codecs to avoid having to make any assumptions about the sourcemap
+    //  historically this is a regular source of breakage
+    var absSourceMap;
+    try {
+      absSourceMap = adjustSourceMap(this, {format: 'absolute'}, sourceMap);
+    }
+    catch (exception) {
+      return handleException('source-map error', exception.message);
+    }
 
     // prepare the adjusted sass source-map for later look-ups
-    sourceMapConsumer = new SourceMapConsumer(sourceMap);
+    sourceMapConsumer = new SourceMapConsumer(absSourceMap);
 
     // embed source-map in css for rework-css to use
-    contentWithMap = content + convert.fromObject(sourceMap).toComment({multiline: true});
+    contentWithMap = content + convert.fromObject(absSourceMap).toComment({multiline: true});
   }
   // absent source map
   else {
@@ -217,7 +216,7 @@ function resolveUrlLoader(content, sourceMap) {
           // split into uri and query/hash and then find the absolute path to the uri
           var split    = initialised.split(/([?#])/g),
               uri      = split[0],
-              absolute = uri && findFile.absolute(directory, uri, resolvedRoot),
+              absolute = uri && findFile(options).absolute(directory, uri, resolvedRoot),
               query    = options.keepQuery ? split.slice(1).join('') : '';
 
           // use the absolute path (or default to initialised)
