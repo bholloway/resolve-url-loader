@@ -26,13 +26,14 @@
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
   "dependencies": {
-    "camelcase": "^1.2.1",
+    "adjust-sourcemap-loader": "^1.0.0",
+    "camelcase": "^4.0.0",
     "convert-source-map": "^1.1.1",
     "loader-utils": "^0.2.11",
-    "lodash.defaults": "^3.1.2",
+    "lodash.defaults": "^4.0.0",
     "rework": "^1.0.1",
     "rework-visit": "^1.0.0",
-    "source-map": "^0.1.43",
+    "source-map": "^0.5.6",
     "urix": "^0.1.0"
   }
 }
