@@ -119,7 +119,7 @@ If the asset is not found then the `url()` statement will not be updated with a 
 
 The loader will also fail when input source-map `sources` cannot all be resolved relative to some consistent path within `root`.
 
-## Limitations
+## Limitations / Known-issues
 
 ### Mixins
 
@@ -128,6 +128,26 @@ Where `url()` statements are created in a SASS mixin the file may be expected to
 This may be beacuse [rework](https://github.com/reworkcss/rework) is limited in how it works with the `sass-loader` source maps.
 
 Unfortunately you need to work around this until we can investigate other solutions.
+
+### Compatiblity
+
+#### Webpack
+
+This loader was written for Webpack 1 and has been tweaked to also support with Webpack 2.
+
+If you find any Webpack 2 problems please comment on any similar existing issue or raise a new one.
+
+#### Node-sass
+
+> **IMPORTANT**
+> 
+> Avoid the combination of **Webpack 1** with **node-sass@^4.0.0**.
+>
+> Use **Webpack 2** if you need latest **node-sass**
+
+Since `node-sass@>=4.0.0` source-maps have sometimes featured negative column values. Since this loader relies on source-maps this can cause a fatal error.
+
+I don't have a lot of data on this. If you are stuck in Webpack 1 and find that this combination actually works ok for you please let me know.
 
 ## Getting help
 
