@@ -34,8 +34,9 @@ function resolveUrlLoader(content, sourceMap) {
   var loader   = this,
       filePath = path.dirname(loader.resourcePath);
 
-  // prefer loader query, else options object, else default values
-  var options = defaults(loaderUtils.parseQuery(loader.query), loader.options[camelcase(PACKAGE_NAME)], {
+  // webpack 1: prefer loader query, else options object
+  // webpack 2; prefer loader options
+  var options = defaults(loaderUtils.getOptions(loader), loader.options[camelcase(PACKAGE_NAME)], {
     absolute : false,
     sourceMap: false,
     fail     : false,

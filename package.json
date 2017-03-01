@@ -1,6 +1,6 @@
 {
   "name": "resolve-url-loader",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
   "main": "index.js",
   "repository": {
@@ -29,7 +29,7 @@
     "adjust-sourcemap-loader": "^1.0.0",
     "camelcase": "^4.0.0",
     "convert-source-map": "^1.1.1",
-    "loader-utils": "^0.2.11",
+    "loader-utils": "^1.0.0",
     "lodash.defaults": "^4.0.0",
     "rework": "^1.0.1",
     "rework-visit": "^1.0.0",
