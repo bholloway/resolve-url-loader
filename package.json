@@ -1,6 +1,6 @@
 {
   "name": "resolve-url-loader",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
   "main": "index.js",
   "repository": {
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
   "dependencies": {
-    "adjust-sourcemap-loader": "^1.0.0",
+    "adjust-sourcemap-loader": "^1.1.0",
     "camelcase": "^4.0.0",
     "convert-source-map": "^1.1.1",
     "loader-utils": "^1.0.0",
