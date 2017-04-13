@@ -125,7 +125,7 @@ The loader will also fail when input source-map `sources` cannot all be resolved
 
 Where `url()` statements are created in a SASS mixin the file may be expected to be relative to the mixin. Obviously this is **not** the desired behaviour.
 
-This may be beacuse [rework](https://github.com/reworkcss/rework) is limited in how it works with the `sass-loader` source maps.
+This may be because [rework](https://github.com/reworkcss/rework) is limited in how it works with the `sass-loader` source maps.
 
 Unfortunately you need to work around this until we can investigate other solutions.
 
