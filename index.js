@@ -24,7 +24,7 @@ var PACKAGE_NAME = require('./package.json').name;
  * A webpack loader that resolves absolute url() paths relative to their original source file.
  * Requires source-maps to do any meaningful work.
  * @param {string} content Css content
- * @param {object} sourceMap The source-map
+ * @param {object|String} sourceMap The source-map
  * @returns {string|String}
  */
 function resolveUrlLoader(content, sourceMap) {
@@ -58,6 +58,8 @@ function resolveUrlLoader(content, sourceMap) {
 
   // incoming source-map
   var sourceMapConsumer, contentWithMap, sourceRoot;
+  // NOTE: source-map from the less-loader comes as string
+  sourceMap = (typeof sourceMap === 'string') ? JSON.parse(sourceMap) : sourceMap;
   if (sourceMap) {
 
     // support non-standard string encoded source-map (per less-loader)
