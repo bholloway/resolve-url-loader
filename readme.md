@@ -8,6 +8,18 @@ Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loa
 
 This loader will use the source-map from the SASS compiler to locate the original `.scss` source file and write a more Webpack-friendly path for your asset. The CSS loader can then locate your asset for individual processing.
 
+
+## Getting started
+
+```bash
+# via yarn
+yarn add resolve-url-loader --dev
+
+# via npm
+npm install --save resolve-url-loader --dev
+```
+
+
 ## Usage
 
 Plain CSS works fine:
