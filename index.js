@@ -38,7 +38,7 @@ function resolveUrlLoader(content, sourceMap) {
   // webpack 2; prefer loader options
   var options = defaults(loaderUtils.getOptions(loader), loader.options[camelcase(PACKAGE_NAME)], {
     absolute : false,
-    sourceMap: false,
+    sourceMap: loader.sourceMap,
     fail     : false,
     silent   : false,
     keepQuery: false,
@@ -97,14 +97,13 @@ function resolveUrlLoader(content, sourceMap) {
 
   // process
   //  rework-css will throw on css syntax errors
-  var useMap = loader.sourceMap || options.sourceMap,
-      reworked;
+  var reworked;
   try {
     reworked = rework(contentWithMap, {source: loader.resourcePath})
       .use(reworkPlugin)
       .toString({
-        sourcemap        : useMap,
-        sourcemapAsObject: useMap
+        sourcemap        : options.sourceMap,
+        sourcemapAsObject: options.sourceMap
       });
   }
     //  fail gracefully
@@ -113,7 +112,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // complete with source-map
-  if (useMap) {
+  if (options.sourceMap) {
 
     // source-map sources seem to be relative to the file being processed
     absoluteToRelative(reworked.map.sources, path.resolve(filePath, sourceRoot || '.'));
