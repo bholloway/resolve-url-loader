@@ -25,6 +25,10 @@
     "url": "https://github.com/bholloway/resolve-url-loader/issues"
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "dependencies": {
     "adjust-sourcemap-loader": "^1.1.0",
     "camelcase": "^4.0.0",
