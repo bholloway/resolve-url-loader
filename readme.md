@@ -100,9 +100,6 @@ module.exports = {
 
 Where `...` is a hash of any of the following options.
 
-* `absolute` Forces the url() to be resolved to an absolute path. This is considered 
-[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths) so only do it if you know what you are doing.
-
 * `sourceMap` Generate a source-map.
 
 * `silent` Do not display warnings on CSS syntax or source-map error.
@@ -115,17 +112,28 @@ Where `...` is a hash of any of the following options.
 
 * `root` An optional directory within which search may be performed. Relative paths are permitted. Where omitted `process.cwd()` is used and should be sufficient for most use cases.
 
+There are some additional hacks available without support. Only do this if you know what you are doing.
+
+* `absolute` Forces the url() to be resolved to an absolute path. This is considered 
+[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths).
+
+* `includeRoot` (experimental, non-performant) Include the project `root` in file search. The `root` option need **not** be specified.
+
 Note that query parameters take precedence over programmatic parameters.
 
 ## How it works
 
 A [rework](https://github.com/reworkcss/rework) process is run on incoming CSS.
 
-Each `url()` statement that implies an asset triggers a file search using node `fs` operations. The asset should be relative to the original source file that was transpiled. This file is determined by consulting the incoming source-map at the point of the `url()` statement.
+Each `url()` statement that implies an asset triggers a file search using node `fs` operations. The asset should be relative to the original source file that was transpiled. This original source is determined by consulting the incoming source-map at the point of the `url()` statement.
 
-Usually the asset is found relative to the original source file. However in some cases there is no immediate match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory.
+Usually the asset is found relative to the original source file `O(1)`. However in some cases there is no immediate match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory `O(n)`.
 
 Shallower paths must be limited to avoid the whole file system from being considered. Progressively shallower paths within the `root` will be considered. Paths featuring a `package.json` or `bower.json` file will not be considered.
+
+* This effectively excludes your project root (except where `options.includeRoot`).
+* Search in a project subdirectory will not escape that subdirectory (except where`options.includeRoot`).
+* Search of a package in `node_modules` will not escape that package.
 
 If the asset is not found then the `url()` statement will not be updated with a Webpack module-relative path. However if the `url()` statement has no source-map `source` information the loader will fail.
 
@@ -135,11 +143,11 @@ The loader will also fail when input source-map `sources` cannot all be resolved
 
 ### Mixins
 
-Where `url()` statements are created in a SASS mixin the file may be expected to be relative to the mixin. Obviously this is **not** the desired behaviour.
+Where `url()` statements are created in a mixin the source file may then be the mixin file, and not the file calling the mixin. Obviously this is **not** the desired behaviour.
 
-This may be because [rework](https://github.com/reworkcss/rework) is limited in how it works with the `sass-loader` source maps.
+The incoming source map can vary greatly with different transpilers and their mixins. Use a [source map visualiser](http://sokra.github.io/source-map-visualization/#custom-choose) to see more.  If the source-map shows the correct original file and the mixin still doesn't work then raise an issue and point to the visualisation.
 
-Unfortunately you need to work around this until we can investigate other solutions.
+Ultimately you will need to work around this. Try to avoid the mixin. Worst case you can try the `includeRoot` option to force a search of your project sources.
 
 ### Compatiblity
 
@@ -178,7 +186,8 @@ Before raising a new issue:
 * remove this loader and make sure it is not a problem with a different loader in your config (most often the case)
 * check [stack overflow](http://stackoverflow.com/search?q=resolve-url-loader) for an answer
 * review [previous issues](/issues?utf8=%E2%9C%93&q=is%3Aissue) that may be similar
-* be prepared to create a **simple open-source project** that exhibits your problem, should the solution not be immediately obvious to me
+* be prepared to create a **simple open-source project** that exhibits your problem, should the solution not be immediately obvious to us
+* be prepared to use a [source map visualisation](http://sokra.github.io/source-map-visualization/#custom-choose) to check the transpiler has correct source maps coming out
 * (ideally) debug some code and let me know where the problem sits
 
 ### Pull requests
@@ -187,5 +196,6 @@ I am happy to take **pull requests**, however:
 
 * Ensure your change is **backwards compatible** - not all users will be using the same version of Webpack or SASS that you do.
 * Follow the **existing code style**.
+* Uncomon use-cases/fixes should be opt-in per a new **option**.
 * Do **not** overwrite existing variables with new values. I would prefer your change variable names elsewhere if necessary.
 * Add **comments** that describe why the code is necessary - i.e. what edge case are we solving. Otherwise we may rewrite later and break your use-case.
