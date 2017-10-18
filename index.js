@@ -46,11 +46,11 @@ function resolveUrlLoader(content, sourceMap) {
     includeRoot: false
   });
 
-  // validate root directory
+  // validate root directory, where specified
   var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
-      isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot);
+      isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot) && fs.statSync(resolvedRoot).isDirectory();
   if (options.root && !isValidRoot) {
-    return handleException('"root" option does not resolve to a valid path');
+    return handleException('loader misconfiguration', '"root" option does not resolve to a valid directory', true);
   }
 
   // directory of the file that is being processed
@@ -92,23 +92,19 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // choose a CSS engine
-  var enginePath = require.resolve('./lib/engine/' + options.engine);
+  var enginePath = /^\w+/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
   var isValidEngine = fs.existsSync(enginePath);
   if (!isValidEngine) {
-    return handleException('"engine" option is not valid');
+    return handleException('loader misconfiguration', '"engine" option is not valid', true);
   }
 
   // process
-  var reworked = require(enginePath)(
-    loader.resourcePath,
-    content,
-    {
-      outputSourceMap: !!options.sourceMap,
-      transformDeclaration: valueProcessor(path.dirname(loader.resourcePath), {limit: resolvedRoot}),
-      absSourceMap: absSourceMap,
-      sourceMapConsumer: sourceMapConsumer
-    }
-  );
+  var reworked = require(enginePath)(loader.resourcePath, content, {
+    outputSourceMap: !!options.sourceMap,
+    transformDeclaration: valueProcessor(path.dirname(loader.resourcePath), options),
+    absSourceMap: absSourceMap,
+    sourceMapConsumer: sourceMapConsumer
+  });
 
   // error
   if (reworked instanceof Error) {
@@ -130,14 +126,15 @@ function resolveUrlLoader(content, sourceMap) {
    * Push an error for the given exception and return the original content.
    * @param {string} label Summary of the error
    * @param {string|Error} [exception] Optional extended error details
+   * @param {boolean} [isCritical] Optionally force display
    * @returns {string} The original CSS content
    */
-  function handleException(label, exception) {
+  function handleException(label, exception, isCritical) {
     var rest = (typeof exception === 'string') ? [exception] :
                (exception instanceof Error) ? [exception.message, exception.stack.split('\n')[1].trim()] :
                [];
     var message = '  resolve-url-loader cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  ');
-    if (options.fail) {
+    if (isCritical || options.fail) {
       loader.emitError(message);
     }
     else if (!options.silent) {
