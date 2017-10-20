@@ -42,6 +42,7 @@ function resolveUrlLoader(content, sourceMap) {
     fail       : false,
     silent     : false,
     keepQuery  : false,
+    attempts   : 0,
     debug      : false,
     root       : null,
     includeRoot: false
