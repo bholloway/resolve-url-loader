@@ -102,6 +102,8 @@ Where `...` is a hash of any of the following options.
 
 * `sourceMap` Generate a source-map.
 
+* `attempts` Limit searching for any files not where they are expected to be. This is unlimited by default so you will want to set it `1` or some small value.
+
 * `silent` Do not display warnings on CSS syntax or source-map error.
 
 * `fail` Syntax or source-map errors will result in an error.
@@ -127,7 +129,7 @@ A [rework](https://github.com/reworkcss/rework) process is run on incoming CSS.
 
 Each `url()` statement that implies an asset triggers a file search using node `fs` operations. The asset should be relative to the original source file that was transpiled. This original source is determined by consulting the incoming source-map at the point of the `url()` statement.
 
-Usually the asset is found relative to the original source file `O(1)`. However in some cases there is no immediate match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory `O(n)`.
+Usually the asset is found relative to the original source file `O(1)`. However in some cases there is no immediate match (*cough* bootstrap *cough*) and we so we start searching both deeper and shallower from the starting directory `O(n)`. Note that `n` may be limited by the `attempts` option.
 
 Shallower paths must be limited to avoid the whole file system from being considered. Progressively shallower paths within the `root` will be considered. Paths featuring a `package.json` or `bower.json` file will not be considered.
 
@@ -140,6 +142,17 @@ If the asset is not found then the `url()` statement will not be updated with a 
 The loader will also fail when input source-map `sources` cannot all be resolved relative to some consistent path within `root`.
 
 ## Limitations / Known-issues
+
+### File search "magic"
+
+Failure to find an asset will trigger a file search of your project.
+
+This feature was for historic reasons, to work around broken packages. It is less relevant now and many users may not be aware of it.
+
+We now have the `attempts` option to limit this feature. However by default it is unlimited (`attempts=0`) which could make your build non-performant.
+
+You should explicitly set `attempts=1` and increase the value only if needed. We will look to make this the default in the next major release.
+
 
 ### Mixins
 
