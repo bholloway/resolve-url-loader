@@ -16,7 +16,7 @@ This loader will use the source-map from the SASS compiler to locate the origina
 yarn add resolve-url-loader --dev
 
 # via npm
-npm install --save resolve-url-loader --dev
+npm install resolve-url-loader --save-dev
 ```
 
 
