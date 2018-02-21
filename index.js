@@ -36,7 +36,7 @@ function resolveUrlLoader(content, sourceMap) {
 
   // webpack 1: prefer loader query, else options object
   // webpack 2; prefer loader options
-  var options = defaults(loaderUtils.getOptions(loader), loader.options && loader.options[camelcase(PACKAGE_NAME)], {
+  var options = defaults(loader.query, {
     absolute   : false,
     sourceMap  : loader.sourceMap,
     fail       : false,
