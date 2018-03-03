@@ -34,5 +34,11 @@
     "postcss": "^6.0.17",
     "source-map": "^0.5.6",
     "urix": "^0.1.0"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.5"
+  },
+  "scripts": {
+    "lint": "jshint index.js lib"
   }
 }
