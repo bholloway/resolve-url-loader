@@ -35,18 +35,24 @@ function resolveUrlLoader(content, sourceMap) {
       filePath = path.dirname(loader.resourcePath);
 
   // webpack 1: prefer loader query, else options object
-  // webpack 2; prefer loader options
-  var options = defaults(loaderUtils.getOptions(loader), loader.options[camelcase(PACKAGE_NAME)], {
-    absolute   : false,
-    sourceMap  : loader.sourceMap,
-    fail       : false,
-    silent     : false,
-    keepQuery  : false,
-    attempts   : 0,
-    debug      : false,
-    root       : null,
-    includeRoot: false
-  });
+  // webpack 2: prefer loader options
+  // webpack 3: deprecate loader.options object
+  // webpack 4: loader.options no longer defined
+  var options = defaults(
+    loaderUtils.getOptions(loader),
+    loader.options && loader.options[camelcase(PACKAGE_NAME)],
+    {
+      absolute   : false,
+      sourceMap  : loader.sourceMap,
+      fail       : false,
+      silent     : false,
+      keepQuery  : false,
+      attempts   : 0,
+      debug      : false,
+      root       : null,
+      includeRoot: false
+    }
+  );
 
   // validate root directory
   var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
