@@ -33,6 +33,7 @@
     "adjust-sourcemap-loader": "^1.1.0",
     "camelcase": "^4.1.0",
     "convert-source-map": "^1.5.1",
+    "cross-env": "^5.1.5",
     "loader-utils": "^1.1.0",
     "lodash.defaults": "^4.0.0",
     "rework": "^1.0.1",
@@ -41,9 +42,25 @@
     "urix": "^0.1.0"
   },
   "devDependencies": {
-    "jshint": "^2.9.5"
+    "blue-tape": "^1.0.0",
+    "compose-function": "^3.0.3",
+    "get-value": "^3.0.1",
+    "joi": "^13.1.2",
+    "jshint": "^2.9.5",
+    "micromatch": "^3.1.10",
+    "ms": "^2.1.1",
+    "outdent": "^0.5.0",
+    "promise-compose": "^1.1.2",
+    "recursive-readdir": "^2.2.2",
+    "tap-diff": "^0.1.1"
   },
   "scripts": {
-    "lint": "jshint index.js lib"
+    "lint": "jshint --exclude **/node_modules index.js lib test",
+    "pretest": "cd ./test/test-my-cli && npm install",
+    "test": "tape test | tap-diff",
+    "test:webpack1": "cross-env ONLY='webpack1*' npm run test",
+    "test:webpack2": "cross-env ONLY='webpack2*' npm run test",
+    "test:webpack3": "cross-env ONLY='webpack3*' npm run test",
+    "test:webpack4": "cross-env ONLY='webpack4*' npm run test"
   }
 }
