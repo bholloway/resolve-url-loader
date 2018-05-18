@@ -14,7 +14,6 @@ var path              = require('path'),
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
 var valueProcessor = require('./lib/value-processor');
-var absoluteToRelative = require('./lib/absolute-to-relative');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -59,14 +58,11 @@ function resolveUrlLoader(content, sourceMap) {
     return handleException('loader misconfiguration', '"root" option does not resolve to a valid directory', true);
   }
 
-  // directory of the file that is being processed
-  var resourceDir = path.dirname(loader.resourcePath);
-
   // loader result is cacheable
   loader.cacheable();
 
   // incoming source-map
-  var sourceMapConsumer, absSourceMap, sourceRoot, basePath;
+  var sourceMapConsumer, absSourceMap;
   if (sourceMap) {
 
     // support non-standard string encoded source-map (per less-loader)
@@ -79,15 +75,10 @@ function resolveUrlLoader(content, sourceMap) {
       }
     }
 
-    // Note the current sourceRoot before it is removed
-    //  later when we go back to relative paths, we need to add it again
-    sourceRoot = sourceMap.sourceRoot;
-    basePath = path.resolve(resourceDir, sourceRoot || '.');
-
     // leverage adjust-sourcemap-loader's codecs to avoid having to make any assumptions about the sourcemap
     //  historically this is a regular source of breakage
     try {
-      absSourceMap = adjustSourceMap(this, {format: 'absolute'}, sourceMap);
+      absSourceMap = adjustSourceMap(loader, {format: 'absolute'}, sourceMap);
     }
     catch (exception) {
       return handleException('source-map error', exception.message);
@@ -104,28 +95,32 @@ function resolveUrlLoader(content, sourceMap) {
     return handleException('loader misconfiguration', '"engine" option is not valid', true);
   }
 
-  // process
-  var reworked = require(enginePath)(loader.resourcePath, content, {
-    outputSourceMap: !!options.sourceMap,
-    transformDeclaration: valueProcessor(path.dirname(loader.resourcePath), options),
-    absSourceMap: absSourceMap,
-    sourceMapConsumer: sourceMapConsumer
-  });
+  // process async
+  var callback = loader.async();
+  Promise
+    .resolve(require(enginePath)(loader.resourcePath, content, {
+      outputSourceMap: !!options.sourceMap,
+      transformDeclaration: valueProcessor(loader.context, options),
+      absSourceMap: absSourceMap,
+      sourceMapConsumer: sourceMapConsumer
+    }))
+    .then(onSuccess)
+    .catch(onFailure);
 
-  // error
-  if (reworked instanceof Error) {
-    return handleException('Error in CSS', reworked);
+  function onSuccess(reworked) {
+    // complete with source-map
+    //  source-map sources are relative to the file being processed
+    if (options.sourceMap) {
+      var finalMap = adjustSourceMap(loader, {format: 'sourceRelative'}, reworked.map);
+      callback(null, reworked.content, finalMap);
+    }
+    else {
+      callback(null, reworked.content);
+    }
   }
-  // complete with source-map
-  //  source-map sources seem to be relative to the file being processed, we need to transform to existing sourceRoot
-  else if (options.sourceMap) {
-    reworked.map.sources = reworked.map.sources.map(absoluteToRelative(basePath));
-    reworked.map.sourceRoot = sourceRoot;
-    loader.callback(null, reworked.content, reworked.map);
-  }
-  // complete without source-map
-  else {
-    return reworked.content;
+
+  function onFailure(error) {
+    callback(null, handleException('Error in CSS', error));
   }
 
   /**
