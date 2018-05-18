@@ -65,8 +65,12 @@ function resolveUrlLoader(content, sourceMap) {
   // loader result is cacheable
   loader.cacheable();
 
+  // webpack1 : callback = this.callback
+  // webpack2+: callback = this.async()
+  var callback = (typeof loader.async === 'function') ? loader.async() : loader.callback;
+
   // incoming source-map
-  var sourceMapConsumer, absSourceMap, sourceRoot, basePath;
+  var sourceMapConsumer, absSourceMap;
   if (sourceMap) {
 
     // support non-standard string encoded source-map (per less-loader)
@@ -78,11 +82,6 @@ function resolveUrlLoader(content, sourceMap) {
         return handleException('source-map error', 'cannot parse source-map string (from less-loader?)');
       }
     }
-
-    // Note the current sourceRoot before it is removed
-    //  later when we go back to relative paths, we need to add it again
-    sourceRoot = sourceMap.sourceRoot;
-    basePath = path.resolve(resourceDir, sourceRoot || '.');
 
     // leverage adjust-sourcemap-loader's codecs to avoid having to make any assumptions about the sourcemap
     //  historically this is a regular source of breakage
@@ -117,11 +116,11 @@ function resolveUrlLoader(content, sourceMap) {
     return handleException('Error in CSS', reworked);
   }
   // complete with source-map
-  //  source-map sources seem to be relative to the file being processed, we need to transform to existing sourceRoot
+  //  source-map sources are relative to the file being processed
   else if (options.sourceMap) {
-    reworked.map.sources = reworked.map.sources.map(absoluteToRelative(basePath));
-    reworked.map.sourceRoot = sourceRoot;
-    loader.callback(null, reworked.content, reworked.map);
+    reworked.map.sources = reworked.map.sources.map(absoluteToRelative(resourceDir));
+    reworked.map.sourceRoot = resourceDir;
+    callback(null, reworked.content, reworked.map);
   }
   // complete without source-map
   else {
