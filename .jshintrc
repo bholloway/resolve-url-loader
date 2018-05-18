@@ -23,6 +23,5 @@
   "maxlen": 120,
   "scripturl": true,
   "node": true,
-  "jasmine": true,
-  "esnext": true
+  "esversion": 6
 }

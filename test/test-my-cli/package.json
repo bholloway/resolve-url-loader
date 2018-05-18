@@ -1,0 +1,25 @@
+{
+  "name": "test-my-cli",
+  "version": "0.0.1",
+  "description": "A test helper for e2e testing of cli applications in Tape",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "compose-function": "^3.0.3",
+    "cross-spawn": "^6.0.5",
+    "get-value": "^3.0.0",
+    "joi": "^13.1.2",
+    "mkdirp": "^0.5.1",
+    "ms": "^2.1.1",
+    "promise-compose": "^1.1.2",
+    "recursive-readdir": "^2.2.2",
+    "repeat-element": "^1.1.2",
+    "rimraf": "^2.6.2",
+    "set-value": "^3.0.0"
+  },
+  "scripts": {},
+  "author": "",
+  "license": "MIT"
+}
