@@ -10,7 +10,7 @@ const {assign} = Object;
  */
 exports.indent = (n) => (...lines) =>
   lines
-    .map((line) => line
+    .map((line) => String(line)
       .match(new RegExp(`.{1,${120 - n}}`, 'g'))
       .map((part, i) => ''.padStart(i ? (n + 2) : n) + part)
     )

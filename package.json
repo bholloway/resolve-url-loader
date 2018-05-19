@@ -44,6 +44,7 @@
   "devDependencies": {
     "blue-tape": "^1.0.0",
     "compose-function": "^3.0.3",
+    "es6-promisify": "^6.0.0",
     "get-value": "^3.0.1",
     "joi": "^13.1.2",
     "jshint": "^2.9.5",

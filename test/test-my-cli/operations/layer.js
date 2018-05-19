@@ -1,8 +1,8 @@
 'use strict';
 
-const {promisify} = require('util');
 const {basename} = require('path');
-const mkdirp = promisify(require('mkdirp'));
+const {promisify} = require('es6-promisify');
+const mkdirp = require('mkdirp');
 const compose = require('compose-function');
 const {assign} = Object;
 
@@ -42,7 +42,7 @@ exports.create = compose(
     (layers) => ([createLayer(), ...layers]),
     lens()((_, {root}, log) => {
       log(`mkdirp: "${root}"`);
-      mkdirp(root);
+      return promisify(mkdirp)(root);
     })
   ),
   doLast(
