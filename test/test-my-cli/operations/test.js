@@ -33,7 +33,9 @@ exports.create = (name, fn) => {
   return compose(operation(NAME, name), sequence)(
     lens('layers', null)(assertOutLayer(`${NAME}() may only be used outside layer()`)),
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    ({test: test0, ...context0}, {onActivity}, log) => {
+    (context0, {onActivity}, log) => {
+      const {test: test0} = context0;
+
       onActivity();
 
       const innerTestWithOuterContext = (test1) =>

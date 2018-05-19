@@ -12,10 +12,13 @@ const {testIsFile, testIsDir, MkDirOp, CleanOp, SymLinkOp, CopyOp, WriteOp} = re
 
 const NAME = basename(__filename).slice(0, -3);
 
-const mergeUndos = ([{undo, ...layer}, ...rest]) => (undos) => ([
-  assign({undo: sequence(...undos, undo)}, layer),
-  ...rest
-]);
+const mergeUndos = ([layer, ...layers]) => (undos) => {
+  const {undo} = layer;
+  return [
+    assign({}, layer, {undo: sequence(...undos, undo)}),
+    ...layers
+  ];
+};
 
 const hashToSrcDestTuple = (hash) => (_, {root}) =>
   entries(hash).map(([k, v]) => [v, join(root, k)]);
@@ -29,7 +32,8 @@ const srcDestTupleToOp = ([srcPath, destPath], {root}, log) => {
 
     case (typeof srcPath === 'string'):
       if (destPath.startsWith(root)) {
-        return Promise.all([testIsFile(srcPath), testIsDir(srcPath)])
+        return Promise
+          .all([testIsFile(srcPath).catch(() => console.error(srcPath)), testIsDir(srcPath)])
           .then(([isSrcFile, isSrcDir]) =>
             isSrcDir ? new SymLinkOp({srcPath, destPath, log}) :
               isSrcFile ? new CopyOp({srcPath, destPath, log}) :
@@ -97,8 +101,10 @@ exports.create = (hash) => {
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
     compose(lens(null, mergeUndos), sequence)(
       hashToSrcDestTuple(hash),
+      lens('*')((list, _, log) => log(`${list.length} tuples`)),
       mapParallel(srcDestTupleToOp),
       flatten,
+      lens('*')((list, _, log) => log(`${list.length} operations`)),
       mapSerial((op) => op.exec()),
       reverse,
       mapSerial((op) => () => op.undo())

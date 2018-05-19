@@ -2,7 +2,7 @@
 
 const {join, dirname, basename} = require('path');
 const {readFile} = require('fs');
-const {promisify} = require('util');
+const {promisify} = require('es6-promisify');
 const listDir = require('recursive-readdir');
 const Joi = require('joi');
 const {assign} = Object;
@@ -113,12 +113,13 @@ exports.withSourceMappingURL = (next) => {
     return Promise.resolve(next(
       test,
       exec,
-      list.map(({content: raw, ...rest}) => {
+      list.map((file) => {
+        const {content: raw} = file;
         const [content, sourceMappingURL] = raw
           .split(/^\/\*#\s*sourceMappingURL=([^*]+)\*\/$/m)
           .map((v) => v.trim());
 
-        return assign({}, rest, {content, sourceMappingURL});
+        return assign({}, file, {content, sourceMappingURL});
       })
     ));
   };
@@ -150,13 +151,14 @@ exports.withSplitCssAssets = (next) => {
     return Promise.resolve(next(
       test,
       exec,
-      list.map(({content: raw, ...rest}) => {
+      list.map((file) => {
+        const {content: raw} = file;
         const [content, assets] = raw.split(/url\(([^)]+)\)/).reduce(
           ([c, a], v, i) => (i % 2 === 0) ? [`${c}${v}`, a] : [`${c}url($${a.length})`, [...a, v]],
           ['', []]
         );
 
-        return assign({}, rest, {content, assets});
+        return assign({}, file, {content, assets});
       })
     ));
   };

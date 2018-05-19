@@ -13,11 +13,15 @@
     "joi": "^13.1.2",
     "mkdirp": "^0.5.1",
     "ms": "^2.1.1",
+    "object.entries": "^1.0.0",
+    "object.values": "^1.0.0",
     "promise-compose": "^1.1.2",
+    "es6-promisify": "^6.0.0",
     "recursive-readdir": "^2.2.2",
     "repeat-element": "^1.1.2",
     "rimraf": "^2.6.2",
-    "set-value": "^3.0.0"
+    "set-value": "^3.0.0",
+    "string.prototype.padstart": "^3.0.0"
   },
   "scripts": {},
   "author": "",
