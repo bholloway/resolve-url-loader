@@ -12,8 +12,8 @@ var path              = require('path'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
-
 var valueProcessor = require('./lib/value-processor');
+var defaultJoin = require('./lib/default-join');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -36,7 +36,7 @@ function resolveUrlLoader(content, sourceMap) {
   // webpack 4: loader.options no longer defined
   var options = defaults(
     loaderUtils.getOptions(loader),
-    loader.options && loader.options[camelcase(PACKAGE_NAME)],
+    !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
     {
       absolute   : false,
       sourceMap  : loader.sourceMap,
@@ -44,12 +44,23 @@ function resolveUrlLoader(content, sourceMap) {
       fail       : false,
       silent     : false,
       keepQuery  : false,
-      attempts   : 0,
+      attempts   : 1,
+      join       : defaultJoin,
       debug      : false,
       root       : null,
       includeRoot: false
     }
   );
+
+  // attempts are discontinued
+  if ((options.join === defaultJoin) && (options.attempts !== 1)) {
+    return handleException('loader misconfiguration', '"attempts" option now requires "join" function', true);
+  }
+
+  // validate join option
+  if (typeof options.join !== 'function') {
+    return handleException('loader misconfiguration', '"join" option must be a Function', true);
+  }
 
   // validate root directory, where specified
   var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
@@ -101,8 +112,8 @@ function resolveUrlLoader(content, sourceMap) {
     .resolve(require(enginePath)(loader.resourcePath, content, {
       outputSourceMap: !!options.sourceMap,
       transformDeclaration: valueProcessor(loader.context, options),
-      absSourceMap: absSourceMap,
-      sourceMapConsumer: sourceMapConsumer
+      absSourceMap,
+      sourceMapConsumer
     }))
     .then(onSuccess)
     .catch(onFailure);

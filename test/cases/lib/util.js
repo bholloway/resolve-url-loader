@@ -2,7 +2,7 @@
 
 const {join, dirname} = require('path');
 
-const {resolve, lib: {fs: {CleanOp}}} = require('../../test-my-cli/index');
+const {resolve, lib: {fs: {CleanOp}}} = require('test-my-cli');
 
 exports.cleanOutputDir = resolve(
   ({cwd, env: {OUTPUT}}) => new CleanOp({path: join(cwd, dirname(OUTPUT))}).exec()

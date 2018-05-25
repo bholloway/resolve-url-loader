@@ -4,23 +4,19 @@
  */
 'use strict';
 
-var fs          = require('fs'),
-    path        = require('path'),
-    loaderUtils = require('loader-utils');
+var fs   = require('fs'),
+    path = require('path');
 
-var PACKAGE_NAME = require('../package.json').name;
+var PACKAGE_NAME = require('./package.json').name;
 
 /**
  * Factory for find-file with the given <code>options</code> hash.
  * @param {{debug:boolean, root:string, includeRoot:boolean, attempts:number}} options Options hash
  */
-function findFile(options) {
+function fileSearch(options) {
   var resolvedRoot = options.root && path.resolve(options.root) || process.cwd();
-
-  return {
-    absolute: absolute,
-    base    : base
-  };
+  var log = (typeof options.debug === 'function') && options.debug || !!options.debug && console.log;
+  return absolute;
 
   /**
    * Search for the relative file reference from the <code>startPath</code> up to the process
@@ -48,55 +44,48 @@ function findFile(options) {
     var remaining = Math.max(0, options.attempts) || 1E+9;
 
     // ignore explicit URLs and ensure we are at a valid start path
-    var absoluteStart = loaderUtils.isUrlRequest(uri, options.root) && path.resolve(startPath);
-    if (absoluteStart) {
+    var absoluteStart = path.resolve(startPath);
 
-      // find path to the root, stopping at cwd, package.json or bower.json
-      var pathToRoot = [];
-      var isWorking;
-      do {
-        pathToRoot.push(absoluteStart);
-        isWorking = testWithinLimit(absoluteStart) && testNotPackage(absoluteStart);
-        absoluteStart = path.resolve(absoluteStart, '..');
-      } while (isWorking);
+    // find path to the root, stopping at cwd, package.json or bower.json
+    var pathToRoot = [];
+    var isWorking;
+    do {
+      pathToRoot.push(absoluteStart);
+      isWorking = testWithinLimit(absoluteStart) && testNotPackage(absoluteStart);
+      absoluteStart = path.resolve(absoluteStart, '..');
+    } while (isWorking);
 
-      // #62 support stylus nib: optionally force that path to include the root
-      var appendRoot = options.includeRoot && (pathToRoot.indexOf(resolvedRoot) < 0);
-      var queue = pathToRoot.concat(appendRoot ? resolvedRoot : []);
+    // #62 support stylus nib: optionally force that path to include the root
+    var appendRoot = options.includeRoot && (pathToRoot.indexOf(resolvedRoot) < 0);
+    var queue = pathToRoot.concat(appendRoot ? resolvedRoot : []);
 
-      // the queue pattern ensures that we favour paths closest the the start path
-      // process the queue until empty or until we exhaust our attempts
-      while (queue.length && (remaining-- > 0)) {
+    // the queue pattern ensures that we favour paths closest the the start path
+    // process the queue until empty or until we exhaust our attempts
+    while (queue.length && (remaining-- > 0)) {
 
-        // shift the first item off the queue, consider it the base for our relative uri
-        var basePath = queue.shift();
-        var fullPath = path.resolve(basePath, uri);
-        messages.push(basePath);
+      // shift the first item off the queue, consider it the base for our relative uri
+      var basePath = queue.shift();
+      var fullPath = path.resolve(basePath, uri);
+      messages.push(basePath);
 
-        // file exists so convert to a dataURI and end
-        if (fs.existsSync(fullPath)) {
-          flushMessages('FOUND');
-          return basePath;
-        }
-        // enqueue subdirectories that are not packages and are not in the root path
-        else {
-          enqueue(queue, basePath);
-        }
+      // file exists so end
+      if (fs.existsSync(fullPath)) {
+        flushMessages('FOUND');
+        return basePath;
       }
-
-      // interrupted by options.attempts
-      if (queue.length) {
-        flushMessages('NOT FOUND (INTERRUPTED)');
-      }
-      // not found
+      // enqueue subdirectories that are not packages and are not in the root path
       else {
-        flushMessages('NOT FOUND');
-        return null;
+        enqueue(queue, basePath);
       }
     }
-    // ignored
+
+    // interrupted by options.attempts
+    if (queue.length) {
+      flushMessages('NOT FOUND (INTERRUPTED)');
+    }
+    // not found
     else {
-      flushMessages('IGNORED');
+      flushMessages('NOT FOUND');
       return null;
     }
 
@@ -140,12 +129,12 @@ function findFile(options) {
      * @param {string} result Final text to append to the message
      */
     function flushMessages(result) {
-      if (options.debug) {
+      if (log) {
         var text = ['\n' + PACKAGE_NAME + ': ' + uri]
           .concat(messages)
           .concat(result)
           .join('\n  ');
-        console.log(text);
+        log(text);
       }
     }
   }
@@ -162,4 +151,4 @@ function findFile(options) {
   }
 }
 
-module.exports = findFile;
+module.exports = fileSearch;

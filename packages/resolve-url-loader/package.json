@@ -1,0 +1,50 @@
+{
+  "name": "resolve-url-loader",
+  "version": "2.3.0",
+  "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bholloway/resolve-url-loader.git"
+  },
+  "keywords": [
+    "webpack",
+    "loader",
+    "css",
+    "normalize",
+    "rewrite",
+    "resolve",
+    "url",
+    "sass",
+    "relative",
+    "file"
+  ],
+  "author": "bholloway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bholloway/resolve-url-loader/issues"
+  },
+  "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "files": [
+    "index.js",
+    "lib"
+  ],
+  "scripts": {
+    "lint": "jshint --exclude **/node_modules index.js lib"
+  },
+  "dependencies": {
+    "adjust-sourcemap-loader": "^1.1.0",
+    "camelcase": "^4.1.0",
+    "compose-function": "^3.0.3",
+    "convert-source-map": "^1.5.1",
+    "cross-env": "^5.1.5",
+    "loader-utils": "^1.1.0",
+    "lodash.defaults": "^4.0.0",
+    "rework": "^1.0.1",
+    "rework-visit": "^1.0.0",
+    "source-map": "^0.5.7"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.5"
+  }
+}

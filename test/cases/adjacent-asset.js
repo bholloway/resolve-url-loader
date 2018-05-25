@@ -1,10 +1,10 @@
 'use strict';
 
-const {dirname, join} = require('path');
+const {dirname, join, resolve} = require('path');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
 
-const {layer, unlayer, fs, env, cwd, exec} = require('../test-my-cli');
+const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
 const {assertExitCodeZero} = require('./lib/assert');
 
 module.exports = (engineDir) =>
@@ -40,10 +40,10 @@ module.exports = (engineDir) =>
       }),
       exec('npm install'),
       fs({
-        'packageA/node_modules/resolve-url-loader': process.cwd()
+        'packageA/node_modules/resolve-url-loader': dirname(require.resolve('resolve-url-loader'))
       })
     ),
     assertExitCodeZero('npm install'),
-    require('./lib/common'),
+    require('./common'),
     unlayer
   );
