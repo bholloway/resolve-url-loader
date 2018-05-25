@@ -11,7 +11,7 @@ const {isConsistent} = require('./util');
 const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
   require('./hoc');
 
-const {assert} = require('../../test-my-cli/index');
+const {assert} = require('test-my-cli');
 
 const subdir = ({root, cwd, env: {OUTPUT}}) => relative(root, join(cwd, dirname(OUTPUT)));
 
