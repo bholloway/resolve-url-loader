@@ -1,11 +1,12 @@
 'use strict';
 
+const compose = require('compose-function');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
 
 const {test, layer, unlayer, env, exec} = require('test-my-cli');
 const {cleanOutputDir, trim, excludingHash, excludingQuery, excludingQuotes} = require('../lib/util');
-const {assertWebpackOk, assertContent, assertCssSourceMap, assertConsistentAssets, assertAssetPresent} =
+const {assertWebpackOk, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
   require('../lib/assert');
 
 module.exports = test(
@@ -40,8 +41,8 @@ module.exports = test(
               }
               `),
             assertCssSourceMap('env.SOURCES'),
-            assertConsistentAssets(5),
-            assertAssetPresent(true)
+            assertAssetUrls('env.ASSETS'),
+            assertAssetFiles('env.FILES')
           )
         ),
         test(
@@ -66,8 +67,8 @@ module.exports = test(
               }
               `),
             assertCssSourceMap(true),
-            assertConsistentAssets(5, excludingQuotes),
-            assertAssetPresent(false),
+            assertAssetUrls('env.URLS', excludingQuotes),
+            assertAssetFiles(false),
             unlayer
           )
         )
@@ -87,8 +88,8 @@ module.exports = test(
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap('env.SOURCES'),
-            assertConsistentAssets(5),
-            assertAssetPresent(true)
+            assertAssetUrls('env.ASSETS'),
+            assertAssetFiles('env.FILES')
           )
         ),
         test(
@@ -108,8 +109,8 @@ module.exports = test(
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap(true),
-            assertConsistentAssets(5, excludingHash, excludingQuery, excludingQuotes),
-            assertAssetPresent(false),
+            assertAssetUrls('env.URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
+            assertAssetFiles(false),
             unlayer
           )
         ),
@@ -127,8 +128,8 @@ module.exports = test(
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap(false),
-            assertConsistentAssets(5),
-            assertAssetPresent(true),
+            assertAssetUrls('env.ASSETS'),
+            assertAssetFiles('env.FILES'),
             unlayer
           )
         )

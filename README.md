@@ -27,7 +27,7 @@ The target for the next major version
   * resolve-url-loader
   - [x] check some typical directory structures
   - [x] check `keepQuery` option
-  - [ ] check URIs with protocols are not processed
+  - [x] check URIs with protocols are not processed
   - [ ] check `absolute` option
   - [ ] check `debug` option
   - [ ] check `fail` option

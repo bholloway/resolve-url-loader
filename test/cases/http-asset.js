@@ -19,22 +19,21 @@ module.exports = (engineDir) =>
           `,
         'src/feature/index.scss': outdent`
           .someclassname {
-            single-quoted: url('../images/img.jpg');
-            double-quoted: url("../images/img.jpg");
-            unquoted: url(../images/img.jpg);
-            query: url(../images/img.jpg?query);
-            hash: url(../images/img.jpg#hash);
+            single-quoted: url('http://google.com');
+            double-quoted: url("http://google.com");
+            unquoted: url(http://google.com);
+            query: url(http://google.com?query);
+            hash: url(http://google.com#hash);
           }
-          `,
-        'src/images/img.jpg': require.resolve('./assets/blank.jpg')
+          `
       }),
       env({
         PATH: dirname(process.execPath),
         ENTRY: 'src/index.scss',
         SOURCES: '["/src/feature/index.scss", "/src/index.scss"]',
-        URLS: '["./images/img.jpg"]',
-        ASSETS: '["d68e763c825dc0e388929ae1b375ce18.jpg"]',
-        FILES: 'true'
+        URLS: '["\\"http://google.com\\"","http://google.com","http://google.com?query","http://google.com#hash"]',
+        ASSETS: '["\\"http://google.com\\"","http://google.com","http://google.com?query","http://google.com#hash"]',
+        FILES: 'false'
       }),
       exec('npm install'),
       fs({
