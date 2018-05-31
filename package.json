@@ -7,11 +7,7 @@
   ],
   "scripts": {
     "lint": "jshint --exclude **/node_modules test",
-    "test": "tape test | tap-diff",
-    "test:webpack1": "cross-env ONLY='webpack1*' npm run test",
-    "test:webpack2": "cross-env ONLY='webpack2*' npm run test",
-    "test:webpack3": "cross-env ONLY='webpack3*' npm run test",
-    "test:webpack4": "cross-env ONLY='webpack4*' npm run test"
+    "test": "tape test | tap-diff"
   },
   "devDependencies": {
     "blue-tape": "^1.0.0",

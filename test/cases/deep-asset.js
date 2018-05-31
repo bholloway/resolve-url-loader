@@ -1,6 +1,6 @@
 'use strict';
 
-const {dirname, join, resolve} = require('path');
+const {dirname, join} = require('path');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
 
@@ -31,7 +31,10 @@ module.exports = (engineDir) =>
       env({
         PATH: dirname(process.execPath),
         ENTRY: 'src/index.scss',
-        SOURCES: '["/src/feature/index.scss", "/src/index.scss"]'
+        SOURCES: '["/src/feature/index.scss", "/src/index.scss"]',
+        URLS: '["./feature/images/img.jpg"]',
+        ASSETS: '["d68e763c825dc0e388929ae1b375ce18.jpg"]',
+        FILES: 'true'
       }),
       exec('npm install'),
       fs({

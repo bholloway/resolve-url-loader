@@ -7,9 +7,8 @@ const sequence = require('promise-compose');
 const get = require('get-value');
 const ms = require('ms');
 
-const {isConsistent} = require('./util');
-const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
-  require('./hoc');
+const {unique} = require('./util');
+const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./hoc');
 
 const {assert} = require('test-my-cli');
 
@@ -60,49 +59,67 @@ exports.assertContent = (expected) =>
     }
   });
 
-exports.assertCssSourceMap = (isExpectedOrField) => sequence(
-  assertCss(({ok, notOk}, _, list) => {
-    if (list.length) {
-      const [{sourceMappingURL}] = list;
-      (isExpectedOrField ? ok : notOk)(
-        sourceMappingURL,
-        `should ${isExpectedOrField ? '' : 'NOT'} yield sourceMappingURL comment`
+exports.assertCssSourceMap = (isExpectedOrField) => {
+  const isExpected = !!isExpectedOrField;
+  const field = (typeof isExpectedOrField === 'string') && isExpectedOrField;
+
+  return sequence(
+    assertCss(({ok, notOk}, _, list) => {
+      if (list.length) {
+        const [{sourceMappingURL}] = list;
+        (isExpected ? ok : notOk)(
+          sourceMappingURL,
+          `should ${isExpectedOrField ? '' : 'NOT'} yield sourceMappingURL comment`
+        );
+      }
+    }),
+
+    assertSourceMap(({ok, notOk, deepLooseEqual}, exec, list) => {
+      (isExpected ? ok : notOk)(
+        list.length,
+        `should ${isExpected ? '' : 'NOT'} yield css source-map file`
       );
-    }
-  }),
-  assertSourceMap(({ok, notOk, deepLooseEqual}, exec, list) => {
-    (isExpectedOrField ? ok : notOk)(
-      list.length,
-      `should ${isExpectedOrField ? '' : 'NOT'} yield css source-map file`
-    );
-    if ((typeof isExpectedOrField === 'string') && list.length) {
-      const jsonText = get(exec, isExpectedOrField);
+      if (field && list.length) {
+        const jsonText = get(exec, field);
+        if (jsonText) {
+          const [{sources}] = list;
+          const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
+          const expected = JSON.parse(jsonText);
+          deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
+        }
+      }
+    })
+  );
+};
+
+exports.assertAssetUrls = (field, caveats = (x => x)) => {
+  const transform = compose(unique, caveats);
+
+  return assertCss(({equal, ok, deepLooseEqual}, exec, list) => {
+    if (field && list.length) {
+      const jsonText = get(exec, field);
       if (jsonText) {
-        const [{sources}] = list;
-        const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
-        const expected = JSON.parse(get(exec, isExpectedOrField));
-        deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
+        const [{assets}] = list;
+        const expected = JSON.parse(jsonText);
+        deepLooseEqual(transform(assets), transform(expected), 'should yield expected url statements');
       }
     }
-  })
-);
-
-exports.assertConsistentAssets = (n, ...caveats) =>
-  assertCss(({equal, ok}, _, list) => {
-    if (list.length) {
-      const [{assets}] = list;
-      equal(assets.length, n, `should yield ${n} assets`);
-      ok(compose(isConsistent, ...caveats)(assets), 'should be only one actual asset');
-    }
   });
+};
 
-exports.assertAssetPresent = (presentOrNot) =>
-  assertCss(({ok, notOk}, _, list) => {
+exports.assertAssetFiles = (isExpectedOrField, caveats = (x => x)) => {
+  const transform = compose(unique, caveats);
+  const isExpected = !!isExpectedOrField;
+  const field = (typeof isExpectedOrField === 'string') && isExpectedOrField;
+
+  return assertCss(({ok, notOk}, exec, list) => {
+    const isActuallyExpected = field ? (get(exec, field) === 'true') : isExpected;
     if (list.length) {
       const [{base, assets}] = list;
-      (presentOrNot ? ok : notOk)(
-        existsSync(join(base, assets[0])),
-        `should ${presentOrNot ? '' : 'NOT'} output the asset`
+      (isActuallyExpected ? ok : notOk)(
+        transform(assets).every((asset) => existsSync(join(base, asset))),
+        `should ${isExpected ? '' : 'NOT'} output all assets`
       );
     }
   });
+};
