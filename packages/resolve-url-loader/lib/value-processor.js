@@ -39,7 +39,6 @@ function valueProcessor(filePath, options) {
      * @returns {string} Every 3 or 5 items is an encoded url everything else is as is
      */
     function eachSplitOrGroup(token, i) {
-      var BACKSLASH_REGEX = /\\/g;
 
       // we can get groups as undefined under certain match circumstances
       var initialised = token || '';
@@ -56,13 +55,15 @@ function valueProcessor(filePath, options) {
 
         // use the absolute path (or default to initialised)
         if (options.absolute) {
-          return !!absolute && absolute.replace(BACKSLASH_REGEX, '/').concat(query) || initialised;
+          // #6 - backslashes are not legal in URI
+          return !!absolute && absolute.replace(/\\/g, '/').concat(query) || initialised;
         }
         // module relative path (or default to initialised)
         else {
-          var relative     = !!absolute && path.relative(filePath, absolute),
+          // #6 - backslashes are not legal in URI
+          var relative     = !!absolute && path.relative(filePath, absolute).replace(/\\/g, '/').concat(query),
               rootRelative = !!relative && loaderUtils.urlToRequest(relative, '~');
-          return rootRelative ? rootRelative.replace(BACKSLASH_REGEX, '/').concat(query) : initialised;
+          return rootRelative ? rootRelative : initialised;
         }
       }
       // everything else, including parentheses and quotation (where present) and media statements
