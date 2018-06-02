@@ -39,6 +39,10 @@ module.exports = test(
                 query: url($3);
                 hash: url($4);
               }
+              
+              .anotherclassname {
+                display: block;
+              }
               `),
             assertCssSourceMap('env.SOURCES'),
             assertAssetUrls('env.ASSETS'),
@@ -66,6 +70,10 @@ module.exports = test(
                 query: url($3);
                 hash: url($4);
               }
+              
+              .anotherclassname {
+                display: block;
+              }
               `),
             assertCssSourceMap(true),
             assertAssetUrls('env.URLS', excludingQuotes),
@@ -86,8 +94,8 @@ module.exports = test(
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
             assertContent(trim`
-              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);
-              query:url($3);hash:url($4)}
+              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
+              .anotherclassname{display:block}
               `),
             assertCssSourceMap('env.SOURCES'),
             assertAssetUrls('env.ASSETS'),
@@ -108,8 +116,8 @@ module.exports = test(
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
             assertContent(trim`
-              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);
-              query:url($3);hash:url($4)}
+              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
+              .anotherclassname{display:block}
               `),
             assertCssSourceMap(true),
             assertAssetUrls('env.URLS', excludingQuotes),
@@ -128,8 +136,8 @@ module.exports = test(
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
             assertContent(trim`
-              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);
-              query:url($3);hash:url($4)}
+              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
+              .anotherclassname{display:block}
               `),
             assertCssSourceMap(false),
             assertAssetUrls('env.ASSETS'),
