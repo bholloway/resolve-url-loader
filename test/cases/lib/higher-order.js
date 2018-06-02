@@ -9,7 +9,7 @@ const Joi = require('joi');
 const {assign} = Object;
 
 exports.withEnvRebase = (list) => ({root}) =>
-  list.map((v) => compose(normalize, join)(root, v));
+  list.map((v) => compose(v => v.replace(/\\/g, '/'), normalize, join)(root, v));
 
 /**
  * A factory for a higher-order-function that enhances an assert() function with a list of files
