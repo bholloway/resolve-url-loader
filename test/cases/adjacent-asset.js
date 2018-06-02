@@ -17,6 +17,9 @@ module.exports = (engineDir) =>
         'packageA/webpack.config.js': join(engineDir, './webpack.config.js'),
         'packageA/src/index.scss': outdent`
           @import "feature/index.scss";
+          .anotherclassname {
+            display: block;
+          }
           `,
         'packageA/src/feature/index.scss': outdent`
           .someclassname {
