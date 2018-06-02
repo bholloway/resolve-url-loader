@@ -1,24 +1,23 @@
 'use strict';
 
-const compose = require('compose-function');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
 
 const {test, layer, unlayer, env, exec} = require('test-my-cli');
-const {cleanOutputDir, trim, excludingHash, excludingQuery, excludingQuotes} = require('../lib/util');
+const {cleanOutputDir, trim, excludingQuotes} = require('../lib/util');
 const {assertWebpackOk, logOutput, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
   require('../lib/assert');
 
 module.exports = test(
-  'keepQuery=true',
+  'absolute=true',
   sequence(
     layer(
       env({
         DEVTOOL: '"source-map"',
-        LOADER_QUERY: '?sourceMap&keepQuery',
-        LOADER_OPTIONS: JSON.stringify({sourceMap: true, keepQuery: true}),
-        CSS_QUERY: '?sourceMap',
-        CSS_OPTIONS: JSON.stringify({sourceMap: true}),
+        LOADER_QUERY: '?sourceMap&absolute',
+        LOADER_OPTIONS: JSON.stringify({sourceMap: true, absolute: true}),
+        CSS_QUERY: '?sourceMap&root=',
+        CSS_OPTIONS: JSON.stringify({sourceMap: true, root: ''}),
         OUTPUT: 'build/[name].js'
       })
     ),
@@ -42,8 +41,8 @@ module.exports = test(
               }
               `),
             assertCssSourceMap('env.SOURCES'),
-            assertAssetUrls('env.ASSETS', excludingHash),
-            assertAssetFiles('env.FILES', excludingHash)
+            assertAssetUrls('env.ASSETS'),
+            assertAssetFiles('env.FILES')
           )
         ),
         test(
@@ -51,8 +50,8 @@ module.exports = test(
           sequence(
             layer(
               env({
-                CSS_QUERY: '?sourceMap&url=false',
-                CSS_OPTIONS: JSON.stringify({sourceMap: true, url: false}),
+                CSS_QUERY: '?sourceMap&root=&url=false',
+                CSS_OPTIONS: JSON.stringify({sourceMap: true, root: '', url: false}),
               })
             ),
             cleanOutputDir,
@@ -69,7 +68,7 @@ module.exports = test(
               }
               `),
             assertCssSourceMap(true),
-            assertAssetUrls('env.URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
+            assertAssetUrls('env.ABSOLUTE', excludingQuotes),
             assertAssetFiles(false),
             unlayer
           )
@@ -91,8 +90,8 @@ module.exports = test(
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap('env.SOURCES'),
-            assertAssetUrls('env.ASSETS', excludingHash),
-            assertAssetFiles('env.FILES', excludingHash)
+            assertAssetUrls('env.ASSETS'),
+            assertAssetFiles('env.FILES')
           )
         ),
         test(
@@ -100,8 +99,8 @@ module.exports = test(
           sequence(
             layer(
               env({
-                CSS_QUERY: '?sourceMap&url=false',
-                CSS_OPTIONS: JSON.stringify({sourceMap: true, url: false}),
+                CSS_QUERY: '?sourceMap&root=&url=false',
+                CSS_OPTIONS: JSON.stringify({sourceMap: true, root: '', url: false}),
               })
             ),
             cleanOutputDir,
@@ -113,7 +112,7 @@ module.exports = test(
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap(true),
-            assertAssetUrls('env.URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
+            assertAssetUrls('env.ABSOLUTE', excludingQuotes),
             assertAssetFiles(false),
             unlayer
           )
@@ -133,8 +132,8 @@ module.exports = test(
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap(false),
-            assertAssetUrls('env.ASSETS', excludingHash),
-            assertAssetFiles('env.FILES', excludingHash),
+            assertAssetUrls('env.ASSETS'),
+            assertAssetFiles('env.FILES'),
             unlayer
           )
         )

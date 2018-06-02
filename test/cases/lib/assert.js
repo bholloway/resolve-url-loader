@@ -8,11 +8,13 @@ const get = require('get-value');
 const ms = require('ms');
 
 const {unique} = require('./util');
-const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./hoc');
+const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
+  require('./higher-order');
 
 const {assert} = require('test-my-cli');
 
-const subdir = ({root, cwd, env: {OUTPUT}}) => relative(root, join(cwd, dirname(OUTPUT)));
+const subdir = ({root, cwd, env: {OUTPUT}}) =>
+  relative(root, join(cwd, dirname(OUTPUT)));
 
 const assertCss = compose(
   assert,
@@ -34,10 +36,20 @@ exports.assertExitCodeZero = (message) =>
     (code === 0) ? pass(`${message} (${ms(Math.round(time), {long: true})})`) : fail(stderr)
   );
 
+exports.logOutput = (mode) =>
+  assert((_, {stdout, stderr}) => {
+    if ((mode === true) || /stdout/.test(mode)) {
+      console.log(stdout);
+    }
+    if ((mode === true) || /stderr/.test(mode)) {
+      console.log(stderr);
+    }
+  });
+
 exports.assertWebpackOk = sequence(
   exports.assertExitCodeZero('webpack'),
-  assert(({pass, fail}, {stdout, stderr}) => {
-    console.log(stderr);
+
+  assert(({pass, fail}, {stdout}) => {
     const lines = stdout.split('\n');
     const start = lines.findIndex(line => /\bERROR\b/.test(line));
     if (start < 0) {
@@ -74,18 +86,25 @@ exports.assertCssSourceMap = (isExpectedOrField) => {
       }
     }),
 
-    assertSourceMap(({ok, notOk, deepLooseEqual}, exec, list) => {
+    assertSourceMap(({ok, notOk}, exec, list) =>
       (isExpected ? ok : notOk)(
         list.length,
         `should ${isExpected ? '' : 'NOT'} yield css source-map file`
-      );
-      if (field && list.length) {
-        const jsonText = get(exec, field);
-        if (jsonText) {
-          const [{sources}] = list;
-          const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
-          const expected = JSON.parse(jsonText);
-          deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
+      )
+    ),
+
+    assertSourceMap(({deepLooseEqual, pass}, exec, list) => {
+      if (list.length) {
+        const [{sources}] = list;
+        if (field) {
+          const jsonText = get(exec, field);
+          if (jsonText) {
+            const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
+            const expected = JSON.parse(jsonText);
+            deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
+          }
+        } else {
+          pass('should NOT expect source-map sources');
         }
       }
     })
@@ -95,13 +114,17 @@ exports.assertCssSourceMap = (isExpectedOrField) => {
 exports.assertAssetUrls = (field, caveats = (x => x)) => {
   const transform = compose(unique, caveats);
 
-  return assertCss(({equal, ok, deepLooseEqual}, exec, list) => {
-    if (field && list.length) {
-      const jsonText = get(exec, field);
-      if (jsonText) {
-        const [{assets}] = list;
-        const expected = JSON.parse(jsonText);
-        deepLooseEqual(transform(assets), transform(expected), 'should yield expected url statements');
+  return assertCss(({deepLooseEqual, pass}, exec, list) => {
+    if (list.length) {
+      const [{assets}] = list;
+      if (field) {
+        const jsonText = get(exec, field);
+        if (jsonText) {
+          const expected = JSON.parse(jsonText);
+          deepLooseEqual(transform(assets), transform(expected), 'should yield expected url statements');
+        }
+      } else {
+        pass('should NOT expect any url statements');
       }
     }
   });
@@ -112,14 +135,17 @@ exports.assertAssetFiles = (isExpectedOrField, caveats = (x => x)) => {
   const isExpected = !!isExpectedOrField;
   const field = (typeof isExpectedOrField === 'string') && isExpectedOrField;
 
-  return assertCss(({ok, notOk}, exec, list) => {
+  return assertCss(({ok, pass, fail}, exec, list) => {
     const isActuallyExpected = field ? (get(exec, field) === 'true') : isExpected;
     if (list.length) {
       const [{base, assets}] = list;
-      (isActuallyExpected ? ok : notOk)(
-        transform(assets).every((asset) => existsSync(join(base, asset))),
-        `should ${isExpected ? '' : 'NOT'} output all assets`
-      );
+      if (!isActuallyExpected) {
+        pass('should NOT expect any assets');
+      } else if (assets.length) {
+        ok(transform(assets).every((asset) => existsSync(join(base, asset))), 'should output all assets');
+      } else {
+        fail('should output all assets');
+      }
     }
   });
 };

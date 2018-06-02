@@ -30,10 +30,11 @@ module.exports = (engineDir) =>
       env({
         PATH: dirname(process.execPath),
         ENTRY: 'src/index.scss',
-        SOURCES: '["/src/feature/index.scss", "/src/index.scss"]',
-        URLS: '["\\"http://google.com\\"","http://google.com","http://google.com?query","http://google.com#hash"]',
-        ASSETS: '["\\"http://google.com\\"","http://google.com","http://google.com?query","http://google.com#hash"]',
-        FILES: 'false'
+        SOURCES: ['/src/feature/index.scss', '/src/index.scss'],
+        URLS: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],
+        ABSOLUTE: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],
+        ASSETS: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],
+        FILES: false
       }),
       exec('npm install'),
       fs({
