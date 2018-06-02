@@ -6,6 +6,7 @@ const outdent = require('outdent');
 
 const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
 const {assertExitCodeZero} = require('./lib/assert');
+const {withEnvRebase} = require('./lib/higher-order');
 
 module.exports = (engineDir) =>
   sequence(
@@ -31,10 +32,11 @@ module.exports = (engineDir) =>
       env({
         PATH: dirname(process.execPath),
         ENTRY: 'src/index.scss',
-        SOURCES: '["/src/feature/index.scss", "/src/index.scss"]',
-        URLS: '["./feature/images/img.jpg"]',
-        ASSETS: '["d68e763c825dc0e388929ae1b375ce18.jpg"]',
-        FILES: 'true'
+        SOURCES: ['/src/feature/index.scss', '/src/index.scss'],
+        URLS: ['./feature/images/img.jpg'],
+        ABSOLUTE: withEnvRebase(['src/feature/images/img.jpg']),
+        ASSETS: ['d68e763c825dc0e388929ae1b375ce18.jpg'],
+        FILES: true
       }),
       exec('npm install'),
       fs({

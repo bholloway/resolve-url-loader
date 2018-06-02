@@ -27,24 +27,28 @@ The target for the next major version
 - [ ] Automated tests
   - [x] basic tests
   - [x] tests run on both Mac and Windows
+  - [ ] improve test composition and filtering
 
   * resolve-url-loader
   - [x] check some typical directory structures
   - [x] check `keepQuery` option
   - [x] check URIs with protocols are not processed
-  - [ ] check `absolute` option
+  - [x] check `absolute` option
   - [ ] check `debug` option
   - [ ] check `fail` option
   - [ ] check `silent` option
 
+- Consider merging feature branch
+
   * resolve-url-loader-filesearch
-  - [ ] check file search works and is limited by `attempts` option
-  - [ ] OPTIONAL test `root` and `includeRoot` options when using file search
+  - [ ] check `debug` option
+  - [ ] check search works and is limited by `attempts` option
+  - [ ] OPTIONAL check `root` option
+  - [ ] OPTIONAL check `includeRoot` option
 
 - [ ] Rewrite README.md
   - [ ] resolve-url-loader
+    * The `absolute` option requires `css-loader` with option `root: ''`.
   - [ ] resolve-url-loader-filesearch
 
 - [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
-
-

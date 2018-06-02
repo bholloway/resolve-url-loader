@@ -1,11 +1,15 @@
 'use strict';
 
-const {join, dirname} = require('path');
+const {normalize, join, dirname} = require('path');
+const compose = require('compose-function');
 
 const {resolve, lib: {fs: {CleanOp}}} = require('test-my-cli');
 
 exports.cleanOutputDir = resolve(
-  ({cwd, env: {OUTPUT}}) => new CleanOp({path: join(cwd, dirname(OUTPUT))}).exec()
+  ({cwd, env: {OUTPUT}}) => {
+    const path = compose(dirname, normalize, join)(cwd, OUTPUT);
+    return new CleanOp({path}).exec();
+  }
 );
 
 exports.trim = (strings) =>

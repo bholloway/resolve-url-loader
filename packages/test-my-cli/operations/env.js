@@ -2,7 +2,7 @@
 
 const {basename} = require('path');
 const compose = require('compose-function');
-const {assign} = Object;
+const {assign, keys} = Object;
 
 const joi = require('../lib/joi');
 const {lens, sequence} = require('../lib/promise');
@@ -17,7 +17,7 @@ const system = process.env;
 const createMerge = (append) => {
   const defaultDelimiter = (process.platform === 'win32') ? ';' : ':';
 
-  const delimiters = (Array.isArray(append) ? append : Object.keys(append))
+  const delimiters = (Array.isArray(append) ? append : keys(append))
     .reduce((r, k) => assign(r, {
       [k]: (typeof append[k] === 'string') ? append[k] : defaultDelimiter
     }), {});
@@ -42,6 +42,15 @@ const createMerge = (append) => {
   };
 };
 
+const createEvaluate = (root) => (hash) =>
+  keys(hash)
+    .reduce((r, k) => {
+      const maybeFn = hash[k];
+      const value = (typeof maybeFn === 'function') ? maybeFn({root}) : maybeFn;
+      const text = (typeof value === 'string') ? value : JSON.stringify(value);
+      return assign(r, {[k]: text});
+    }, {});
+
 exports.schema = {
   debug: joi.debug().optional(),
   append: joi.alternatives().try(
@@ -63,7 +72,9 @@ exports.create = (hash) => {
   return compose(operation(NAME), lens('layers', 'layers'), sequence)(
     assertInLayer(`${NAME}() may only be used inside layer()`),
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    (layers, {append}, log) => {
+    (layers, {root, append}, log) => {
+      const merge = createMerge(append);
+      const evaluate = createEvaluate(root);
 
       // we need to refer to the last env() in this layer, or failing that, previous layers
       const i = layers.findIndex(({env}) => !!env);
@@ -76,10 +87,9 @@ exports.create = (hash) => {
         .then((previousHash) => {
           // merge the given hash with the previous one
           // we can calculate now since ENV is invariant
-          const merge = createMerge(append);
-          const result = [...Object.keys(hash), ...Object.keys(previousHash)]
+          const result = [...keys(hash), ...keys(previousHash)]
             .filter((v, i, a) => (a.indexOf(v) === i))
-            .reduce((r, k) => assign(r, {[k]: merge(k, hash, previousHash)}), {});
+            .reduce((r, k) => assign(r, {[k]: merge(k, evaluate(hash), previousHash)}), {});
 
           // remember that layers are backwards with most recent first
           log(

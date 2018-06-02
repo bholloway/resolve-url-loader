@@ -1,12 +1,11 @@
 'use strict';
 
-const compose = require('compose-function');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
 
 const {test, layer, unlayer, env, exec} = require('test-my-cli');
-const {cleanOutputDir, trim, excludingHash, excludingQuery, excludingQuotes} = require('../lib/util');
-const {assertWebpackOk, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
+const {cleanOutputDir, trim, excludingQuotes} = require('../lib/util');
+const {assertWebpackOk, logOutput, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
   require('../lib/assert');
 
 module.exports = test(
@@ -31,6 +30,7 @@ module.exports = test(
             cleanOutputDir,
             exec('npm run webpack'),
             assertWebpackOk,
+            logOutput(process.env.VERBOSE),
             assertContent(outdent`
               .someclassname {
                 single-quoted: url($0);
@@ -57,6 +57,7 @@ module.exports = test(
             cleanOutputDir,
             exec('npm run webpack'),
             assertWebpackOk,
+            logOutput(process.env.VERBOSE),
             assertContent(outdent`
               .someclassname {
                 single-quoted: url($0);
@@ -83,6 +84,7 @@ module.exports = test(
             cleanOutputDir,
             exec(`npm run webpack-p`),
             assertWebpackOk,
+            logOutput(process.env.VERBOSE),
             assertContent(trim`
               .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);
               query:url($3);hash:url($4)}
@@ -104,12 +106,13 @@ module.exports = test(
             cleanOutputDir,
             exec(`npm run webpack-p`),
             assertWebpackOk,
+            logOutput(process.env.VERBOSE),
             assertContent(trim`
               .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);
               query:url($3);hash:url($4)}
               `),
             assertCssSourceMap(true),
-            assertAssetUrls('env.URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
+            assertAssetUrls('env.URLS', excludingQuotes),
             assertAssetFiles(false),
             unlayer
           )
@@ -123,6 +126,7 @@ module.exports = test(
             cleanOutputDir,
             exec(`npm run webpack-p`),
             assertWebpackOk,
+            logOutput(process.env.VERBOSE),
             assertContent(trim`
               .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);
               query:url($3);hash:url($4)}

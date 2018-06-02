@@ -1,11 +1,15 @@
 'use strict';
 
-const {join, dirname, basename} = require('path');
+const {join, normalize, dirname, basename} = require('path');
 const {readFile} = require('fs');
 const {promisify} = require('es6-promisify');
 const listDir = require('recursive-readdir');
+const compose = require('compose-function');
 const Joi = require('joi');
 const {assign} = Object;
+
+exports.withEnvRebase = (list) => ({root}) =>
+  list.map((v) => compose(normalize, join)(root, v));
 
 /**
  * A factory for a higher-order-function that enhances an assert() function with a list of files
