@@ -5,8 +5,9 @@ const {assign} = Object;
 
 const layerCommon = {
   undo: joi.func().required(),
+  cwd: joi.func().optional(),
   env: joi.func().optional(),
-  cwd: joi.func().optional()
+  meta: joi.func().optional()
 };
 
 exports.layer = joi.object(assign({

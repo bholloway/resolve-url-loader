@@ -3,8 +3,9 @@
 const {dirname, join} = require('path');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
+const {layer, unlayer, fs, env, meta, cwd, exec} = require('test-my-cli');
 
-const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
+const {trim} = require('./lib/util');
 const {assertExitCodeZero} = require('./lib/assert');
 
 module.exports = (engineDir) =>
@@ -32,8 +33,27 @@ module.exports = (engineDir) =>
       }),
       env({
         PATH: dirname(process.execPath),
-        ENTRY: 'src/index.scss',
+        ENTRY: 'src/index.scss'
+      }),
+      meta({
         SOURCES: ['/src/feature/index.scss', '/src/index.scss'],
+        CONTENT_DEV: outdent`
+          .someclassname {
+            single-quoted: url($0);
+            double-quoted: url($1);
+            unquoted: url($2);
+            query: url($3);
+            hash: url($4);
+          }
+          
+          .anotherclassname {
+            display: block;
+          }
+          `,
+        CONTENT_PROD: trim`
+          .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
+          .anotherclassname{display:block}
+          `,
         URLS: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],
         ABSOLUTE: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],
         ASSETS: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],

@@ -68,8 +68,7 @@ use in your test.
 ```javascript
 const {basename, dirname, join} = require('path');
 const sequence = require('promise-compose');
-const {init, test, layer, unlayer, fs, env, cwd, exec, assert} =
-  require('test-my-cli');
+const {init, test, layer, unlayer, fs, env, cwd, exec, assert} = require('test-my-cli');
 
 const NAME = basename(__filename);
 
