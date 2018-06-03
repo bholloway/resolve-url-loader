@@ -33,7 +33,7 @@ exports.withFiles = ({ext, subdir}) => (next) => {
 
     const {root} = exec;
     const directory = subdir ?
-      join(root, (typeof subdir === 'function') ? subdir(exec) : subdir) :
+      compose(normalize, join)(root, (typeof subdir === 'function') ? subdir(exec) : subdir) :
       root;
 
     return listDir(directory)

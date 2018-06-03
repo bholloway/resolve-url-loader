@@ -8,6 +8,7 @@ const templateFn = require('adjust-sourcemap-loader')
 module.exports = {
   entry: path.join(__dirname, process.env.ENTRY),
   output: {
+    // NB: deep output path (weirdly) forces loader.context to be relative
     path: path.join(__dirname, process.env.OUTPUT),
     filename: '[name].js',
     devtoolModuleFilenameTemplate: templateFn,

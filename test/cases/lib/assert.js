@@ -35,10 +35,10 @@ exports.assertExitCodeZero = (message) =>
 
 exports.logOutput = (mode) =>
   assert((_, {stdout, stderr}) => {
-    if ((mode === true) || /stdout/.test(mode)) {
+    if ((mode === 'true') || /stdout/.test(mode)) {
       console.log(stdout);
     }
-    if ((mode === true) || /stderr/.test(mode)) {
+    if ((mode === 'true') || /stderr/.test(mode)) {
       console.log(stderr);
     }
   });
