@@ -40,7 +40,7 @@ module.exports = (engineDir) =>
       }),
       env({
         PATH: dirname(process.execPath),
-        ENTRY: 'src/index.scss'
+        ENTRY: join('src', 'index.scss')
       }),
       meta({
         SOURCES: ['/src/feature/index.scss', '/src/index.scss'],

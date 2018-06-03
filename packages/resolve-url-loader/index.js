@@ -30,6 +30,11 @@ function resolveUrlLoader(content, sourceMap) {
   // details of the file being processed
   var loader = this;
 
+  // a relative loader.context is a problem
+  if (/^\./.test(loader.context)) {
+    return handleException('webpack misconfiguration', 'loader.context is relative, expected absolute', true);
+  }
+
   // webpack 1: prefer loader query, else options object
   // webpack 2: prefer loader options
   // webpack 3: deprecate loader.options object
