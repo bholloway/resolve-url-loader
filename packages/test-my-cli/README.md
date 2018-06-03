@@ -60,24 +60,28 @@ For this we use `blue-tape` and `promise-compose`.
 npm install --dev blue-tape promise-compose outdent
 ```
 
-### Configuration
+### Init
 
-You will need to configure some otherwise pure functions (operations) that you will
-use in your test.
+You will need `init()` at the start of your test. This creates an object
+that is passed through a promise chain.
+
+We recommend using `promise-compose` to compose a sequence where
+`init()` is the first element.
 
 ```javascript
-const {basename, dirname, join} = require('path');
+const {platform} = require('process');
 const sequence = require('promise-compose');
-const {init, test, layer, unlayer, fs, env, cwd, exec, assert} = require('test-my-cli');
+const {init} = require('test-my-cli');
 
-const NAME = basename(__filename);
+const appendPath = (...paths) =>
+  paths.join((platform === 'win32') ? ';' : ':');
 
-test(NAME, sequence(
+test('myTest', sequence(
   init({
-    directory: ['/my/absolute/path", 'tmp', NAME],
+    directory: ['/my/absolute/path", 'tmp', `myTest-${Date.now()}`],
     ttl: '1s',
     debug: false,
-    env: {append: ['PATH']}
+    env: {merge: {PATH: appendPath}}
   }),
   ...
 ));
@@ -133,14 +137,12 @@ test(NAME, sequence(
   
   To customise logging set `debug` to your own function.
 
-* **...fn**
+* **(...each function)**
 
-  Each function has a specific role and be configured through
-  specific options.
-  
-  For example when we use `env()` we want any `PATH` we specify to be
-  appendeded to both the system path and previous `env()` declared. It is
-  _very_ likely you will also want this in your use case.
+  Each of the remaining functions can be configured in `init()`.
+
+  For example, it is recommended that `env()` is configured to append
+  `PATH` to previously defined values using `appendPath`.
 
   Refer to the implementation of each operation for further detail.
 

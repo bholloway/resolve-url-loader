@@ -25,12 +25,13 @@ The target for the next major version
 - [x] Move the file search to a separate package as "opt in"
 
 - [ ] Automated tests
+
+  * test-my-cli
   - [x] basic tests
   - [x] tests run on both Mac and Windows
-  - [ ] better ENV `append` (rename to `merge`)
-    - [ ] regex key matching
-    - [ ] custom merge fn
-    - [ ] previous `append` as a pre-made merge fn?
+  - [x] better ENV `append` (rename to `merge`)
+    - [x] regex key matching
+    - [x] custom merge fn
 
   * resolve-url-loader
   - [x] check some typical directory structures
@@ -40,8 +41,6 @@ The target for the next major version
   - [ ] check `debug` option
   - [ ] check `fail` option
   - [ ] check `silent` option
-
-- Consider merging feature branch
 
   * resolve-url-loader-filesearch
   - [ ] check `debug` option
