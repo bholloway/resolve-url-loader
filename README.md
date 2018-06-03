@@ -27,7 +27,10 @@ The target for the next major version
 - [ ] Automated tests
   - [x] basic tests
   - [x] tests run on both Mac and Windows
-  - [ ] improve test composition and filtering
+  - [ ] better ENV `append` (rename to `merge`)
+    - [ ] regex key matching
+    - [ ] custom merge fn
+    - [ ] previous `append` as a pre-made merge fn?
 
   * resolve-url-loader
   - [x] check some typical directory structures

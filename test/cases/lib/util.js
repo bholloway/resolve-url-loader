@@ -2,7 +2,6 @@
 
 const {normalize, join, dirname} = require('path');
 const compose = require('compose-function');
-
 const {resolve, lib: {fs: {CleanOp}}} = require('test-my-cli');
 
 exports.cleanOutputDir = resolve(

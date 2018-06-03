@@ -4,14 +4,11 @@ const {existsSync} = require('fs');
 const {dirname, join, relative} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
-const get = require('get-value');
 const ms = require('ms');
+const {assert} = require('test-my-cli');
 
 const {unique} = require('./util');
-const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
-  require('./higher-order');
-
-const {assert} = require('test-my-cli');
+const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./higher-order');
 
 const subdir = ({root, cwd, env: {OUTPUT}}) =>
   relative(root, join(cwd, dirname(OUTPUT)));
@@ -62,67 +59,57 @@ exports.assertWebpackOk = sequence(
   })
 );
 
-exports.assertContent = (expected) =>
-  assertCss(({equal}, _, list) => {
+exports.assertContent = (field) =>
+  assertCss(({equal}, {meta}, list) => {
     equal(list.length, 1, 'should yield a single css file');
     if (list.length) {
       const [{content}] = list;
+      const expected = meta[field];
       equal(content, expected, 'should yield expected css content');
     }
   });
 
-exports.assertCssSourceMap = (isExpectedOrField) => {
-  const isExpected = !!isExpectedOrField;
-  const field = (typeof isExpectedOrField === 'string') && isExpectedOrField;
+exports.assertCssSourceMap = (fieldOrFalse) => sequence(
+  assertCss(({ok, notOk}, _, list) => {
+    if (list.length) {
+      const [{sourceMappingURL}] = list;
+      (fieldOrFalse ? ok : notOk)(
+        sourceMappingURL,
+        `should ${fieldOrFalse ? '' : 'NOT'} yield sourceMappingURL comment`
+      );
+    }
+  }),
 
-  return sequence(
-    assertCss(({ok, notOk}, _, list) => {
-      if (list.length) {
-        const [{sourceMappingURL}] = list;
-        (isExpected ? ok : notOk)(
-          sourceMappingURL,
-          `should ${isExpectedOrField ? '' : 'NOT'} yield sourceMappingURL comment`
-        );
+  assertSourceMap(({ok, notOk}, _, list) =>
+    (fieldOrFalse ? ok : notOk)(
+      list.length,
+      `should ${fieldOrFalse ? '' : 'NOT'} yield css source-map file`
+    )
+  ),
+
+  assertSourceMap(({deepLooseEqual, pass}, {meta}, list) => {
+    if (list.length) {
+      const [{sources}] = list;
+      if (fieldOrFalse) {
+        const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
+        const expected = meta[fieldOrFalse];
+        deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
+      } else {
+        pass('should NOT expect source-map sources');
       }
-    }),
+    }
+  })
+);
 
-    assertSourceMap(({ok, notOk}, exec, list) =>
-      (isExpected ? ok : notOk)(
-        list.length,
-        `should ${isExpected ? '' : 'NOT'} yield css source-map file`
-      )
-    ),
-
-    assertSourceMap(({deepLooseEqual, pass}, exec, list) => {
-      if (list.length) {
-        const [{sources}] = list;
-        if (field) {
-          const jsonText = get(exec, field);
-          if (jsonText) {
-            const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
-            const expected = JSON.parse(jsonText);
-            deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
-          }
-        } else {
-          pass('should NOT expect source-map sources');
-        }
-      }
-    })
-  );
-};
-
-exports.assertAssetUrls = (field, caveats = (x => x)) => {
+exports.assertAssetUrls = (fieldOrFalse, caveats = (x => x)) => {
   const transform = compose(unique, caveats);
 
-  return assertCss(({deepLooseEqual, pass}, exec, list) => {
+  return assertCss(({deepLooseEqual, pass}, {meta}, list) => {
     if (list.length) {
       const [{assets}] = list;
-      if (field) {
-        const jsonText = get(exec, field);
-        if (jsonText) {
-          const expected = JSON.parse(jsonText);
-          deepLooseEqual(transform(assets), transform(expected), 'should yield expected url statements');
-        }
+      if (fieldOrFalse) {
+        const expected = meta[fieldOrFalse];
+        deepLooseEqual(transform(assets), transform(expected), 'should yield expected url statements');
       } else {
         pass('should NOT expect any url statements');
       }
@@ -130,13 +117,11 @@ exports.assertAssetUrls = (field, caveats = (x => x)) => {
   });
 };
 
-exports.assertAssetFiles = (isExpectedOrField, caveats = (x => x)) => {
+exports.assertAssetFiles = (fieldOrFalse, caveats = (x => x)) => {
   const transform = compose(unique, caveats);
-  const isExpected = !!isExpectedOrField;
-  const field = (typeof isExpectedOrField === 'string') && isExpectedOrField;
 
-  return assertCss(({ok, pass, fail}, exec, list) => {
-    const isActuallyExpected = field ? (get(exec, field) === 'true') : isExpected;
+  return assertCss(({ok, pass, fail}, {meta}, list) => {
+    const isActuallyExpected = !!fieldOrFalse && !!meta[fieldOrFalse];
     if (list.length) {
       const [{base, assets}] = list;
       if (!isActuallyExpected) {

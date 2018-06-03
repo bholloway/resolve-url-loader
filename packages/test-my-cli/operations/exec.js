@@ -1,9 +1,9 @@
 'use strict';
 
 const {basename} = require('path');
-
 const spawn = require('cross-spawn');
 const compose = require('compose-function');
+const {assign} = Object;
 
 const joi = require('../lib/joi');
 const {operation, assertInOperation} = require('../lib/operation');
@@ -33,27 +33,32 @@ exports.create = (command) => {
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
     (layers, _, log) => {
 
-      // locate cwd (required) and env (optional)
+      // locate cwd (required) and env (optional) and meta (optional)
       const {cwd: cwdGetter} = layers.find(({cwd}) => !!cwd) || {};
       const {env: envGetter} = layers.find(({env}) => !!env) || {};
+      const {meta: metaGetter} = layers.find(({meta}) => !!meta) || {};
       if (!cwdGetter) {
         throw new Error('There must be a preceding cwd() element before exec()');
       }
 
-      // resolve cwd and env
+      // resolve
       const cwd = cwdGetter();
       const env = envGetter ? envGetter() : {};
+      const meta = metaGetter ? metaGetter() : {};
       log(
         `layer ${layers.length}`,
-        `cmd ${JSON.stringify(command)}`,
-        `cwd ${JSON.stringify(cwd)}`,
-        `env ${JSON.stringify(env)}`
+        `cmd  ${JSON.stringify(command)}`,
+        `cwd  ${JSON.stringify(cwd)}`,
+        `env  ${JSON.stringify(env)}`,
+        `meta ${JSON.stringify(meta)}`
       );
 
-      return {cwd, env};
+      return {cwd, env, meta};
     },
-    withTime(({cwd, env}, {root, onActivity}) =>
+    withTime(({cwd, env, meta}, {root, onActivity}) =>
       new Promise((resolve) => {
+        const common = {root, cwd, env, meta};
+
         const interval = setInterval(onActivity, 50);
         const child = spawn(cmd, args, {cwd, env, shell: true, stdio: 'pipe'});
 
@@ -65,12 +70,12 @@ exports.create = (command) => {
 
         child.once('close', (code) => {
           clearInterval(interval);
-          resolve({root, cwd, env, code, stdout, stderr});
+          resolve(assign({}, common, {code, stdout, stderr}));
         });
 
         child.once('error', (error) => {
           clearInterval(interval);
-          resolve({root, cwd, env, code: 1, stdout, stderr: error.toString()});
+          resolve(assign({}, common, {code: 1, stdout, stderr: error.toString()}));
         });
       })
     ),

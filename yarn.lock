@@ -459,7 +459,7 @@ get-value@^2.0.3, get-value@^2.0.6:
   version "2.0.6"
   resolved "https://registry.npmjs.org/get-value/-/get-value-2.0.6.tgz#dc15ca1c672387ca76bd37ac0a395ba2042a2c28"
 
-get-value@^3.0.0, get-value@^3.0.1:
+get-value@^3.0.0:
   version "3.0.1"
   resolved "https://registry.npmjs.org/get-value/-/get-value-3.0.1.tgz#5efd2a157f1d6a516d7524e124ac52d0a39ef5a8"
   dependencies:

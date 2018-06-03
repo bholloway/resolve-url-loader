@@ -2,10 +2,9 @@
 
 const compose = require('compose-function');
 const sequence = require('promise-compose');
-const outdent = require('outdent');
-
 const {test, layer, unlayer, env, exec} = require('test-my-cli');
-const {cleanOutputDir, trim, excludingHash, excludingQuery, excludingQuotes} = require('../lib/util');
+
+const {cleanOutputDir, excludingHash, excludingQuery, excludingQuotes} = require('../lib/util');
 const {assertWebpackOk, logOutput, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
   require('../lib/assert');
 
@@ -32,22 +31,10 @@ module.exports = test(
             exec('npm run webpack'),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
-            assertContent(outdent`
-              .someclassname {
-                single-quoted: url($0);
-                double-quoted: url($1);
-                unquoted: url($2);
-                query: url($3);
-                hash: url($4);
-              }
-              
-              .anotherclassname {
-                display: block;
-              }
-              `),
-            assertCssSourceMap('env.SOURCES'),
-            assertAssetUrls('env.ASSETS', excludingHash),
-            assertAssetFiles('env.FILES', excludingHash)
+            assertContent('CONTENT_DEV'),
+            assertCssSourceMap('SOURCES'),
+            assertAssetUrls('ASSETS', excludingHash),
+            assertAssetFiles('FILES', excludingHash)
           )
         ),
         test(
@@ -63,21 +50,9 @@ module.exports = test(
             exec('npm run webpack'),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
-            assertContent(outdent`
-              .someclassname {
-                single-quoted: url($0);
-                double-quoted: url($1);
-                unquoted: url($2);
-                query: url($3);
-                hash: url($4);
-              }
-              
-              .anotherclassname {
-                display: block;
-              }
-              `),
-            assertCssSourceMap(true),
-            assertAssetUrls('env.URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
+            assertContent('CONTENT_DEV'),
+            assertCssSourceMap('SOURCES'),
+            assertAssetUrls('URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
             assertAssetFiles(false),
             unlayer
           )
@@ -94,13 +69,10 @@ module.exports = test(
             exec(`npm run webpack-p`),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
-            assertContent(trim`
-              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
-              .anotherclassname{display:block}
-              `),
-            assertCssSourceMap('env.SOURCES'),
-            assertAssetUrls('env.ASSETS', excludingHash),
-            assertAssetFiles('env.FILES', excludingHash)
+            assertContent('CONTENT_PROD'),
+            assertCssSourceMap('SOURCES'),
+            assertAssetUrls('ASSETS', excludingHash),
+            assertAssetFiles('FILES', excludingHash)
           )
         ),
         test(
@@ -116,12 +88,9 @@ module.exports = test(
             exec(`npm run webpack-p`),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
-            assertContent(trim`
-              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
-              .anotherclassname{display:block}
-              `),
-            assertCssSourceMap(true),
-            assertAssetUrls('env.URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
+            assertContent('CONTENT_PROD'),
+            assertCssSourceMap('SOURCES'),
+            assertAssetUrls('URLS', compose(excludingHash, excludingQuery, excludingQuotes)),
             assertAssetFiles(false),
             unlayer
           )
@@ -136,13 +105,10 @@ module.exports = test(
             exec(`npm run webpack-p`),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
-            assertContent(trim`
-              .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
-              .anotherclassname{display:block}
-              `),
+            assertContent('CONTENT_PROD'),
             assertCssSourceMap(false),
-            assertAssetUrls('env.ASSETS', excludingHash),
-            assertAssetFiles('env.FILES', excludingHash),
+            assertAssetUrls('ASSETS', excludingHash),
+            assertAssetFiles('FILES', excludingHash),
             unlayer
           )
         )

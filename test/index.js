@@ -5,7 +5,6 @@ const {readdirSync} = require('fs');
 const sequence = require('promise-compose');
 const micromatch = require('micromatch');
 const tape = require('blue-tape');
-
 const {init} = require('test-my-cli');
 
 const testIncluded = process.env.ONLY ?
