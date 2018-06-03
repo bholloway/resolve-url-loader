@@ -8,8 +8,8 @@ const templateFn = require('adjust-sourcemap-loader')
 module.exports = {
   entry: path.join(__dirname, process.env.ENTRY),
   output: {
-    path: path.join(__dirname, path.dirname(process.env.OUTPUT)),
-    filename: path.basename(process.env.OUTPUT),
+    path: path.join(__dirname, process.env.OUTPUT),
+    filename: '[name].js',
     devtoolModuleFilenameTemplate: templateFn,
     devtoolFallbackModuleFilenameTemplate: templateFn
   },
@@ -18,8 +18,8 @@ module.exports = {
     loaders: [{
       test: /\.scss$/,
       loader: ExtractTextPlugin.extract([
-        `css-loader${process.env.CSS_QUERY}`,
-        `resolve-url-loader${process.env.LOADER_QUERY}`,
+        `css-loader?${process.env.CSS_QUERY}`,
+        `resolve-url-loader?${process.env.LOADER_QUERY}`,
         'sass-loader?sourceMap&sourceMapContents=false'
       ], {
         id: 'css'

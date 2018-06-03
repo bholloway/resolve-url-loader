@@ -2,10 +2,12 @@
 
 const {join} = require('path');
 const {readdirSync} = require('fs');
+const {platform} = require('process');
 const sequence = require('promise-compose');
 const micromatch = require('micromatch');
 const tape = require('blue-tape');
 const {init} = require('test-my-cli');
+const {assign} = Object;
 
 const testIncluded = process.env.ONLY ?
   (...v) => {
@@ -31,11 +33,20 @@ readdirSync(join(__dirname, 'engines'))
       `${engineName}--${caseName}`,
       sequence(
         init({
-          directory: [process.cwd(), 'tmp', `${engineName}--${caseName}--${epoch}`],
+          directory: [process.cwd(), 'tmp', `${epoch}--${engineName}--${caseName}`],
           ttl: (process.env.KEEP !== 'true') && '1s',
           debug: (process.env.DEBUG === 'true'),
-          env: {append: ['PATH']},
-          unlayer: {inhibit: (process.env.KEEP === 'true')}
+          env: {
+            merge: {
+              'PATH': (...elements) => elements.join((platform === 'win32') ? ';' : ':'),
+              '*QUERY': (...elements) => elements.join('&'),
+              '*OPTIONS': (prev, next) => assign(JSON.parse(prev), next),
+              'OUTPUT': (...elements) => elements.join('--')
+            }
+          },
+          unlayer: {
+            inhibit: (process.env.KEEP === 'true')
+          }
         }),
         require(`./cases/${caseName}`)(join(__dirname, 'engines', engineName))
       )

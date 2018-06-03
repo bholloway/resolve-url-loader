@@ -12,20 +12,11 @@ const {meta} = require('../lib/assert/meta');
 
 const NAME = basename(__filename).slice(0, -3);
 
-const createEvaluate = ({root}) => (hash) =>
-  keys(hash)
-    .reduce((r, k) => {
-      const maybeFn = hash[k];
-      const value = (typeof maybeFn === 'function') ? maybeFn({root}) : maybeFn;
-      return assign(r, {[k]: value});
-    }, {});
+const createInvoke = (context) => (candidate) =>
+  (typeof candidate === 'function') ? candidate(context) : candidate;
 
 exports.schema = {
-  debug: joi.debug().optional(),
-  append: joi.alternatives().try(
-    joi.array().items(joi.string().required()),
-    joi.object().pattern(/^[\w-]+$/, joi.alternatives().try(joi.bool(), joi.string()).required())
-  ).optional()
+  debug: joi.debug().optional()
 };
 
 /**
@@ -41,8 +32,10 @@ exports.create = (hash) => {
   return compose(operation(NAME), lens('layers', 'layers'), sequence)(
     assertInLayer(`${NAME}() may only be used inside layer()`),
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    (layers, {root, append}, log) => {
-      const evaluate = createEvaluate({root});
+    (layers, {root}, log) => {
+      const invoke = createInvoke({root});
+      const currentHash = keys(hash)
+        .reduce((r, k) => assign(r, {[k]: invoke(hash[k])}), {});
 
       // we need to refer to the last meta() in this layer, or failing that, previous layers
       // doing this by index is less terse but we want that information for debug
@@ -54,8 +47,8 @@ exports.create = (hash) => {
       return Promise.resolve()
         .then(previousGetter)
         .then((previousHash) => {
-          // merge the given hash with the previous one, evaluate any functions
-          const result = assign(evaluate(hash), previousHash);
+          // merge the given hash with the previous one
+          const result = assign(currentHash, previousHash);
 
           // remember that layers are backwards with most recent first
           log(

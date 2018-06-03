@@ -1,7 +1,7 @@
 'use strict';
 
 const {existsSync} = require('fs');
-const {dirname, join, relative} = require('path');
+const {join, relative} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
 const ms = require('ms');
@@ -11,7 +11,7 @@ const {unique} = require('./util');
 const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./higher-order');
 
 const subdir = ({root, cwd, env: {OUTPUT}}) =>
-  relative(root, join(cwd, dirname(OUTPUT)));
+  relative(root, join(cwd, OUTPUT));
 
 const assertCss = compose(
   assert,

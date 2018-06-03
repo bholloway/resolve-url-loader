@@ -2,6 +2,7 @@
 
 const {basename} = require('path');
 const compose = require('compose-function');
+const {isMatch} = require('micromatch');
 const {assign, keys} = Object;
 
 const joi = require('../lib/joi');
@@ -12,27 +13,23 @@ const {env} = require('../lib/assert/env');
 
 const NAME = basename(__filename).slice(0, -3);
 
-const createMerge = ({append, base}) => {
-  const defaultDelimiter = (process.platform === 'win32') ? ';' : ':';
+const createMerge = ({merge, transform, base}) => {
+  return (key, previous, current) => {
+    const mergeKey = keys(merge).find((pattern) => isMatch(key, pattern));
+    const mergeFn = (typeof merge[mergeKey] === 'function') ? merge[mergeKey] : ((_, x) => x);
 
-  const delimiters = (Array.isArray(append) ? append : keys(append))
-    .reduce((r, k) => assign(r, {
-      [k]: (typeof append[k] === 'string') ? append[k] : defaultDelimiter
-    }), {});
-
-  return (k, current, previous) => {
     switch (true) {
-      case (k in current) && (delimiters[k]) && (k in previous):
-        return `${current[k]}${delimiters[k]}${previous[k]}`;
+      case (key in previous) && (key in current):
+        return mergeFn(previous[key], current[key]);
 
-      case (k in current) && (delimiters[k]) && (k in base):
-        return `${current[k]}${delimiters[k]}${base[k]}`;
+      case (key in base) && (key in current):
+        return mergeFn(base[key], current[key]);
 
-      case (k in current):
-        return current[k];
+      case (key in current):
+        return current[key];
 
-      case (k in previous):
-        return previous[k];
+      case (key in previous):
+        return previous[key];
 
       default:
         throw new Error('Reached an illegal state');
@@ -40,21 +37,15 @@ const createMerge = ({append, base}) => {
   };
 };
 
-const createEvaluate = ({root}) => (hash) =>
-  keys(hash)
-    .reduce((r, k) => {
-      const maybeFn = hash[k];
-      const value = (typeof maybeFn === 'function') ? maybeFn({root}) : maybeFn;
-      const text = (typeof value === 'string') ? value : JSON.stringify(value);
-      return assign(r, {[k]: text});
-    }, {});
+const createInvoke = (context) => (candidate) =>
+  (typeof candidate === 'function') ? candidate(context) : candidate;
+
+const stringify = (candidate) =>
+  (typeof candidate === 'string') ? candidate : JSON.stringify(candidate);
 
 exports.schema = {
   debug: joi.debug().optional(),
-  append: joi.alternatives().try(
-    joi.array().items(joi.string().required()),
-    joi.object().pattern(/^[\w-]+$/, joi.alternatives().try(joi.bool(), joi.string()).required())
-  ).optional()
+  merge: joi.object().pattern(/^[\w-*]+$/, joi.func().required()).unknown(false).optional()
 };
 
 /**
@@ -70,9 +61,11 @@ exports.create = (hash) => {
   return compose(operation(NAME), lens('layers', 'layers'), sequence)(
     assertInLayer(`${NAME}() may only be used inside layer()`),
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    (layers, {root, append}, log) => {
-      const merge = createMerge({append, base: process.env});
-      const evaluate = createEvaluate({root});
+    (layers, {root, merge}, log) => {
+      const mergeValue = compose(stringify, createMerge({merge, base: process.env}));
+      const invoke = createInvoke({root});
+      const currentHash = keys(hash)
+        .reduce((r, k) => assign(r, {[k]: invoke(hash[k])}), {});
 
       // we need to refer to the last env() in this layer, or failing that, previous layers
       // doing this by index is less terse but we want that information for debug
@@ -84,16 +77,16 @@ exports.create = (hash) => {
       return Promise.resolve()
         .then(previousGetter)
         .then((previousHash) => {
-          // merge the given hash with the previous one, evaluate any functions
-          const result = [...keys(hash), ...keys(previousHash)]
+          // merge the given hash with the previous one
+          const result = [...keys(previousHash), ...keys(currentHash)]
             .filter((v, i, a) => (a.indexOf(v) === i))
-            .reduce((r, k) => assign(r, {[k]: merge(k, evaluate(hash), previousHash)}), {});
+            .reduce((r, k) => assign(r, {[k]: mergeValue(k, previousHash, currentHash)}), {});
 
           // remember that layers are backwards with most recent first
           log(
             [`layer ${layers.length}`, previousLayerN && `layer ${previousLayerN}`]
               .filter(Boolean).join(' -> '),
-            JSON.stringify(hash),
+            JSON.stringify(currentHash),
             JSON.stringify(result)
           );
 

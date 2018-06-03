@@ -3,7 +3,7 @@
 const sequence = require('promise-compose');
 const {test, layer, unlayer, env, exec} = require('test-my-cli');
 
-const {cleanOutputDir, excludingQuotes} = require('../lib/util');
+const {excludingQuotes} = require('../lib/util');
 const {assertWebpackOk, logOutput, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
   require('../lib/assert');
 
@@ -13,27 +13,37 @@ module.exports = test(
     layer(
       env({
         DEVTOOL: '"source-map"',
-        LOADER_QUERY: '?sourceMap',
-        LOADER_OPTIONS: JSON.stringify({sourceMap: true}),
-        CSS_QUERY: '?sourceMap',
-        CSS_OPTIONS: JSON.stringify({sourceMap: true}),
-        OUTPUT: 'build/[name].js'
+        LOADER_QUERY: 'sourceMap',
+        LOADER_OPTIONS: {sourceMap: true},
+        CSS_QUERY: 'sourceMap',
+        CSS_OPTIONS: {sourceMap: true},
+        OUTPUT: 'build--default'
       })
     ),
     test(
       'development',
       sequence(
+        layer(
+          env({
+            OUTPUT: 'development'
+          })
+        ),
         test(
           'normal-build',
           sequence(
-            cleanOutputDir,
+            layer(
+              env({
+                OUTPUT: 'normal-build'
+              })
+            ),
             exec('npm run webpack'),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
             assertContent('CONTENT_DEV'),
             assertCssSourceMap('SOURCES'),
             assertAssetUrls('ASSETS'),
-            assertAssetFiles('FILES')
+            assertAssetFiles('FILES'),
+            unlayer
           )
         ),
         test(
@@ -41,11 +51,11 @@ module.exports = test(
           sequence(
             layer(
               env({
-                CSS_QUERY: '?sourceMap&url=false',
-                CSS_OPTIONS: JSON.stringify({sourceMap: true, url: false}),
+                CSS_QUERY: 'url=false',
+                CSS_OPTIONS: {url: false},
+                OUTPUT: 'without-url'
               })
             ),
-            cleanOutputDir,
             exec('npm run webpack'),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
@@ -55,23 +65,34 @@ module.exports = test(
             assertAssetFiles(false),
             unlayer
           )
-        )
+        ),
+        unlayer
       )
     ),
     test(
       'production',
       sequence(
+        layer(
+          env({
+            OUTPUT: 'production'
+          })
+        ),
         test(
           'normal-build',
           sequence(
-            cleanOutputDir,
+            layer(
+              env({
+                OUTPUT: 'normal-build'
+              })
+            ),
             exec(`npm run webpack-p`),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
             assertContent('CONTENT_PROD'),
             assertCssSourceMap('SOURCES'),
             assertAssetUrls('ASSETS'),
-            assertAssetFiles('FILES')
+            assertAssetFiles('FILES'),
+            unlayer
           )
         ),
         test(
@@ -79,11 +100,11 @@ module.exports = test(
           sequence(
             layer(
               env({
-                CSS_QUERY: '?sourceMap&url=false',
-                CSS_OPTIONS: JSON.stringify({sourceMap: true, url: false}),
+                CSS_QUERY: 'url=false',
+                CSS_OPTIONS: {url: false},
+                OUTPUT: 'without-url'
               })
             ),
-            cleanOutputDir,
             exec(`npm run webpack-p`),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
@@ -98,9 +119,11 @@ module.exports = test(
           'without-devtool',
           sequence(
             layer(
-              env({DEVTOOL: 'false'})
+              env({
+                DEVTOOL: false,
+                OUTPUT: 'without-devtool'
+              })
             ),
-            cleanOutputDir,
             exec(`npm run webpack-p`),
             assertWebpackOk,
             logOutput(process.env.VERBOSE),
@@ -110,7 +133,8 @@ module.exports = test(
             assertAssetFiles('FILES'),
             unlayer
           )
-        )
+        ),
+        unlayer
       )
     ),
     unlayer
