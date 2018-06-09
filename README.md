@@ -38,14 +38,16 @@ The target for the next major version
   - [x] check `keepQuery` option
   - [x] check URIs with protocols are not processed
   - [x] check `absolute` option
-  - [ ] check `debug` option
+  - [ ] check `simpleJoin` option as `verboseJoin` function
   - [ ] check `fail` option
   - [ ] check `silent` option
+  - [ ] check `root` option
+  - [ ] check defunct options lead to warnings
 
   * resolve-url-loader-filesearch
-  - [ ] check `debug` option
+  - [ ] check `searchJoin`
+  - [ ] check `verboseSearchJoin`
   - [ ] check search works and is limited by `attempts` option
-  - [ ] OPTIONAL check `root` option
   - [ ] OPTIONAL check `includeRoot` option
 
 - [ ] Rewrite README.md

@@ -1,6 +1,6 @@
 'use strict';
 
-const {existsSync} = require('fs');
+const {existsSync, writeFileSync, mkdirSync} = require('fs');
 const {join, relative} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
@@ -33,16 +33,6 @@ exports.assertExitCodeZero = (message) =>
     (code === 0) ? pass(`${message} (${ms(Math.round(time), {long: true})})`) : fail(stderr)
   );
 
-exports.logOutput = (mode) =>
-  assert((_, {stdout, stderr}) => {
-    if ((mode === 'true') || /stdout/.test(mode)) {
-      console.log(stdout);
-    }
-    if ((mode === 'true') || /stderr/.test(mode)) {
-      console.log(stderr);
-    }
-  });
-
 exports.assertWebpackOk = sequence(
   exports.assertExitCodeZero('webpack'),
 
@@ -58,6 +48,16 @@ exports.assertWebpackOk = sequence(
     }
   })
 );
+
+exports.saveOutput = assert((_, exec) => {
+  const {root, stdout, stderr} = exec;
+  const directory = join(root, subdir(exec));
+  if (!existsSync(directory)) {
+    mkdirSync(directory);
+  }
+  writeFileSync(join(directory, 'stdout.txt'), stdout);
+  writeFileSync(join(directory, 'stderr.txt'), stderr);
+});
 
 exports.assertContent = (field) =>
   assertCss(({equal}, {meta}, list) => {

@@ -1,5 +1,5 @@
 {
-  "name": "webpack1-sassloader6-sass4",
+  "name": "webpack2-sassloader6-sass4",
   "version": "1.0.0",
   "dependencies": {
     "adjust-sourcemap-loader": "^1.2.0",
@@ -11,7 +11,7 @@
     "webpack": "^2.7.0"
   },
   "scripts": {
-    "webpack": "webpack",
+    "webpack-d": "webpack --debug --output-pathinfo",
     "webpack-p": "webpack -p"
   }
 }

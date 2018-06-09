@@ -16,7 +16,8 @@ const testIncluded = process.env.ONLY ?
   } :
   () => true;
 
-const epoch = Math.round(Date.now() / 1000);
+const epoch = Math.round(Date.now() / 1000).toString().padStart(10, 0);
+console.log(`timestamp: ${epoch}`);
 
 readdirSync(join(__dirname, 'engines'))
   .reduce(
@@ -33,7 +34,7 @@ readdirSync(join(__dirname, 'engines'))
       `${engineName}--${caseName}`,
       sequence(
         init({
-          directory: [process.cwd(), 'tmp', `${epoch}--${engineName}--${caseName}`],
+          directory: [process.cwd(), join('tmp', epoch), join(engineName, caseName)],
           ttl: (process.env.KEEP !== 'true') && '1s',
           debug: (process.env.DEBUG === 'true'),
           env: {
