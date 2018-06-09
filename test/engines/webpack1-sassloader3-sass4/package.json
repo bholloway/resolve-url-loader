@@ -11,7 +11,7 @@
     "webpack": "^1.12.12"
   },
   "scripts": {
-    "webpack": "webpack",
+    "webpack-d": "webpack -d",
     "webpack-p": "webpack -p"
   }
 }

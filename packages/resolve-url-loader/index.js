@@ -12,8 +12,9 @@ var path              = require('path'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
+
 var valueProcessor = require('./lib/value-processor');
-var defaultJoin = require('./lib/default-join');
+var joinFn = require('./lib/join-fn');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -32,7 +33,11 @@ function resolveUrlLoader(content, sourceMap) {
 
   // a relative loader.context is a problem
   if (/^\./.test(loader.context)) {
-    return handleException('webpack misconfiguration', 'loader.context is relative, expected absolute', true);
+    return handleException(
+      'webpack misconfiguration',
+      'loader.context is relative, expected absolute',
+      true
+    );
   }
 
   // webpack 1: prefer loader query, else options object
@@ -50,28 +55,46 @@ function resolveUrlLoader(content, sourceMap) {
       silent     : false,
       keepQuery  : false,
       attempts   : 1,
-      join       : defaultJoin,
-      debug      : false,
+      join       : joinFn.simpleJoin,
       root       : null,
       includeRoot: false
     }
   );
 
-  // attempts are discontinued
-  if ((options.join === defaultJoin) && (options.attempts !== 1)) {
-    return handleException('loader misconfiguration', '"attempts" option now requires "join" function', true);
+  // defunct options
+  if ('debug' in options) {
+    handleException(
+      'loader misconfiguration',
+      '"debug" option is defunct (use "join" option set to loader.verboseJoin)',
+      false
+    );
+  }
+  if ('attempts' in options) {
+    handleException(
+      'loader misconfiguration',
+      '"attempts" option is defunct (consider "join" option if search is needed)',
+      false
+    );
   }
 
   // validate join option
   if (typeof options.join !== 'function') {
-    return handleException('loader misconfiguration', '"join" option must be a Function', true);
+    return handleException(
+      'loader misconfiguration',
+      '"join" option must be a Function',
+      true
+    );
   }
 
   // validate root directory, where specified
   var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
       isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot) && fs.statSync(resolvedRoot).isDirectory();
   if (options.root && !isValidRoot) {
-    return handleException('loader misconfiguration', '"root" option does not resolve to a valid directory', true);
+    return handleException(
+      'loader misconfiguration',
+      '"root" option does not resolve to a valid directory',
+      true
+    );
   }
 
   // loader result is cacheable
@@ -87,7 +110,11 @@ function resolveUrlLoader(content, sourceMap) {
         sourceMap = JSON.parse(sourceMap);
       }
       catch (exception) {
-        return handleException('source-map error', 'cannot parse source-map string (from less-loader?)');
+        return handleException(
+          'source-map error',
+          'cannot parse source-map string (from less-loader?)',
+          false
+        );
       }
     }
 
@@ -97,7 +124,11 @@ function resolveUrlLoader(content, sourceMap) {
       absSourceMap = adjustSourceMap(loader, {format: 'absolute'}, sourceMap);
     }
     catch (exception) {
-      return handleException('source-map error', exception.message);
+      return handleException(
+        'source-map error',
+        exception.message,
+        false
+      );
     }
 
     // prepare the adjusted sass source-map for later look-ups
@@ -105,17 +136,21 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // choose a CSS engine
-  var enginePath = /^\w+/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
+  var enginePath    = /^\w+/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
   var isValidEngine = fs.existsSync(enginePath);
   if (!isValidEngine) {
-    return handleException('loader misconfiguration', '"engine" option is not valid', true);
+    return handleException(
+      'loader misconfiguration',
+      '"engine" option is not valid',
+      true
+    );
   }
 
   // process async
   var callback = loader.async();
   Promise
     .resolve(require(enginePath)(loader.resourcePath, content, {
-      outputSourceMap: !!options.sourceMap,
+      outputSourceMap     : !!options.sourceMap,
       transformDeclaration: valueProcessor(loader.context, options),
       absSourceMap,
       sourceMapConsumer
@@ -136,7 +171,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   function onFailure(error) {
-    callback(null, handleException('Error in CSS', error));
+    callback(null, handleException('Error in CSS', error, false));
   }
 
   /**
@@ -150,16 +185,16 @@ function resolveUrlLoader(content, sourceMap) {
     var rest = (typeof exception === 'string') ? [exception] :
                (exception instanceof Error) ? [exception.message, exception.stack.split('\n')[1].trim()] :
                [];
-    var message = '  resolve-url-loader cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  ');
+    var instance = new Error('resolve-url-loader cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  '));
     if (isCritical || options.fail) {
-      loader.emitError(message);
+      loader.emitError(instance);
     }
     else if (!options.silent) {
-      loader.emitWarning(message);
+      loader.emitWarning(instance);
     }
     return content;
   }
 
 }
 
-module.exports = resolveUrlLoader;
+module.exports = Object.assign(resolveUrlLoader, joinFn);

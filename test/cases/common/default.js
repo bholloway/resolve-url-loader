@@ -4,7 +4,7 @@ const sequence = require('promise-compose');
 const {test, layer, unlayer, env, exec} = require('test-my-cli');
 
 const {excludingQuotes} = require('../lib/util');
-const {assertWebpackOk, logOutput, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
+const {assertWebpackOk, saveOutput, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles} =
   require('../lib/assert');
 
 module.exports = test(
@@ -36,9 +36,9 @@ module.exports = test(
                 OUTPUT: 'normal-build'
               })
             ),
-            exec('npm run webpack'),
+            exec('npm run webpack-d'),
+            saveOutput,
             assertWebpackOk,
-            logOutput(process.env.VERBOSE),
             assertContent('CONTENT_DEV'),
             assertCssSourceMap('SOURCES'),
             assertAssetUrls('ASSETS'),
@@ -56,9 +56,9 @@ module.exports = test(
                 OUTPUT: 'without-url'
               })
             ),
-            exec('npm run webpack'),
+            exec('npm run webpack-d'),
+            saveOutput,
             assertWebpackOk,
-            logOutput(process.env.VERBOSE),
             assertContent('CONTENT_DEV'),
             assertCssSourceMap('SOURCES'),
             assertAssetUrls('URLS', excludingQuotes),
@@ -86,8 +86,8 @@ module.exports = test(
               })
             ),
             exec(`npm run webpack-p`),
+            saveOutput,
             assertWebpackOk,
-            logOutput(process.env.VERBOSE),
             assertContent('CONTENT_PROD'),
             assertCssSourceMap('SOURCES'),
             assertAssetUrls('ASSETS'),
@@ -106,8 +106,8 @@ module.exports = test(
               })
             ),
             exec(`npm run webpack-p`),
+            saveOutput,
             assertWebpackOk,
-            logOutput(process.env.VERBOSE),
             assertContent('CONTENT_PROD'),
             assertCssSourceMap('SOURCES'),
             assertAssetUrls('URLS', excludingQuotes),
@@ -125,8 +125,8 @@ module.exports = test(
               })
             ),
             exec(`npm run webpack-p`),
+            saveOutput,
             assertWebpackOk,
-            logOutput(process.env.VERBOSE),
             assertContent('CONTENT_PROD'),
             assertCssSourceMap(false),
             assertAssetUrls('ASSETS'),
