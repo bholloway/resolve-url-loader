@@ -22,6 +22,22 @@ exports.schema = {
 };
 
 /**
+ * Remove a directory and any empty parent directories in a deep path.
+ *
+ * @param {string} baseDir A base directory which will be retained
+ * @param {string} subDir A subdirectory, possibly deep, which should be removed
+ */
+const safeRemoveDir = (baseDir, subDir) =>
+  subDir
+    .split(/[\\\/]/)
+    .map((_, i, arr) => join(baseDir, ...arr.slice(0, arr.length - i)))
+    .forEach((directory, i) => {
+      if ((i === 0) || !readdirSync(directory).length) {
+        rimrafSync(directory, {glob: false});
+      }
+    });
+
+/**
  * Initialise configuration for all operations.
  *
  * @param {object} options Options hash
@@ -65,27 +81,28 @@ exports.create = (options) => {
   log(`init: "${absNamedDir}"`);
 
   // we will keep different multitons for each temp directory
-  // when a multiton becomes empty we can remove the temp directory
   if (absTempDir in multitons) {
     indented(`reuse multiton for path "${absTempDir}"`);
   } else {
     indented(`create multiton for path "${absTempDir}"`);
     multitons[absTempDir] = createMultiton({
       onEmpty: () => {
+        // when a multiton becomes empty we can remove whatever portions of it are empty
+        // this protects us where several tests share part of the temp path
         indented(`empty: removing ${absTempDir}`);
-        rimrafSync(absTempDir, {glob: false});
+        safeRemoveDir(baseDir, tempDir);
       }
     });
   }
 
-  // when an instance disposes we can remove the temp directory
+  // when an instance disposes we can remove the named directory
   const {register, deregister} = multitons[absTempDir];
   const instance = {
     ttl,
     dispose() {
       indented(`dispose: removing ${absNamedDir}`);
       deregister(instance);
-      rimrafSync(absNamedDir, {glob: false});
+      safeRemoveDir(absTempDir, namedDir);
     }
   };
   const onActivity = register(instance);
