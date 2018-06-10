@@ -10,8 +10,15 @@ var path    = require('path'),
 
 var PACKAGE_NAME = require('../package.json').name;
 
-exports.simpleJoin = compose(path.normalize, path.join);
+/**
+ * Normalise and join with exactly 2 arguments.
+ */
+exports.simpleJoin = (base, uri) =>
+  compose(path.normalize, path.join)(base, uri);
 
+/**
+ * A factory for a join function with logging.
+ */
 function verboseJoin(debug) {
   var log = (typeof debug === 'function') ? debug : console.log;
 

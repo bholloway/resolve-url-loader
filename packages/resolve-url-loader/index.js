@@ -54,7 +54,6 @@ function resolveUrlLoader(content, sourceMap) {
       fail       : false,
       silent     : false,
       keepQuery  : false,
-      attempts   : 1,
       join       : joinFn.simpleJoin,
       root       : null,
       includeRoot: false
@@ -82,6 +81,12 @@ function resolveUrlLoader(content, sourceMap) {
     return handleException(
       'loader misconfiguration',
       '"join" option must be a Function',
+      true
+    );
+  } else if (options.join.length !== 2) {
+    return handleException(
+      'loader misconfiguration',
+      '"join" Function must take exactly 2 arguments',
       true
     );
   }

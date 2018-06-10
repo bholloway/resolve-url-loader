@@ -30,7 +30,11 @@ module.exports = {
             options: JSON.parse(process.env.CSS_OPTIONS)
           }, {
             loader: 'resolve-url-loader',
-            options: JSON.parse(process.env.LOADER_OPTIONS)
+            options: Object.assign(JSON.parse(process.env.LOADER_OPTIONS), {
+              join: process.env.LOADER_JOIN ?
+                new Function('require', process.env.LOADER_JOIN)(require) : // jshint ignore:line
+                undefined
+            })
           }, {
             loader: sassLoader,
             options: {
