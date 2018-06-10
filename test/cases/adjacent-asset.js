@@ -66,12 +66,12 @@ module.exports = (engineDir) =>
         ASSETS: ['d68e763c825dc0e388929ae1b375ce18.jpg'],
         FILES: true
       }),
-      exec('npm install'),
-      fs({
-        'packageA/node_modules/resolve-url-loader': dirname(require.resolve('resolve-url-loader'))
-      })
+      exec('npm install')
     ),
     assertExitCodeZero('npm install'),
-    require('./common'),
+    require('./common/default'),
+    require('./common/keep-query'),
+    require('./common/absolute'),
+    require('./common/debug'),
     unlayer
   );

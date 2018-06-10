@@ -59,12 +59,12 @@ module.exports = (engineDir) =>
         ASSETS: ['"http://google.com"', 'http://google.com', 'http://google.com?query', 'http://google.com#hash'],
         FILES: false
       }),
-      exec('npm install'),
-      fs({
-        'node_modules/resolve-url-loader': dirname(require.resolve('resolve-url-loader'))
-      })
+      exec('npm install')
     ),
     assertExitCodeZero('npm install'),
-    require('./common'),
+    require('./common/default'),
+    require('./common/keep-query'),
+    require('./common/absolute'),
+    require('./common/debug'),
     unlayer
   );

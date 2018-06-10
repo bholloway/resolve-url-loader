@@ -16,6 +16,7 @@ module.exports = test(
         DEVTOOL: '"source-map"',
         LOADER_QUERY: 'sourceMap&keepQuery',
         LOADER_OPTIONS: {sourceMap: true, keepQuery: true},
+        LOADER_JOIN: '',
         CSS_QUERY: 'sourceMap',
         CSS_OPTIONS: {sourceMap: true},
         OUTPUT: 'build--keep-query'

@@ -32,5 +32,10 @@ module.exports = {
   },
   plugins: [
     new ExtractTextPlugin('css', '[name].[md5:contenthash:hex].css')
-  ]
+  ],
+  resolveUrlLoader: {
+    join: process.env.LOADER_JOIN ?
+      new Function('require', process.env.LOADER_JOIN)(require) : // jshint ignore:line
+      undefined
+  }
 };

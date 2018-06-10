@@ -32,6 +32,7 @@ The target for the next major version
   - [x] better ENV `append` (rename to `merge`)
     - [x] regex key matching
     - [x] custom merge fn
+  - [ ] allow `layer` to further nest `root` directory
 
   * resolve-url-loader
   - [x] check some typical directory structures

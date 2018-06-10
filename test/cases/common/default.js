@@ -15,6 +15,7 @@ module.exports = test(
         DEVTOOL: '"source-map"',
         LOADER_QUERY: 'sourceMap',
         LOADER_OPTIONS: {sourceMap: true},
+        LOADER_JOIN: '',
         CSS_QUERY: 'sourceMap',
         CSS_OPTIONS: {sourceMap: true},
         OUTPUT: 'build--default'
