@@ -8,7 +8,7 @@ const compose = require('compose-function');
 const Joi = require('joi');
 const {assign} = Object;
 
-exports.withEnvRebase = (list) => ({root}) =>
+exports.withRebase = (list) => ({root}) =>
   list.map((v) => compose(v => v.replace(/\\/g, '/'), normalize, join)(root, v));
 
 /**
