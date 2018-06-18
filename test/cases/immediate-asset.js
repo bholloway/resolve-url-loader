@@ -1,13 +1,42 @@
 'use strict';
 
 const {dirname, join} = require('path');
+const compose = require('compose-function');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
-const {layer, unlayer, fs, env, meta, cwd, exec} = require('test-my-cli');
+const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
-const {assertExitCodeZero} = require('./lib/assert');
-const {withEnvRebase} = require('./lib/higher-order');
+const {
+  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles
+} = require('./lib/assert');
+const {withRebase} = require('./lib/higher-order');
+const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
+const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
+
+const assertContentDev = compose(assertContent, outdent)`
+  .some-class-name {
+    single-quoted: url($0);
+    double-quoted: url($1);
+    unquoted: url($2);
+    query: url($3);
+    hash: url($4);
+  }
+  
+  .another-class-name {
+    display: block;
+  }
+  `;
+
+const assertContentProd = compose(assertContent, trim)`
+  .some-class-name{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
+  .another-class-name{display:block}
+  `;
+
+const assertSources = assertCssSourceMap([
+  '/src/feature/index.scss',
+  '/src/index.scss'
+]);
 
 module.exports = (engineDir) =>
   sequence(
@@ -18,12 +47,12 @@ module.exports = (engineDir) =>
         'webpack.config.js': join(engineDir, './webpack.config.js'),
         'src/index.scss': outdent`
           @import "feature/index.scss";
-          .anotherclassname {
+          .another-class-name {
             display: block;
           }
           `,
         'src/feature/index.scss': outdent`
-          .someclassname {
+          .some-class-name {
             single-quoted: url('img.jpg');
             double-quoted: url("img.jpg");
             unquoted: url(img.jpg);
@@ -37,36 +66,153 @@ module.exports = (engineDir) =>
         PATH: dirname(process.execPath),
         ENTRY: join('src', 'index.scss')
       }),
-      meta({
-        SOURCES: ['/src/feature/index.scss', '/src/index.scss'],
-        CONTENT_DEV: outdent`
-          .someclassname {
-            single-quoted: url($0);
-            double-quoted: url($1);
-            unquoted: url($2);
-            query: url($3);
-            hash: url($4);
-          }
-          
-          .anotherclassname {
-            display: block;
-          }
-          `,
-        CONTENT_PROD: trim`
-          .someclassname{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
-          .anotherclassname{display:block}
-          `,
-        URLS: ['./feature/img.jpg'],
-        ABSOLUTE: withEnvRebase(['src/feature/img.jpg']),
-        ASSETS: ['d68e763c825dc0e388929ae1b375ce18.jpg'],
-        FILES: true
-      }),
       exec('npm install')
     ),
     assertExitCodeZero('npm install'),
-    require('./common/default'),
-    require('./common/keep-query'),
-    require('./common/absolute'),
-    require('./common/debug'),
+    testDefault(
+      devNormal(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      devWithoutUrl(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls(['./feature/img.jpg']),
+        assertAssetFiles(false)
+      ),
+      prodNormal(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      prodWithoutUrl(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls(['./feature/img.jpg']),
+        assertAssetFiles(false)
+      ),
+      prodWithoutDevtool(
+        assertContentProd,
+        assertCssSourceMap(false),
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      )
+    ),
+    testAbsolute(
+      devNormal(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      devWithoutUrl(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls(withRebase(['src/feature/img.jpg'])),
+        assertAssetFiles(false)
+      ),
+      prodNormal(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      prodWithoutUrl(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls(withRebase(['src/feature/img.jpg'])),
+        assertAssetFiles(false)
+      ),
+      prodWithoutDevtool(
+        assertContentProd,
+        assertCssSourceMap(false),
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      )
+    ),
+    testDebug(
+      devNormal(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      devWithoutUrl(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls(['./feature/img.jpg']),
+        assertAssetFiles(false)
+      ),
+      prodNormal(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      prodWithoutUrl(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls(['./feature/img.jpg']),
+        assertAssetFiles(false)
+      ),
+      prodWithoutDevtool(
+        assertContentProd,
+        assertCssSourceMap(false),
+        assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      )
+    ),
+    testKeepQuery(
+      devNormal(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls([
+          'd68e763c825dc0e388929ae1b375ce18.jpg',
+          'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
+        ]),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      devWithoutUrl(
+        assertContentDev,
+        assertSources,
+        assertAssetUrls([
+          './feature/img.jpg',
+          './feature/img.jpg?query',
+          './feature/img.jpg#hash'
+        ]),
+        assertAssetFiles(false)
+      ),
+      prodNormal(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls([
+          'd68e763c825dc0e388929ae1b375ce18.jpg',
+          'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
+        ]),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      ),
+      prodWithoutUrl(
+        assertContentProd,
+        assertSources,
+        assertAssetUrls([
+          './feature/img.jpg',
+          './feature/img.jpg?query',
+          './feature/img.jpg#hash'
+        ]),
+        assertAssetFiles(false)
+      ),
+      prodWithoutDevtool(
+        assertContentProd,
+        assertCssSourceMap(false),
+        assertAssetUrls([
+          'd68e763c825dc0e388929ae1b375ce18.jpg',
+          'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
+        ]),
+        assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+      )
+    ),
     unlayer
   );
