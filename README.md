@@ -20,7 +20,7 @@ The target for the next major version
 
 - [x] Move the file search to a separate package as "opt in"
 
-- [ ] Automated tests
+- [ ] Automated tests I
 
   * test-my-cli
   - [x] basic tests
@@ -28,28 +28,35 @@ The target for the next major version
   - [x] better ENV `append` (rename to `merge`)
     - [x] regex key matching
     - [x] custom merge fn
-  - [ ] allow `layer` to further nest `root` directory
 
   * resolve-url-loader
   - [x] check some typical directory structures
   - [x] check `keepQuery` option
   - [x] check URIs with protocols are not processed
   - [x] check `absolute` option
-  - [ ] check `simpleJoin` option as `verboseJoin` function
-  - [ ] check `fail` option
-  - [ ] check `silent` option
+  - [x] check `simpleJoin` option as `verboseJoin` function
   - [ ] check `root` option
   - [ ] check defunct options lead to warnings
+  - [ ] check `silent` option supresses warnings
+
+- [ ] Rewrite README.md
+  * The `absolute` option requires `css-loader` with option `root: ''`.
+  * [Breaking] Errors always fail and are no longer swallowed
+  * [Breaking] File search not supported (`join` option available)
+  * [Breaking] Multiple options changed
+
+- [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
+
+- [ ] Automated tests II
+
+  * test-my-cli
+  - [ ] allow `layer` to further nest `root` directory
 
   * resolve-url-loader-filesearch
   - [ ] check `searchJoin`
   - [ ] check `verboseSearchJoin`
   - [ ] check search works and is limited by `attempts` option
-  - [ ] OPTIONAL check `includeRoot` option
+  - [ ] check `includeRoot` option
 
 - [ ] Rewrite README.md
-  - [ ] resolve-url-loader
-    * The `absolute` option requires `css-loader` with option `root: ''`.
   - [ ] resolve-url-loader-filesearch
-
-- [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)

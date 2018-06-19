@@ -48,15 +48,13 @@ function resolveUrlLoader(content, sourceMap) {
     loaderUtils.getOptions(loader),
     !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
     {
-      absolute   : false,
-      sourceMap  : loader.sourceMap,
-      engine     : 'rework',
-      fail       : false,
-      silent     : false,
-      keepQuery  : false,
-      join       : joinFn.simpleJoin,
-      root       : null,
-      includeRoot: false
+      absolute : false,
+      sourceMap: loader.sourceMap,
+      engine   : 'rework',
+      silent   : false,
+      keepQuery: false,
+      join     : joinFn.simpleJoin,
+      root     : null
     }
   );
 
@@ -72,6 +70,20 @@ function resolveUrlLoader(content, sourceMap) {
     handleException(
       'loader misconfiguration',
       '"attempts" option is defunct (consider "join" option if search is needed)',
+      false
+    );
+  }
+  if ('includeRoot' in options) {
+    handleException(
+      'loader misconfiguration',
+      '"includeRoot" option is defunct (consider "join" option if search is needed)',
+      false
+    );
+  }
+  if ('fail' in options) {
+    handleException(
+      'loader misconfiguration',
+      '"fail" option is discontinued',
       false
     );
   }
@@ -118,7 +130,7 @@ function resolveUrlLoader(content, sourceMap) {
         return handleException(
           'source-map error',
           'cannot parse source-map string (from less-loader?)',
-          false
+          true
         );
       }
     }
@@ -132,7 +144,7 @@ function resolveUrlLoader(content, sourceMap) {
       return handleException(
         'source-map error',
         exception.message,
-        false
+        true
       );
     }
 
@@ -176,7 +188,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   function onFailure(error) {
-    callback(null, handleException('Error in CSS', error, false));
+    callback(null, handleException('Error in CSS', error, true));
   }
 
   /**
@@ -190,8 +202,8 @@ function resolveUrlLoader(content, sourceMap) {
     var rest = (typeof exception === 'string') ? [exception] :
                (exception instanceof Error) ? [exception.message, exception.stack.split('\n')[1].trim()] :
                [];
-    var instance = new Error('resolve-url-loader cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  '));
-    if (isCritical || options.fail) {
+    var instance = new Error(PACKAGE_NAME + ' cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  '));
+    if (isCritical) {
       loader.emitError(instance);
     }
     else if (!options.silent) {
