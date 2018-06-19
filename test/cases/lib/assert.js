@@ -7,7 +7,7 @@ const sequence = require('promise-compose');
 const ms = require('ms');
 const {assert} = require('test-my-cli');
 
-const {excludingQuotes, unique} = require('./util');
+const {excludingQuotes, unique, findMultilineMessages} = require('./util');
 const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./higher-order');
 
 const subdir = ({root, cwd, env: {OUTPUT}}) =>
@@ -40,7 +40,7 @@ exports.assertWebpackOk = sequence(
     const lines = stdout.split('\n');
     const start = lines.findIndex(line => /\bERROR\b/.test(line));
     if (start < 0) {
-      pass('should be free from compile errors');
+      pass('should be free of compile errors');
     } else {
       const end = lines.findIndex((line, i) => line.trim() === '' && i > start) || lines.length;
       const error = lines.slice(start, end).join('\n');
@@ -122,10 +122,23 @@ exports.assertAssetFiles = (fieldOrExpected) =>
       const [{base}] = list;
       if (!expected) {
         pass('should NOT expect any assets');
-      } else if (expected) {
-        ok(unique(expected).every((filename) => existsSync(join(base, filename))), 'should output all assets');
       } else {
-        fail('should output all assets');
+        ok(unique(expected).every((filename) => existsSync(join(base, filename))), 'should output all assets');
       }
     }
   });
+
+exports.assertDebugMessages = (regexStart, regexStop) => {
+  const find = findMultilineMessages(regexStart, regexStop);
+
+  return (fieldOrExpected) =>
+    assert(({equal, looseEqual}, context) => {
+      const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+      const messages = compose(unique, find)(context.stdout);
+      if (!expected) {
+        equal(messages.length, 0, 'should be free of debug messages');
+      } else {
+        looseEqual(messages, expected, 'should output expected debug messages');
+      }
+    });
+};

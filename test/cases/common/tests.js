@@ -43,9 +43,9 @@ exports.testAbsolute = (...rest) =>
     )
   );
 
-exports.testDebug = (...rest) =>
+exports.testVerboseJoin = (...rest) =>
   test(
-    'debug',
+    'verbose-join',
     sequence(
       layer(
         env({

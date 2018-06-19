@@ -26,6 +26,7 @@ function verboseJoin(debug) {
     var absolute = exports.simpleJoin(base, uri);
 
     var text = ['\n' + PACKAGE_NAME + ': ' + uri]
+      .concat(path.relative(process.cwd(), base))
       .concat(fs.existsSync(absolute) ? 'FOUND' : 'NOT FOUND')
       .join('\n  ');
     log(text);
