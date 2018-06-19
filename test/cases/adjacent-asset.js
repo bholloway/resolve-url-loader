@@ -8,10 +8,10 @@ const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
 const {
-  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles
+  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages
 } = require('./lib/assert');
 const {withRebase} = require('./lib/higher-order');
-const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
+const {testDefault, testAbsolute, testVerboseJoin, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
 
 const assertContentDev = compose(assertContent, outdent)`
@@ -36,6 +36,16 @@ const assertContentProd = compose(assertContent, trim)`
 const assertSources = assertCssSourceMap([
   '/src/feature/index.scss',
   '/src/index.scss'
+]);
+
+const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
+
+const assertVerboseJoin = assertDebugMessages(/^resolve-url-loader/, /FOUND$/)([
+  outdent`
+    resolve-url-loader: ../../../packageB/images/img.jpg
+      src/feature
+      FOUND
+    `
 ]);
 
 module.exports = (engineDir) =>
@@ -76,30 +86,35 @@ module.exports = (engineDir) =>
     assertExitCodeZero('npm install'),
     testDefault(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -108,62 +123,72 @@ module.exports = (engineDir) =>
     ),
     testAbsolute(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls(withRebase(['packageB/images/img.jpg'])),
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls(withRebase(['packageB/images/img.jpg'])),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       )
     ),
-    testDebug(
+    testVerboseJoin(
       devNormal(
+        assertVerboseJoin,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
+        assertVerboseJoin,
         assertContentDev,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertVerboseJoin,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
+        assertVerboseJoin,
         assertContentProd,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertVerboseJoin,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -172,6 +197,7 @@ module.exports = (engineDir) =>
     ),
     testKeepQuery(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -181,6 +207,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -191,6 +218,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -200,6 +228,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -210,6 +239,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls([

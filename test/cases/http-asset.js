@@ -8,9 +8,9 @@ const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
 const {
-  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles
+  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages
 } = require('./lib/assert');
-const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
+const {testDefault, testAbsolute, testVerboseJoin, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
 
 const assertContentDev = compose(assertContent, outdent)`
@@ -36,6 +36,8 @@ const assertSources = assertCssSourceMap([
   '/src/feature/index.scss',
   '/src/index.scss'
 ]);
+
+const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
 
 module.exports = (engineDir) =>
   sequence(
@@ -69,6 +71,7 @@ module.exports = (engineDir) =>
     assertExitCodeZero('npm install'),
     testDefault(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -79,6 +82,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -89,6 +93,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -99,6 +104,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -109,6 +115,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls([
@@ -121,6 +128,7 @@ module.exports = (engineDir) =>
     ),
     testAbsolute(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -131,6 +139,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -141,6 +150,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -151,6 +161,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -161,6 +172,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls([
@@ -171,8 +183,9 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       )
     ),
-    testDebug(
+    testVerboseJoin(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -183,6 +196,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -193,6 +207,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -203,6 +218,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -213,6 +229,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls([
@@ -225,6 +242,7 @@ module.exports = (engineDir) =>
     ),
     testKeepQuery(
       devNormal(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -235,6 +253,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       devWithoutUrl(
+        assertNoDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -245,6 +264,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodNormal(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -255,6 +275,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutUrl(
+        assertNoDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -265,6 +286,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
+        assertNoDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls([
