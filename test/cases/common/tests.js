@@ -43,16 +43,16 @@ exports.testAbsolute = (...rest) =>
     )
   );
 
-exports.testVerboseJoin = (...rest) =>
+exports.testDebug = (...rest) =>
   test(
-    'verbose-join',
+    'debug=true',
     sequence(
       layer(
         env({
           DEVTOOL: '"source-map"',
-          LOADER_QUERY: 'sourceMap',
-          LOADER_OPTIONS: {sourceMap: true},
-          LOADER_JOIN: `return require('resolve-url-loader').verboseJoin()`,
+          LOADER_QUERY: 'sourceMap&debug',
+          LOADER_OPTIONS: {sourceMap: true, debug: true},
+          LOADER_JOIN: '',
           CSS_QUERY: 'sourceMap',
           CSS_OPTIONS: {sourceMap: true},
           OUTPUT: 'build--debug'

@@ -14,7 +14,7 @@ var path              = require('path'),
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
 var valueProcessor = require('./lib/value-processor');
-var joinFn = require('./lib/join-fn');
+var defaultJoin = require('./lib/default-join');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -53,19 +53,13 @@ function resolveUrlLoader(content, sourceMap) {
       engine   : 'rework',
       silent   : false,
       keepQuery: false,
-      join     : joinFn.simpleJoin,
+      debug    : false,
+      join     : defaultJoin,
       root     : null
     }
   );
 
   // defunct options
-  if ('debug' in options) {
-    handleException(
-      'loader misconfiguration',
-      '"debug" option is defunct (use "join" option set to loader.verboseJoin)',
-      false
-    );
-  }
   if ('attempts' in options) {
     handleException(
       'loader misconfiguration',
@@ -95,10 +89,10 @@ function resolveUrlLoader(content, sourceMap) {
       '"join" option must be a Function',
       true
     );
-  } else if (options.join.length !== 2) {
+  } else if (options.join.length !== 1) {
     return handleException(
       'loader misconfiguration',
-      '"join" Function must take exactly 2 arguments',
+      '"join" Function must take exactly 1 argument - an options hash',
       true
     );
   }
@@ -169,8 +163,8 @@ function resolveUrlLoader(content, sourceMap) {
     .resolve(require(enginePath)(loader.resourcePath, content, {
       outputSourceMap     : !!options.sourceMap,
       transformDeclaration: valueProcessor(loader.context, options),
-      absSourceMap,
-      sourceMapConsumer
+      absSourceMap        : absSourceMap,
+      sourceMapConsumer   : sourceMapConsumer
     }))
     .then(onSuccess)
     .catch(onFailure);
@@ -214,4 +208,4 @@ function resolveUrlLoader(content, sourceMap) {
 
 }
 
-module.exports = Object.assign(resolveUrlLoader, joinFn);
+module.exports = resolveUrlLoader;
