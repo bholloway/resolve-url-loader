@@ -38,7 +38,7 @@ The target for the next major version
   - [x] check `keepQuery` option
   - [x] check URIs with protocols are not processed
   - [x] check `absolute` option
-  - [x] check `simpleJoin` option as `verboseJoin` function
+  - [x] check `debug` option
   - [ ] check `root` option
   - [ ] check defunct options lead to warnings
   - [ ] check `silent` option supresses warnings

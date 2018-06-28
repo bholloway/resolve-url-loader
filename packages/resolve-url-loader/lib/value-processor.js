@@ -15,6 +15,7 @@ var path        = require('path'),
  */
 function valueProcessor(filePath, options) {
   var URL_STATEMENT_REGEX = /(url\s*\()\s*(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))\s*(\))/g;
+  var join = options.join(options);
 
   /**
    * Process the given CSS declaration value (the RHS of the `:`)
@@ -49,7 +50,7 @@ function valueProcessor(filePath, options) {
         // split into uri and query/hash and then find the absolute path to the uri
         var split    = initialised.split(/([?#])/g),
             uri      = split[0],
-            absolute = !!uri && loaderUtils.isUrlRequest(uri, options.root || '~') && options.join(directory, uri),
+            absolute = !!uri && loaderUtils.isUrlRequest(uri, options.root || '~') && join(directory, uri),
             query    = options.keepQuery ? split.slice(1).join('') : '';
 
         // use the absolute path (or default to initialised)

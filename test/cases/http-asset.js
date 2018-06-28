@@ -10,7 +10,7 @@ const {trim} = require('./lib/util');
 const {
   assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages
 } = require('./lib/assert');
-const {testDefault, testAbsolute, testVerboseJoin, testKeepQuery} = require('./common/tests');
+const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
 
 const assertContentDev = compose(assertContent, outdent)`
@@ -183,7 +183,7 @@ module.exports = (engineDir) =>
         assertAssetFiles(false)
       )
     ),
-    testVerboseJoin(
+    testDebug(
       devNormal(
         assertNoDebug,
         assertContentDev,

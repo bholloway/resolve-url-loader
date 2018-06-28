@@ -11,7 +11,7 @@ const {
   assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages
 } = require('./lib/assert');
 const {withRebase} = require('./lib/higher-order');
-const {testDefault, testAbsolute, testVerboseJoin, testKeepQuery} = require('./common/tests');
+const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
 
 const assertContentDev = compose(assertContent, outdent)`
@@ -40,7 +40,7 @@ const assertSources = assertCssSourceMap([
 
 const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
 
-const assertVerboseJoin = assertDebugMessages(/^resolve-url-loader/, /FOUND$/)([
+const assertDebug = assertDebugMessages(/^resolve-url-loader/, /FOUND$/)([
   outdent`
     resolve-url-loader: ../../../packageB/images/img.jpg
       src/feature
@@ -158,37 +158,37 @@ module.exports = (engineDir) =>
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       )
     ),
-    testVerboseJoin(
+    testDebug(
       devNormal(
-        assertVerboseJoin,
+        assertDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
-        assertVerboseJoin,
+        assertDebug,
         assertContentDev,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
-        assertVerboseJoin,
+        assertDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
-        assertVerboseJoin,
+        assertDebug,
         assertContentProd,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
-        assertVerboseJoin,
+        assertDebug,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
