@@ -44,6 +44,7 @@ The target for the next major version
   * [Breaking] Errors always fail and are no longer swallowed
   * [Breaking] File search not supported (`join` option available)
   * [Breaking] Multiple options changed
+  * [Breaking] Root can only be empty or absolute path (like css-loader)
 
 - [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
 

@@ -14,7 +14,7 @@ var path              = require('path'),
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
 var valueProcessor = require('./lib/value-processor');
-var defaultJoin = require('./lib/default-join');
+var defaultJoin    = require('./lib/default-join');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -48,14 +48,14 @@ function resolveUrlLoader(content, sourceMap) {
     loaderUtils.getOptions(loader),
     !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
     {
-      absolute : false,
       sourceMap: loader.sourceMap,
       engine   : 'rework',
       silent   : false,
+      absolute : false,
       keepQuery: false,
+      root     : false,
       debug    : false,
-      join     : defaultJoin,
-      root     : null
+      join     : defaultJoin
     }
   );
 
@@ -92,19 +92,28 @@ function resolveUrlLoader(content, sourceMap) {
   } else if (options.join.length !== 1) {
     return handleException(
       'loader misconfiguration',
-      '"join" Function must take exactly 1 argument - an options hash',
+      '"join" Function must take exactly 1 argument, an options hash',
       true
     );
   }
 
-  // validate root directory, where specified
-  var resolvedRoot = (typeof options.root === 'string') && path.resolve(options.root) || undefined,
-      isValidRoot  = resolvedRoot && fs.existsSync(resolvedRoot) && fs.statSync(resolvedRoot).isDirectory();
-  if (options.root && !isValidRoot) {
+  // validate root option
+  if (typeof options.root === 'string') {
+    const isValid = (options.root === '') ||
+      (path.isAbsolute(options.root) && fs.existsSync(options.root) && fs.statSync(options.root).isDirectory());
+
+    if (!isValid) {
+      return handleException(
+        'loader misconfiguration',
+        '"root" option must be an empty string or an absolute path to an existing directory',
+        true
+      );
+    }
+  } else if (options.root !== false) {
     return handleException(
       'loader misconfiguration',
-      '"root" option does not resolve to a valid directory',
-      true
+      '"root" option must be string where used or false where unused',
+      false
     );
   }
 
@@ -208,4 +217,4 @@ function resolveUrlLoader(content, sourceMap) {
 
 }
 
-module.exports = resolveUrlLoader;
+module.exports = Object.assign(resolveUrlLoader, {defaultJoin: defaultJoin});

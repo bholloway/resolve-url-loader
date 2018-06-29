@@ -11,7 +11,7 @@ const {assign} = Object;
 
 const testIncluded = process.env.ONLY ?
   (...v) => {
-    const patterns = process.env.ONLY.split(',').map(v => v.trim());
+    const patterns = process.env.ONLY.split(' ').map(v => v.trim());
     return (micromatch(v, patterns).length >= patterns.length);
   } :
   () => true;

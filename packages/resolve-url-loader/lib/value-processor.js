@@ -38,7 +38,7 @@ function valueProcessor(filePath, options) {
      * @param i The index of the item in the split
      * @returns {string} Every 3 or 5 items is an encoded url everything else is as is
      */
-    function eachSplitOrGroup(token, i) {
+    function eachSplitOrGroup(token, i, arr) {
 
       // we can get groups as undefined under certain match circumstances
       var initialised = token || '';
@@ -47,23 +47,26 @@ function valueProcessor(filePath, options) {
       var mod = i % 7;
       if ((mod === 3) || (mod === 5)) {
 
+        // detect quoted url and unescape backslashes
+        var before    = arr[i - 1],
+            after     = arr[i + 1],
+            isQuoted  = (before === after) && ((before === '\'') || (before === '"')),
+            unescaped = isQuoted ? initialised.replace(/\\{2}/g, '\\') : initialised;
+
         // split into uri and query/hash and then find the absolute path to the uri
-        var split    = initialised.split(/([?#])/g),
+        var split    = unescaped.split(/([?#])/g),
             uri      = split[0],
-            absolute = !!uri && loaderUtils.isUrlRequest(uri, options.root || '~') && join(directory, uri),
+            absolute = testIsRelative(uri) && join(directory, uri) || testIsAbsolute(uri) && join(options.root, uri),
             query    = options.keepQuery ? split.slice(1).join('') : '';
 
-        // use the absolute path (or default to initialised)
+        // use the absolute path in absolute mode or else relative path (or default to initialised)
+        // #6 - backslashes are not legal in URI
         if (options.absolute) {
-          // #6 - backslashes are not legal in URI
           return !!absolute && absolute.replace(/\\/g, '/').concat(query) || initialised;
-        }
-        // module relative path (or default to initialised)
-        else {
-          // #6 - backslashes are not legal in URI
-          var relative     = !!absolute && path.relative(filePath, absolute).replace(/\\/g, '/').concat(query),
-              rootRelative = !!relative && loaderUtils.urlToRequest(relative, options.root || '~');
-          return rootRelative ? rootRelative : initialised;
+        } else {
+          var relative = !!absolute && path.relative(filePath, absolute).replace(/\\/g, '/').concat(query),
+              request  = !!relative && loaderUtils.urlToRequest(relative);
+          return request ? request : initialised;
         }
       }
       // everything else, including parentheses and quotation (where present) and media statements
@@ -72,6 +75,26 @@ function valueProcessor(filePath, options) {
       }
     }
   };
+
+  /**
+   * The loaderUtils.isUrlRequest() doesn't support windows absolute paths on principle.
+   * Lets handle them regardless of the dogma.
+   * @param {string|undefined} uri A uri string possibly empty or undefined
+   * @return {boolean} True for relative uri
+   */
+  function testIsRelative(uri) {
+    return !!uri && loaderUtils.isUrlRequest(uri, false) && !path.isAbsolute(uri);
+  }
+
+  /**
+   * The loaderUtils.isUrlRequest() doesn't support windows absolute paths on principle.
+   * Lets handle them regardless of the dogma.
+   * @param {string|undefined} uri A uri string possibly empty or undefined
+   * @return {boolean} True for absolute uri
+   */
+  function testIsAbsolute(uri) {
+    return !!uri && (options.root !== false) && loaderUtils.isUrlRequest(uri, options.root) && path.isAbsolute(uri);
+  }
 }
 
 module.exports = valueProcessor;

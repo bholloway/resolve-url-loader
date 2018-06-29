@@ -43,7 +43,7 @@ const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
 const assertDebug = assertDebugMessages(/^resolve-url-loader/, /FOUND$/)([
   outdent`
     resolve-url-loader: ../../../packageB/images/img.jpg
-      src/feature
+      ./src/feature
       FOUND
     `
 ]);

@@ -20,8 +20,14 @@ const mergeUndos = ([layer, ...layers]) => (undos) => {
   ];
 };
 
-const hashToSrcDestTuple = (hash) => (_, {root}) =>
-  entries(hash).map(([k, v]) => [v, join(root, k)]);
+const hashToSrcDestTuple = (hash) => (_, context) =>
+  entries(hash).map(([k, v]) => {
+    const {root} = context;
+    return [
+      (typeof v === 'function') ? v(context) : v,
+      join(root, k)
+    ];
+  });
 
 const srcDestTupleToOp = ([srcPath, destPath], {root}, log) => {
   switch (true) {
@@ -90,6 +96,7 @@ exports.create = (hash) => {
     joi.array().items(
       joi.alternatives().try(
         joi.any().only(null),
+        joi.func(),
         joi.string()
       ).required()
     ).required(),
