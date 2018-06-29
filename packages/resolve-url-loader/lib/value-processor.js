@@ -61,12 +61,14 @@ function valueProcessor(filePath, options) {
 
         // use the absolute path in absolute mode or else relative path (or default to initialised)
         // #6 - backslashes are not legal in URI
-        if (options.absolute) {
-          return !!absolute && absolute.replace(/\\/g, '/').concat(query) || initialised;
+        if (!absolute) {
+          return initialised;
+        } else if (options.absolute) {
+          return absolute.replace(/\\/g, '/') + query;
         } else {
-          var relative = !!absolute && path.relative(filePath, absolute).replace(/\\/g, '/').concat(query),
-              request  = !!relative && loaderUtils.urlToRequest(relative);
-          return request ? request : initialised;
+          return loaderUtils.urlToRequest(
+            path.relative(filePath, absolute).replace(/\\/g, '/') + query
+          );
         }
       }
       // everything else, including parentheses and quotation (where present) and media statements
@@ -83,7 +85,7 @@ function valueProcessor(filePath, options) {
    * @return {boolean} True for relative uri
    */
   function testIsRelative(uri) {
-    return !!uri && loaderUtils.isUrlRequest(uri, false) && !path.isAbsolute(uri);
+    return !!uri && loaderUtils.isUrlRequest(uri, false) && !path.isAbsolute(uri) && (uri.indexOf('~') !== 0);
   }
 
   /**
