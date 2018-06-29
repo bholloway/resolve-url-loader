@@ -42,8 +42,8 @@ const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
 
 const assertDebug = assertDebugMessages(/^resolve-url-loader/, /FOUND$/)([
   outdent`
-    resolve-url-loader: ../images/img.jpg
-      ./src/feature
+    resolve-url-loader: /images/img.jpg
+      .
       FOUND
     `
 ]);
@@ -63,18 +63,22 @@ module.exports = (engineDir) =>
           `,
         'src/feature/index.scss': outdent`
           .some-class-name {
-            single-quoted: url('../images/img.jpg');
-            double-quoted: url("../images/img.jpg");
-            unquoted: url(../images/img.jpg);
-            query: url(../images/img.jpg?query);
-            hash: url(../images/img.jpg#hash);
+            single-quoted: url('/images/img.jpg');
+            double-quoted: url("/images/img.jpg");
+            unquoted: url(/images/img.jpg);
+            query: url(/images/img.jpg?query);
+            hash: url(/images/img.jpg#hash);
           }
           `,
-        'src/images/img.jpg': require.resolve('./assets/blank.jpg')
+        'images/img.jpg': require.resolve('./assets/blank.jpg')
       }),
       env({
         PATH: dirname(process.execPath),
         ENTRY: join('src', 'index.scss')
+      }),
+      env({
+        LOADER_QUERY: ({root}) => `root=${root}`,
+        LOADER_OPTIONS: ({root}) => ({root})
       }),
       exec('npm install')
     ),
@@ -91,7 +95,7 @@ module.exports = (engineDir) =>
         assertNoDebug,
         assertContentDev,
         assertSources,
-        assertAssetUrls(['./images/img.jpg']),
+        assertAssetUrls(['../images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
@@ -105,7 +109,7 @@ module.exports = (engineDir) =>
         assertNoDebug,
         assertContentProd,
         assertSources,
-        assertAssetUrls(['./images/img.jpg']),
+        assertAssetUrls(['../images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
@@ -128,7 +132,7 @@ module.exports = (engineDir) =>
         assertNoDebug,
         assertContentDev,
         assertSources,
-        assertAssetUrls(withRebase(['src/images/img.jpg'])),
+        assertAssetUrls(withRebase(['images/img.jpg'])),
         assertAssetFiles(false)
       ),
       prodNormal(
@@ -142,7 +146,7 @@ module.exports = (engineDir) =>
         assertNoDebug,
         assertContentProd,
         assertSources,
-        assertAssetUrls(withRebase(['src/images/img.jpg'])),
+        assertAssetUrls(withRebase(['images/img.jpg'])),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
@@ -165,7 +169,7 @@ module.exports = (engineDir) =>
         assertDebug,
         assertContentDev,
         assertSources,
-        assertAssetUrls(['./images/img.jpg']),
+        assertAssetUrls(['../images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
@@ -179,7 +183,7 @@ module.exports = (engineDir) =>
         assertDebug,
         assertContentProd,
         assertSources,
-        assertAssetUrls(['./images/img.jpg']),
+        assertAssetUrls(['../images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
@@ -206,9 +210,9 @@ module.exports = (engineDir) =>
         assertContentDev,
         assertSources,
         assertAssetUrls([
-          './images/img.jpg',
-          './images/img.jpg?query',
-          './images/img.jpg#hash'
+          '../images/img.jpg',
+          '../images/img.jpg?query',
+          '../images/img.jpg#hash'
         ]),
         assertAssetFiles(false)
       ),
@@ -227,9 +231,9 @@ module.exports = (engineDir) =>
         assertContentProd,
         assertSources,
         assertAssetUrls([
-          './images/img.jpg',
-          './images/img.jpg?query',
-          './images/img.jpg#hash'
+          '../images/img.jpg',
+          '../images/img.jpg?query',
+          '../images/img.jpg#hash'
         ]),
         assertAssetFiles(false)
       ),
