@@ -1,6 +1,6 @@
 'use strict';
 
-const {existsSync, writeFileSync, mkdirSync} = require('fs');
+const {existsSync, appendFileSync, mkdirSync} = require('fs');
 const {join, relative} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
@@ -55,8 +55,8 @@ exports.saveOutput = assert((_, exec) => {
   if (!existsSync(directory)) {
     mkdirSync(directory);
   }
-  writeFileSync(join(directory, 'stdout.txt'), stdout);
-  writeFileSync(join(directory, 'stderr.txt'), stderr);
+  appendFileSync(join(directory, 'stdout.txt'), stdout);
+  appendFileSync(join(directory, 'stderr.txt'), stderr);
 });
 
 exports.assertContent = (fieldOrExpected) =>

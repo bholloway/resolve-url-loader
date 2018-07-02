@@ -2,34 +2,33 @@
 
 const {basename, join, dirname} = require('path');
 const compose = require('compose-function');
-const {keys, values, entries, assign} = Object;
+const {keys, values, entries} = Object;
 
 const joi = require('../lib/joi');
+const {assertInLayer} = require('../lib/assert');
 const {lens, sequence, mapSerial, mapParallel} = require('../lib/promise');
 const {operation, assertInOperation} = require('../lib/operation');
-const {assertInLayer} = require('../lib/assert');
 const {testIsFile, testIsDir, MkDirOp, CleanOp, SymLinkOp, CopyOp, WriteOp} = require('../lib/fs');
 
 const NAME = basename(__filename).slice(0, -3);
 
-const mergeUndos = ([layer, ...layers]) => (undos) => {
-  const {undo} = layer;
-  return [
-    assign({}, layer, {undo: sequence(...undos, undo)}),
-    ...layers
-  ];
+const mergeUndos = (layer) => (undos) => {
+  const {register} = layer;
+  undos.forEach(register);
+  return layer;
 };
 
-const hashToSrcDestTuple = (hash) => (_, context) =>
+const hashToTuple = (hash) => (layer) =>
   entries(hash).map(([k, v]) => {
-    const {root} = context;
+    const {root} = layer;
     return [
-      (typeof v === 'function') ? v(context) : v,
+      layer,
+      (typeof v === 'function') ? v(layer) : v,
       join(root, k)
     ];
   });
 
-const srcDestTupleToOp = ([srcPath, destPath], {root}, log) => {
+const tupleToOp = ([{root}, srcPath, destPath], _, log) => {
   switch (true) {
     case (srcPath === null):
       return (destPath === root) ?
@@ -71,7 +70,7 @@ exports.schema = {
 
 /**
  * Given a hash of keys will create directories and files that can be rolled back when the layer
- * is unlayered.
+ * completes.
  *
  * All keys are a path to a file or directory.
  *
@@ -81,7 +80,7 @@ exports.schema = {
  * - Any other `string` is direct file content and to be found in the file which is the key.
  *
  * @param {object} hash A hash of file system items
- * @return {function(Array):Array} A pure function of layers
+ * @return {function(object):Promise} A pure async function of the test context
  */
 exports.create = (hash) => {
   joi.assert(
@@ -89,7 +88,7 @@ exports.create = (hash) => {
     joi.array().items(
       joi.path().relative().required()
     ).required(),
-    'single hash where keys are file or directory paths'
+    'hash where keys are file or directory paths'
   );
   joi.assert(
     values(hash),
@@ -100,21 +99,21 @@ exports.create = (hash) => {
         joi.string()
       ).required()
     ).required(),
-    'single hash where values are null|existing-file-path|existing-directory-path|file-content'
+    'hash where values are null|existing-file-path|existing-directory-path|file-content'
   );
 
-  return compose(operation(NAME), lens('layers', 'layers'), sequence)(
-    assertInLayer(`${NAME}() may only be used inside layer()`),
+  return compose(operation(NAME), lens('layer', 'layer'), sequence)(
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    compose(lens(null, mergeUndos), sequence)(
-      hashToSrcDestTuple(hash),
-      lens('*')((list, _, log) => log(`${list.length} tuples`)),
-      mapParallel(srcDestTupleToOp),
+    assertInLayer(`${NAME}() must be used within layer()`),
+    compose(lens('*', mergeUndos), sequence)(
+      hashToTuple(hash),
+      lens('*', null)((list, _, log) => log(`${list.length} tuples`)),
+      mapParallel(tupleToOp),
       flatten,
-      lens('*')((list, _, log) => log(`${list.length} operations`)),
+      lens('*', null)((list, _, log) => log(`${list.length} operations`)),
       mapSerial((op) => op.exec()),
       reverse,
-      mapSerial((op) => () => op.undo())
+      mapParallel((op) => () => op.undo())
     )
   );
 };

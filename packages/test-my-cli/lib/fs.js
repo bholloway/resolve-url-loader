@@ -1,6 +1,7 @@
 'use strict';
 
-const {existsSync, stat, readFile, writeFile, symlink, unlink} = require('fs');
+const {join} = require('path');
+const {existsSync, readdirSync, stat, readFile, writeFile, symlink, unlink} = require('fs');
 const {isAbsolute} = require('path');
 const {promisify} = require('es6-promisify');
 const mkdirp = require('mkdirp');
@@ -16,6 +17,16 @@ const getStat = sequence(
   conditional((v) => (typeof v === 'string') && isAbsolute(v) && existsSync(v)),
   (v) => v && promisify(stat)(v)
 );
+
+exports.safeRemoveDirSync = (baseDir, subDir) =>
+  subDir
+    .split(/[\\\/]/)
+    .map((_, i, arr) => join(baseDir, ...arr.slice(0, arr.length - i)))
+    .forEach((directory, i) => {
+      if ((i === 0) || !readdirSync(directory).length) {
+        rimraf.sync(directory, {glob: false});
+      }
+    });
 
 exports.testIsFile = sequence(
   getStat,

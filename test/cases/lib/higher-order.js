@@ -8,8 +8,10 @@ const compose = require('compose-function');
 const Joi = require('joi');
 const {assign} = Object;
 
-exports.withRebase = (list) => ({root}) =>
-  list.map((v) => compose(v => v.replace(/\\/g, '/'), normalize, join)(root, v));
+exports.withRebase = (listOrString) => ({root}) => {
+  const transform = compose(v => v.replace(/\\/g, '/'), normalize, join);
+  return Array.isArray(listOrString) ? listOrString.map((v) => transform(root, v)) : transform(root, listOrString);
+};
 
 /**
  * A factory for a higher-order-function that enhances an assert() function with a list of files

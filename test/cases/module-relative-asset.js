@@ -2,14 +2,13 @@
 
 const {dirname, join} = require('path');
 const compose = require('compose-function');
-const sequence = require('promise-compose');
 const outdent = require('outdent');
-const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
+const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
-const {
-  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages
-} = require('./lib/assert');
+const {assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages} =
+  require('./lib/assert');
+const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
 
@@ -39,37 +38,35 @@ const assertSources = assertCssSourceMap([
 
 const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
 
-module.exports = (engineDir) =>
-  sequence(
-    layer(
-      cwd('.'),
-      fs({
-        'package.json': join(engineDir, 'package.json'),
-        'webpack.config.js': join(engineDir, './webpack.config.js'),
-        'src/index.scss': outdent`
-          @import "feature/index.scss";
-          .another-class-name {
-            display: block;
-          }
-          `,
-        'src/feature/index.scss': outdent`
-          .some-class-name {
-            single-quoted: url('~images/img.jpg');
-            double-quoted: url("~images/img.jpg");
-            unquoted: url(~images/img.jpg);
-            query: url(~images/img.jpg?query);
-            hash: url(~images/img.jpg#hash);
-          }
-          `,
-        'node_modules/images/img.jpg': require.resolve('./assets/blank.jpg')
-      }),
-      env({
-        PATH: dirname(process.execPath),
-        ENTRY: join('src', 'index.scss')
-      }),
-      exec('npm install')
-    ),
-    assertExitCodeZero('npm install'),
+module.exports = (engineDir) => test(
+  'module-relative-asset',
+  layer('module-relative-asset')(
+    cwd('.'),
+    fs({
+      'package.json': join(engineDir, 'package.json'),
+      'webpack.config.js': join(engineDir, 'webpack.config.js'),
+      'node_modules': compose(withRebase, join)('..', '..', 'node_modules'),
+      'src/index.scss': outdent`
+        @import "feature/index.scss";
+        .another-class-name {
+          display: block;
+        }
+        `,
+      'src/feature/index.scss': outdent`
+        .some-class-name {
+          single-quoted: url('~images/img.jpg');
+          double-quoted: url("~images/img.jpg");
+          unquoted: url(~images/img.jpg);
+          query: url(~images/img.jpg?query);
+          hash: url(~images/img.jpg#hash);
+        }
+        `,
+      'node_modules/images/img.jpg': require.resolve('./assets/blank.jpg')
+    }),
+    env({
+      PATH: dirname(process.execPath),
+      ENTRY: join('src', 'index.scss')
+    }),
     testDefault(
       devNormal(
         assertNoDebug,
@@ -285,6 +282,6 @@ module.exports = (engineDir) =>
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       )
-    ),
-    unlayer
-  );
+    )
+  )
+);

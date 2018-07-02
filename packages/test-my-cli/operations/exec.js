@@ -1,15 +1,27 @@
 'use strict';
 
-const {basename} = require('path');
+const {normalize, join, basename} = require('path');
 const spawn = require('cross-spawn');
 const compose = require('compose-function');
-const {assign} = Object;
 
 const joi = require('../lib/joi');
+const {assertInLayer} = require('../lib/assert');
 const {operation, assertInOperation} = require('../lib/operation');
 const {withTime, lens, sequence} = require('../lib/promise');
+const {assertSchema} = require('../lib/assert');
+const {config} = require('../lib/assert/config');
+const {env} = require('../lib/assert/env');
 
 const NAME = basename(__filename).slice(0, -3);
+
+const assertCwdEnv = assertSchema(
+  joi.object({
+    cwd: joi.path().relative().required(),
+    env: env.required()
+  }).unknown(true),
+  config,
+  joi.func()
+);
 
 exports.schema = {
   debug: joi.debug().optional()
@@ -19,7 +31,7 @@ exports.schema = {
  * Given a command the method will execute in shell and resolve the results, discarding layers.
  *
  * @param {string} command A shell command
- * @return {function(Array):Array} A pure function of layers
+ * @return {function(object):Promise} A pure async function of the test context
  */
 exports.create = (command) => {
   joi.assert(
@@ -29,36 +41,20 @@ exports.create = (command) => {
   );
   const [cmd, ...args] = command.split(' ');
 
-  return compose(operation(NAME), lens('layers', 'exec'), sequence)(
+  return compose(operation(NAME), lens('layer', 'exec'), sequence)(
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    (layers, _, log) => {
-
-      // locate cwd (required) and env (optional) and meta (optional)
-      const {cwd: cwdGetter} = layers.find(({cwd}) => !!cwd) || {};
-      const {env: envGetter} = layers.find(({env}) => !!env) || {};
-      const {meta: metaGetter} = layers.find(({meta}) => !!meta) || {};
-      if (!cwdGetter) {
-        throw new Error('There must be a preceding cwd() element before exec()');
-      }
-
-      // resolve
-      const cwd = cwdGetter();
-      const env = envGetter ? envGetter() : {};
-      const meta = metaGetter ? metaGetter() : {};
-      log(
-        `layer ${layers.length}`,
-        `cmd  ${JSON.stringify(command)}`,
-        `cwd  ${JSON.stringify(cwd)}`,
-        `env  ${JSON.stringify(env)}`,
-        `meta ${JSON.stringify(meta)}`
-      );
-
-      return {cwd, env, meta};
-    },
-    withTime(({cwd, env, meta}, {root, onActivity}) =>
+    assertInLayer(`${NAME}() must be used within layer()`),
+    assertCwdEnv(`${NAME}() requires a preceding cwd() and env()`),
+    lens('*', 'cwd')(({root, cwd}) => cwd ? compose(normalize, join)(root, cwd) : root),
+    lens('*', null)(({index, cwd, env, meta}, _, log) => log(
+      `layer ${index}`,
+      `cmd:  ${JSON.stringify(command)}`,
+      `cwd:  ${JSON.stringify(cwd)}`,
+      `env:  ${JSON.stringify(env)}`,
+      `meta: ${JSON.stringify(meta)}`
+    )),
+    withTime(({index, root, cwd, env, meta}, {onActivity}) =>
       new Promise((resolve) => {
-        const common = {root, cwd, env, meta};
-
         const interval = setInterval(onActivity, 50);
         const child = spawn(cmd, args, {cwd, env, shell: true, stdio: 'pipe'});
 
@@ -70,15 +66,18 @@ exports.create = (command) => {
 
         child.once('close', (code) => {
           clearInterval(interval);
-          resolve(assign({}, common, {code, stdout, stderr}));
+          resolve({index, root, cwd, env, meta, code, stdout, stderr});
         });
 
         child.once('error', (error) => {
           clearInterval(interval);
-          resolve(assign({}, common, {code: 1, stdout, stderr: error.toString()}));
+          resolve({index, root, cwd, env, meta, code: 1, stdout, stderr: error.toString()});
         });
       })
     ),
-    lens('*', null)(({time, code}, _, log) => log(`time: ${time} sec\ncode: ${code}`))
+    lens('*', null)(({time, code}, _, log) => log(
+      `time: ${time.toFixed(2)} sec`,
+      `code: ${code}`
+    ))
   );
 };

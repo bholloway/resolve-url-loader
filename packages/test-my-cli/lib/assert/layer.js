@@ -4,20 +4,22 @@ const joi = require('../joi');
 const {assign} = Object;
 
 const layerCommon = {
-  undo: joi.func().required(),
-  cwd: joi.func().optional(),
-  env: joi.func().optional(),
-  meta: joi.func().optional()
+  root: joi.path().directory().required(),
+  register: joi.func().required(),
+  unlayer: joi.func().required(),
+  cwd: joi.path().relative().optional(),
+  env: joi.object().optional(),
+  meta: joi.object().optional()
 };
 
-exports.layer = joi.object(assign({
-  isSealed: joi.bool().required()
-}, layerCommon)).unknown(false);
+exports.layer = joi
+  .object(assign({
+    index: joi.number().integer().min(0).required()
+  }, layerCommon))
+  .unknown(false);
 
-exports.unsealedLayer = joi.object(assign({
-  isSealed: joi.bool().only(false).required()
-}, layerCommon)).unknown(false);
-
-exports.sealedLayer = joi.object(assign({
-  isSealed: joi.bool().only(true).required()
-}, layerCommon)).unknown(false);
+exports.inLayer = joi
+  .object(assign({
+    index: joi.number().integer().min(1).required()
+  }, layerCommon))
+  .unknown(false);

@@ -2,13 +2,16 @@
 
 const {readdirSync} = require('fs');
 const {join, basename} = require('path');
+const {promisify} = require('es6-promisify');
+const mkdirp = require('mkdirp');
 const {keys, entries, assign} = Object;
 
-const {sync: rimrafSync} = require('rimraf');
 const compose = require('compose-function');
 
 const joi = require('../lib/joi');
+const {safeRemoveDirSync} = require('../lib/fs');
 const {sequence} = require('../lib/promise');
+const {lens} = require('../lib/promise');
 const {logger, indent} = require('../lib/string');
 const {schema: multitonSchema, create: createMultiton} = require('../lib/multiton');
 const {assertTape} = require('../lib/assert');
@@ -20,22 +23,6 @@ const multitons = {};
 exports.schema = {
   debug: joi.debug().optional()
 };
-
-/**
- * Remove a directory and any empty parent directories in a deep path.
- *
- * @param {string} baseDir A base directory which will be retained
- * @param {string} subDir A subdirectory, possibly deep, which should be removed
- */
-const safeRemoveDir = (baseDir, subDir) =>
-  subDir
-    .split(/[\\\/]/)
-    .map((_, i, arr) => join(baseDir, ...arr.slice(0, arr.length - i)))
-    .forEach((directory, i) => {
-      if ((i === 0) || !readdirSync(directory).length) {
-        rimrafSync(directory, {glob: false});
-      }
-    });
 
 /**
  * Initialise configuration for all operations.
@@ -90,7 +77,7 @@ exports.create = (options) => {
         // when a multiton becomes empty we can remove whatever portions of it are empty
         // this protects us where several tests share part of the temp path
         indented(`empty: removing ${absTempDir}`);
-        safeRemoveDir(baseDir, tempDir);
+        safeRemoveDirSync(baseDir, tempDir);
       }
     });
   }
@@ -102,14 +89,27 @@ exports.create = (options) => {
     dispose() {
       indented(`dispose: removing ${absNamedDir}`);
       deregister(instance);
-      safeRemoveDir(absTempDir, namedDir);
+      safeRemoveDirSync(absTempDir, namedDir);
     }
   };
   const onActivity = register(instance);
 
-  const config = keys(schemas).reduce((r, k) => assign(r, {
-    [k]: assign({debug}, options[k], {root: absNamedDir, onActivity})
-  }), {});
+  const config = keys(schemas)
+    .reduce((r, k) => assign(r, {
+      [k]: assign({debug}, options[k], {onActivity})
+    }), {});
+
+  const layer = {
+    index: 0,
+    root: absNamedDir,
+    register: () => {
+      throw new Error('You must perform all operations within layer()');
+    },
+    unlayer: () => {
+      indented('unlayer() completed down to original init()');
+      return null;
+    }
+  };
 
   // maybe activate the logging based on debug flag for init
   log.activate(config[NAME].debug);
@@ -124,6 +124,7 @@ exports.create = (options) => {
   return sequence(
     onActivity,
     assertTape(`${NAME}() expected tape Test instance, ensure ${NAME} occurs once as first item`),
-    (test) => ({test, config, layers: []})
+    (test) => ({test, config, layer}),
+    lens('layer', null)(({root}) => promisify(mkdirp)(root))
   );
 };
