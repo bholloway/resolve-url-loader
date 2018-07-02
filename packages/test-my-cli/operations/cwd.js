@@ -1,13 +1,12 @@
 'use strict';
 
-const {basename, join} = require('path');
+const {basename} = require('path');
 const compose = require('compose-function');
-const {assign} = Object;
 
 const joi = require('../lib/joi');
-const {lens, sequence} = require('../lib/promise');
-const {operation, assertInOperation} = require('../lib/operation');
 const {assertInLayer} = require('../lib/assert');
+const {lens, sequence, constant} = require('../lib/promise');
+const {operation, assertInOperation} = require('../lib/operation');
 
 const NAME = basename(__filename).slice(0, -3);
 
@@ -16,30 +15,25 @@ exports.schema = {
 };
 
 /**
- * Given a directory the method will present this as the working directory.
+ * Present the given a directory as the working directory within this layer.
  *
  * @param {string} directory A working directory
- * @return {function(Array):Array} A pure function of layers
+ * @return {function(object):Promise} A pure async function of the test context
  */
 exports.create = (directory) => {
   joi.assert(
     directory,
     joi.path().relative().required(),
-    'single directory'
+    'relative directory'
   );
 
-  return compose(operation(NAME), lens('layers', 'layers'), sequence)(
-    assertInLayer(`${NAME}() may only be used inside layer()`),
+  return compose(operation(NAME), lens('layer', 'layer'), sequence)(
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    (layers, {root}, log) => {
-      const cwd = join(root, directory);
-      log(
-        `layer ${layers.length}`,
-        JSON.stringify(cwd)
-      );
-
-      const [layer, ...rest] = layers;
-      return [assign({}, layer, {cwd: () => cwd}), ...rest];
-    }
+    assertInLayer(`${NAME}() must be used within layer()`),
+    compose(lens(null, 'cwd'), constant)(directory),
+    lens('*', null)(({index, cwd}, _, log) => log(
+      `layer ${index}`,
+      `cwd: "${cwd}"`
+    ))
   );
 };

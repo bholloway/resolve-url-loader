@@ -7,7 +7,6 @@ const {assign} = Object;
 const joi = require('../lib/joi');
 const {lens, sequence} = require('../lib/promise');
 const {operation, assertInOperation} = require('../lib/operation');
-const {assertOutLayer} = require('../lib/assert');
 
 const NAME = basename(__filename).slice(0, -3);
 
@@ -31,7 +30,6 @@ exports.create = (name, fn) => {
   );
 
   return compose(operation(NAME, name), sequence)(
-    lens('layers', null)(assertOutLayer(`${NAME}() may only be used outside layer()`)),
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
     (context0, {onActivity}, log) => {
       const {test: test0} = context0;

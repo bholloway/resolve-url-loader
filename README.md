@@ -39,9 +39,11 @@ The target for the next major version
   - [x] check URIs with protocols are not processed
   - [x] check `absolute` option
   - [x] check `debug` option
-  - [ ] check `root` option
+  - [x] check `root` option
   - [ ] check defunct options lead to warnings
   - [ ] check `silent` option supresses warnings
+
+- [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
 
 - [ ] Rewrite README.md
   * The `absolute` option requires `css-loader` with option `root: ''`.
@@ -50,12 +52,12 @@ The target for the next major version
   * [Breaking] Multiple options changed
   * [Breaking] Root can only be empty or absolute path (like css-loader)
 
-- [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
+- [ ] Publish 3.0.0-alpha1
 
 - [ ] Automated tests II
 
   * test-my-cli
-  - [ ] allow `layer` to further nest `root` directory
+  - [x] allow `layer` to further nest `root` directory
 
   * resolve-url-loader-filesearch
   - [ ] check `searchJoin`

@@ -1,84 +1,71 @@
 'use strict';
 
-const sequence = require('promise-compose');
-const {test, layer, unlayer, env} = require('test-my-cli');
+const {test, layer, env} = require('test-my-cli');
 
 exports.testDefault = (...rest) =>
   test(
     'default',
-    sequence(
-      layer(
-        env({
-          DEVTOOL: '"source-map"',
-          LOADER_QUERY: 'sourceMap',
-          LOADER_OPTIONS: {sourceMap: true},
-          LOADER_JOIN: '',
-          CSS_QUERY: 'sourceMap',
-          CSS_OPTIONS: {sourceMap: true},
-          OUTPUT: 'build--default'
-        })
-      ),
-      ...rest,
-      unlayer
+    layer()(
+      env({
+        DEVTOOL: '"source-map"',
+        LOADER_QUERY: 'sourceMap',
+        LOADER_OPTIONS: {sourceMap: true},
+        LOADER_JOIN: '',
+        CSS_QUERY: 'sourceMap',
+        CSS_OPTIONS: {sourceMap: true},
+        OUTPUT: 'default'
+      }),
+      ...rest
     )
   );
 
 exports.testAbsolute = (...rest) =>
   test(
     'absolute=true',
-    sequence(
-      layer(
-        env({
-          DEVTOOL: '"source-map"',
-          LOADER_QUERY: 'sourceMap&absolute',
-          LOADER_OPTIONS: {sourceMap: true, absolute: true},
-          LOADER_JOIN: '',
-          CSS_QUERY: 'sourceMap&root=',
-          CSS_OPTIONS: {sourceMap: true, root: ''},
-          OUTPUT: 'build--absolute'
-        })
-      ),
-      ...rest,
-      unlayer
+    layer()(
+      env({
+        DEVTOOL: '"source-map"',
+        LOADER_QUERY: 'sourceMap&absolute',
+        LOADER_OPTIONS: {sourceMap: true, absolute: true},
+        LOADER_JOIN: '',
+        CSS_QUERY: 'sourceMap&root=',
+        CSS_OPTIONS: {sourceMap: true, root: ''},
+        OUTPUT: 'absolute'
+      }),
+      ...rest
     )
   );
 
 exports.testDebug = (...rest) =>
   test(
     'debug=true',
-    sequence(
-      layer(
-        env({
-          DEVTOOL: '"source-map"',
-          LOADER_QUERY: 'sourceMap&debug',
-          LOADER_OPTIONS: {sourceMap: true, debug: true},
-          LOADER_JOIN: '',
-          CSS_QUERY: 'sourceMap',
-          CSS_OPTIONS: {sourceMap: true},
-          OUTPUT: 'build--debug'
-        })
-      ),
-      ...rest,
-      unlayer
+    layer()(
+      env({
+        DEVTOOL: '"source-map"',
+        LOADER_QUERY: 'sourceMap&debug',
+        LOADER_OPTIONS: {sourceMap: true, debug: true},
+        LOADER_JOIN: '',
+        CSS_QUERY: 'sourceMap',
+        CSS_OPTIONS: {sourceMap: true},
+        OUTPUT: 'debug'
+      }),
+      ...rest
     )
   );
 
 exports.testKeepQuery = (...rest) =>
   test(
     'keepQuery=true',
-    sequence(
-      layer(
-        env({
-          DEVTOOL: '"source-map"',
-          LOADER_QUERY: 'sourceMap&keepQuery',
-          LOADER_OPTIONS: {sourceMap: true, keepQuery: true},
-          LOADER_JOIN: '',
-          CSS_QUERY: 'sourceMap',
-          CSS_OPTIONS: {sourceMap: true},
-          OUTPUT: 'build--keep-query'
-        })
-      ),
-      ...rest,
-      unlayer
+    layer()(
+      env({
+        DEVTOOL: '"source-map"',
+        LOADER_QUERY: 'sourceMap&keepQuery',
+        LOADER_OPTIONS: {sourceMap: true, keepQuery: true},
+        LOADER_JOIN: '',
+        CSS_QUERY: 'sourceMap',
+        CSS_OPTIONS: {sourceMap: true},
+        OUTPUT: 'keep-query'
+      }),
+      ...rest
     )
   );

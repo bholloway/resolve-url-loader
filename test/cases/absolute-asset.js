@@ -1,15 +1,13 @@
 'use strict';
 
-const {dirname, join} = require('path');
+const {join} = require('path');
 const compose = require('compose-function');
-const sequence = require('promise-compose');
 const outdent = require('outdent');
-const {layer, unlayer, fs, env, cwd, exec} = require('test-my-cli');
+const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
-const {
-  assertExitCodeZero, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages
-} = require('./lib/assert');
+const {assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages} =
+  require('./lib/assert');
 const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
@@ -43,45 +41,42 @@ const assertSources = assertCssSourceMap([
 
 const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
 
-module.exports = (engineDir) =>
-  sequence(
-    layer(
-      cwd('.'),
-      fs({
-        'package.json': join(engineDir, 'package.json'),
-        'webpack.config.js': join(engineDir, './webpack.config.js'),
-        'src/index.scss': outdent`
-          @import "feature/index.scss";
-          .another-class-name {
-            display: block;
+module.exports = (engineDir) => test(
+  'absolute-asset',
+  layer('absolute-asset')(
+    cwd('.'),
+    fs({
+      'package.json': join(engineDir, 'package.json'),
+      'webpack.config.js': join(engineDir, 'webpack.config.js'),
+      'node_modules': compose(withRebase, join)('..', '..', 'node_modules'),
+      'src/index.scss': outdent`
+        @import "feature/index.scss";
+        .another-class-name {
+          display: block;
+        }
+        `,
+      'src/feature/index.scss': ({root}) => {
+        const filepath = join(root, 'images', 'img.jpg');
+        // escape windows absolute path with forward slashes
+        return outdent`
+          .some-class-name {
+            single-quoted: url('${escape(filepath, 2)}');
+            double-quoted: url("${escape(filepath, 2)}");
+            unquoted: url(${escape(filepath, 1)});
+            query: url(${escape(filepath, 1)}?query);
+            hash: url(${escape(filepath, 1)}#hash);
           }
-          `,
-        'src/feature/index.scss': ({root}) => {
-          const filepath = join(root, 'images', 'img.jpg');
-          // escape windows absolute path with forward slashes
-          return outdent`
-            .some-class-name {
-              single-quoted: url('${escape(filepath, 2)}');
-              double-quoted: url("${escape(filepath, 2)}");
-              unquoted: url(${escape(filepath, 1)});
-              query: url(${escape(filepath, 1)}?query);
-              hash: url(${escape(filepath, 1)}#hash);
-            }
-            `;
-        },
-        'images/img.jpg': require.resolve('./assets/blank.jpg')
-      }),
-      env({
-        PATH: dirname(process.execPath),
-        ENTRY: join('src', 'index.scss')
-      }),
-      env({
-        LOADER_QUERY: 'root=',
-        LOADER_OPTIONS: ({root: ''})
-      }),
-      exec('npm install')
-    ),
-    assertExitCodeZero('npm install'),
+          `;
+      },
+      'images/img.jpg': require.resolve('./assets/blank.jpg')
+    }),
+    env({
+      ENTRY: join('src', 'index.scss')
+    }),
+    env({
+      LOADER_QUERY: 'root=',
+      LOADER_OPTIONS: ({root: ''})
+    }),
     testDefault(
       devNormal(
         assertNoDebug,
@@ -246,6 +241,6 @@ module.exports = (engineDir) =>
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       )
-    ),
-    unlayer
-  );
+    )
+  )
+);

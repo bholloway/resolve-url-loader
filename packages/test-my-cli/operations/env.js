@@ -6,39 +6,37 @@ const {isMatch} = require('micromatch');
 const {assign, keys} = Object;
 
 const joi = require('../lib/joi');
+const {assertInLayer} = require('../lib/assert');
 const {lens, sequence} = require('../lib/promise');
 const {operation, assertInOperation} = require('../lib/operation');
-const {assertInLayer} = require('../lib/assert');
 const {env} = require('../lib/assert/env');
 
 const NAME = basename(__filename).slice(0, -3);
 
-const createMerge = ({merge, transform, base}) => {
-  return (key, previous, current) => {
-    const mergeKey = keys(merge).find((pattern) => isMatch(key, pattern));
-    const mergeFn = (typeof merge[mergeKey] === 'function') ? merge[mergeKey] : ((_, x) => x);
+const createMerge = ({merge, base}) => (key, previous, current) => {
+  const mergeKey = keys(merge).find((pattern) => isMatch(key, pattern));
+  const mergeFn = (typeof merge[mergeKey] === 'function') ? merge[mergeKey] : ((_, x) => x);
 
-    switch (true) {
-      case (key in previous) && (key in current):
-        return mergeFn(previous[key], current[key]);
+  switch (true) {
+    case (key in previous) && (key in current):
+      return mergeFn(previous[key], current[key]);
 
-      case (key in base) && (key in current):
-        return mergeFn(base[key], current[key]);
+    case (key in base) && (key in current):
+      return mergeFn(base[key], current[key]);
 
-      case (key in current):
-        return current[key];
+    case (key in current):
+      return current[key];
 
-      case (key in previous):
-        return previous[key];
+    case (key in previous):
+      return previous[key];
 
-      default:
-        throw new Error('Reached an illegal state');
-    }
-  };
+    default:
+      throw new Error('Reached an illegal state');
+  }
 };
 
-const createInvoke = (context) => (candidate) =>
-  (typeof candidate === 'function') ? candidate(context) : candidate;
+const createInvoke = (layer) => (candidate) =>
+  (typeof candidate === 'function') ? candidate(layer) : candidate;
 
 const stringify = (candidate) =>
   (typeof candidate === 'string') ? candidate : JSON.stringify(candidate);
@@ -53,46 +51,34 @@ exports.schema = {
  * or previous layers.
  *
  * @param {object} hash A hash of ENV values
- * @return {function(Array):Array} A pure function of layers
+ * @return {function(object):Promise} A pure async function of the test context
  */
 exports.create = (hash) => {
   joi.assert(hash, env.required(), 'single hash of ENV:value');
 
-  return compose(operation(NAME), lens('layers', 'layers'), sequence)(
-    assertInLayer(`${NAME}() may only be used inside layer()`),
+  return compose(operation(NAME), lens('layer', 'layer.env'), sequence)(
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
-    (layers, {root, merge}, log) => {
+    assertInLayer(`${NAME}() must be used within layer()`),
+    (layer, {merge}, log) => {
+      const {index, env: prevEnv = {}} = layer;
       const mergeValue = compose(stringify, createMerge({merge, base: process.env}));
-      const invoke = createInvoke({root});
-      const currentHash = keys(hash)
-        .reduce((r, k) => assign(r, {[k]: invoke(hash[k])}), {});
 
-      // we need to refer to the last env() in this layer, or failing that, previous layers
-      // doing this by index is less terse but we want that information for debug
-      const i = layers.findIndex(({env}) => !!env);
-      const previousLayerN = (i < 0) ? 0 : layers.length - i;
-      const {env: previousGetter = () => ({})} = (i < 0) ? {} : layers[i];
+      // evaluate the current values
+      const invoke = createInvoke(layer);
+      const additionalEnv = keys(hash).reduce((r, k) => assign(r, {[k]: invoke(hash[k])}), {});
 
       // merge the current hash with previous values
-      return Promise.resolve()
-        .then(previousGetter)
-        .then((previousHash) => {
-          // merge the given hash with the previous one
-          const result = [...keys(previousHash), ...keys(currentHash)]
-            .filter((v, i, a) => (a.indexOf(v) === i))
-            .reduce((r, k) => assign(r, {[k]: mergeValue(k, previousHash, currentHash)}), {});
+      const nextEnv = [...keys(prevEnv), ...keys(additionalEnv)]
+        .filter((v, i, a) => (a.indexOf(v) === i))
+        .reduce((r, k) => assign(r, {[k]: mergeValue(k, prevEnv, additionalEnv)}), {});
 
-          // remember that layers are backwards with most recent first
-          log(
-            [`layer ${layers.length}`, previousLayerN && `layer ${previousLayerN}`]
-              .filter(Boolean).join(' -> '),
-            JSON.stringify(currentHash),
-            JSON.stringify(result)
-          );
+      log(
+        `layer ${index}`,
+        JSON.stringify(additionalEnv),
+        JSON.stringify(nextEnv)
+      );
 
-          const [layer, ...rest] = layers;
-          return [assign({}, layer, {env: () => result}), ...rest];
-        });
+      return nextEnv;
     }
   );
 };

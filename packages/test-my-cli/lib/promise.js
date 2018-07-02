@@ -2,7 +2,7 @@
 
 const sequence = require('promise-compose');
 const getValue = require('get-value');
-const setValue = require('set-value');
+const {set: setValue} = require('object-path-immutable');
 const {assign} = Object;
 
 /**
@@ -55,6 +55,8 @@ exports.lens = (gets, set) => {
 
 /**
  * A higher-order-function where the given functions occur in sequence.
+ *
+ * It differs from simple promise-compose in that additional invariant arguments are applied to each element function.
  *
  * @param {...function} fns Any number of functions to perform sequentially
  * @retuns {function(...*):Promise}

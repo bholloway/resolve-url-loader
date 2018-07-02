@@ -1,11 +1,9 @@
 'use strict';
 
-const repeat = require('repeat-element');
-
 const joi = require('../joi');
 const {context} = require('./context');
 const {exec} = require('./exec');
-const {layer, sealedLayer, unsealedLayer} = require('./layer');
+const {inLayer} = require('./layer');
 
 const assertSchema = (...schemas) => {
   joi.assert(
@@ -24,25 +22,10 @@ const assertSchema = (...schemas) => {
 };
 exports.assertSchema = assertSchema;
 
-exports.assertTape = assertSchema(
-  joi.test().instanceofTape()
-);
+exports.assertTape = assertSchema(joi.test().instanceofTape());
 
 exports.assertContext = assertSchema(context);
 
 exports.assertExec = assertSchema(exec);
 
-exports.assertInLayer = assertSchema(
-  joi.array().ordered(
-    unsealedLayer.required(),
-    ...repeat(sealedLayer.optional(), 30)
-  )
-);
-
-exports.assertOutLayer = assertSchema(
-  joi.array().items(sealedLayer.optional())
-);
-
-exports.assertLayers = assertSchema(
-  joi.array().items(layer).min(1)
-);
+exports.assertInLayer = assertSchema(inLayer);
