@@ -1,6 +1,6 @@
 'use strict';
 
-const {dirname, join} = require('path');
+const {join} = require('path');
 const compose = require('compose-function');
 const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
@@ -77,7 +77,6 @@ module.exports = (engineDir) => test(
       'packageB/images/img.jpg': require.resolve('./assets/blank.jpg')
     }),
     env({
-      PATH: dirname(process.execPath),
       ENTRY: join('src', 'index.scss')
     }),
     testDefault(
