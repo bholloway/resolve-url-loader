@@ -43,10 +43,9 @@ exports.create = (name, fn) => {
         assign({}, context1, {test: test0});
 
       // fix race condition with blue-tape ending the test before next test is defined
-      //  (testing shows 5ms should be enough but use 20ms to be sure)
       const delayTape = sequence(
         () => log(`test: ${name}: waiting to end`),
-        () => new Promise(resolve => setTimeout(resolve, 20)),
+        () => new Promise(resolve => setTimeout(resolve, 50)),
         () => log(`test: ${name}: actual end`)
       );
 
