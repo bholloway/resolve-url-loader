@@ -8,7 +8,8 @@ const templateFn = require('adjust-sourcemap-loader')
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].[contenthash].css',
-  disable: false
+  disable: false,
+  allChunks: true
 });
 
 module.exports = {
