@@ -14,7 +14,7 @@ var path              = require('path'),
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
 var valueProcessor = require('./lib/value-processor');
-var defaultJoin    = require('./lib/default-join');
+var joinFn         = require('./lib/join-function');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -55,7 +55,7 @@ function resolveUrlLoader(content, sourceMap) {
       keepQuery: false,
       root     : false,
       debug    : false,
-      join     : defaultJoin
+      join     : joinFn.defaultJoin
     }
   );
 
@@ -77,7 +77,7 @@ function resolveUrlLoader(content, sourceMap) {
   if ('fail' in options) {
     handleException(
       'loader misconfiguration',
-      '"fail" option is discontinued',
+      '"fail" option is defunct',
       false
     );
   }
@@ -191,7 +191,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   function onFailure(error) {
-    callback(null, handleException('Error in CSS', error, true));
+    callback(null, handleException('error in CSS', error, true));
   }
 
   /**
@@ -205,7 +205,7 @@ function resolveUrlLoader(content, sourceMap) {
     var rest = (typeof exception === 'string') ? [exception] :
                (exception instanceof Error) ? [exception.message, exception.stack.split('\n')[1].trim()] :
                [];
-    var instance = new Error(PACKAGE_NAME + ' cannot operate: ' + [label].concat(rest).filter(Boolean).join('\n  '));
+    var instance = new Error(PACKAGE_NAME + ': ' + [label].concat(rest).filter(Boolean).join('\n  '));
     if (isCritical) {
       loader.emitError(instance);
     }
@@ -217,4 +217,4 @@ function resolveUrlLoader(content, sourceMap) {
 
 }
 
-module.exports = Object.assign(resolveUrlLoader, {defaultJoin: defaultJoin});
+module.exports = Object.assign(resolveUrlLoader, joinFn);

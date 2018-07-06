@@ -31,7 +31,7 @@ module.exports = {
     }]
   },
   plugins: [
-    new ExtractTextPlugin('css', '[name].[md5:contenthash:hex].css')
+    new ExtractTextPlugin('css', '[name].[md5:contenthash:hex].css', { allChunks: true })
   ],
   resolveUrlLoader: {
     join: process.env.LOADER_JOIN ?

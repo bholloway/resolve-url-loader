@@ -5,9 +5,12 @@ const {join, relative} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
 const ms = require('ms');
+const outdent = require('outdent');
+const escapeString = require('escape-string-regexp');
 const {assert} = require('test-my-cli');
+const {assign} = Object;
 
-const {excludingQuotes, unique, findMultilineMessages} = require('./util');
+const {excludingQuotes, unique} = require('./util');
 const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./higher-order');
 
 const subdir = ({root, cwd, env: {OUTPUT}}) =>
@@ -128,17 +131,19 @@ exports.assertAssetFiles = (fieldOrExpected) =>
     }
   });
 
-exports.assertDebugMessages = (regexStart, regexStop) => {
-  const find = findMultilineMessages(regexStart, regexStop);
+exports.assertDebugMsg = (strings, ...substitutions) => {
+  const getRaw = () => [].concat(strings.raw || strings);
+  const text = assign(getRaw(), {raw: getRaw()});
+  const source = outdent(text, ...substitutions.map(v => escapeString(v)));
+  const pattern = new RegExp(source, 'gm');
 
-  return (fieldOrExpected) =>
-    assert(({equal, looseEqual}, context) => {
-      const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
-      const messages = compose(unique, find)(context.stdout);
-      if (!expected) {
-        equal(messages.length, 0, 'should be free of debug messages');
-      } else {
-        looseEqual(messages, expected, 'should output expected debug messages');
-      }
-    });
+  return (fieldOrExpected) => assert(({equal}, context) => {
+    const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+    const matches = context.stdout.match(pattern) || [];
+    if (!expected) {
+      equal(matches.length, 0, 'should be free of debug messages');
+    } else {
+      equal(matches.length, expected, 'should output expected debug messages');
+    }
+  });
 };

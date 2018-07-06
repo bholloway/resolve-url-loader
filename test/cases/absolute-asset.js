@@ -6,8 +6,7 @@ const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
-const {assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMessages} =
-  require('./lib/assert');
+const {assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMsg} = require('./lib/assert');
 const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
@@ -39,7 +38,7 @@ const assertSources = assertCssSourceMap([
   '/src/index.scss'
 ]);
 
-const assertNoDebug = assertDebugMessages(/^resolve-url-loader/)(false);
+const assertNoDebug = assertDebugMsg('^[ ]*resolve-url-loader:')(0);
 
 module.exports = (engineDir) => test(
   'absolute-asset',
