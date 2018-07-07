@@ -32,6 +32,41 @@ readdirSync(join(__dirname, 'engines'))
     cases.forEach((caseName) => console.log(engineName, caseName));
 
     if (cases.length) {
+
+      // common and/or cached node-modules cuts test time drastically
+      const cacheDir = join(process.cwd(), 'tmp', '.cache', engineName);
+      const engineFiles = readdirSync(engineDir)
+        .reduce((hash, file) => assign(hash, {[file]: join(engineDir, file)}), {});
+
+      tape(
+        engineName,
+        sequence(
+          init({
+            directory: [process.cwd(), join('tmp', '.cache'), engineName],
+            ttl: false,
+            debug: (process.env.DEBUG === 'true'),
+            env: {
+              merge: {
+                'PATH': (...elements) => elements.join((platform === 'win32') ? ';' : ':')
+              }
+            },
+            layer: {
+              keep: true
+            }
+          }),
+          layer()(
+            cwd('.'),
+            fs(engineFiles),
+            env({
+              PATH: dirname(process.execPath)
+            }),
+            exec('npm install'),
+            assertExitCodeZero('npm install')
+          )
+        )
+      );
+
+      // test cases are a function of the cache directory
       tape(
         engineName,
         sequence(
@@ -51,20 +86,12 @@ readdirSync(join(__dirname, 'engines'))
               keep: (process.env.KEEP === 'true')
             }
           }),
-          // common node-modules cuts test time in half
           layer()(
-            cwd('.'),
-            fs({
-              'package.json': join(engineDir, 'package.json'),
-              'node_modules': null
-            }),
             env({
               PATH: dirname(process.execPath)
             }),
-            exec('npm install'),
-            assertExitCodeZero('npm install'),
-            layer('cases')(
-              ...cases.map((caseName) => require(`./cases/${caseName}`)(engineDir))
+            layer()(
+              ...cases.map((caseName) => require(`./cases/${caseName}`)(cacheDir))
             )
           )
         )
