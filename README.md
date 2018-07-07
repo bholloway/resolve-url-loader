@@ -36,8 +36,11 @@ The target for the next major version
   - [x] check `absolute` option
   - [x] check `debug` option
   - [x] check `root` option
-  - [ ] check defunct options lead to warnings
-  - [ ] check `silent` option supresses warnings
+  - [x] check defunct options lead to warnings
+  - [x] check `silent` option supresses warnings
+  - [x] check invalid `join` and `root` options lead to errors
+  - [x] check `silent` option doesn't supresses errors
+  - [x] check bad CSS gives expected error
 
 - [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
 

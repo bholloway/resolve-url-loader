@@ -96,7 +96,7 @@ function valueProcessor(filePath, options) {
    * @return {boolean} True for absolute uri
    */
   function testIsAbsolute(uri) {
-    return !!uri && (options.root !== false) && loaderUtils.isUrlRequest(uri, options.root) &&
+    return !!uri && (typeof options.root === 'string') && loaderUtils.isUrlRequest(uri, options.root) &&
       (/^\//.test(uri) || path.isAbsolute(uri));
   }
 }

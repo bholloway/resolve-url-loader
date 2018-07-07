@@ -6,7 +6,9 @@ const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
-const {assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertDebugMsg} = require('./lib/assert');
+const {
+  assertWebpackOk, assertNoErrors, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertStdout
+} = require('./lib/assert');
 const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
@@ -35,13 +37,15 @@ const assertSources = assertCssSourceMap([
   '/src/index.scss'
 ]);
 
-const assertNoDebug = assertDebugMsg('^[ ]*resolve-url-loader:')(0);
+const assertNoMessages = assertStdout()`
+  ^[ ]*resolve-url-loader:
+  `(0); /* jshint ignore:line */
 
-const assertDebugJoins = assertDebugMsg`
+const assertDebugMessages = assertStdout('debug')`
   ^resolve-url-loader:[ ]*${'../../../packageB/images/img.jpg'}
   [ ]+${'./src/feature'}
   [ ]+FOUND$
-  `;
+  `(1); /* jshint ignore:line */
 
 module.exports = (cacheDir) => test(
   'adjacent-asset',
@@ -78,35 +82,45 @@ module.exports = (cacheDir) => test(
     }),
     testDefault(
       devNormal(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -115,35 +129,45 @@ module.exports = (cacheDir) => test(
     ),
     testAbsolute(
       devNormal(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(withRebase(['packageB/images/img.jpg'])),
         assertAssetFiles(false)
       ),
       prodNormal(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(withRebase(['packageB/images/img.jpg'])),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -152,35 +176,45 @@ module.exports = (cacheDir) => test(
     ),
     testDebug(
       devNormal(
-        assertDebugJoins(1),
+        assertWebpackOk,
+        assertNoErrors,
+        assertDebugMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
-        assertDebugJoins(1),
+        assertWebpackOk,
+        assertNoErrors,
+        assertDebugMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodNormal(
-        assertDebugJoins(1),
+        assertWebpackOk,
+        assertNoErrors,
+        assertDebugMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
-        assertDebugJoins(1),
+        assertWebpackOk,
+        assertNoErrors,
+        assertDebugMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['../../packageB/images/img.jpg']),
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
-        assertDebugJoins(1),
+        assertWebpackOk,
+        assertNoErrors,
+        assertDebugMessages,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -189,7 +223,9 @@ module.exports = (cacheDir) => test(
     ),
     testKeepQuery(
       devNormal(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -199,7 +235,9 @@ module.exports = (cacheDir) => test(
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       devWithoutUrl(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls([
@@ -210,7 +248,9 @@ module.exports = (cacheDir) => test(
         assertAssetFiles(false)
       ),
       prodNormal(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -220,7 +260,9 @@ module.exports = (cacheDir) => test(
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
       prodWithoutUrl(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls([
@@ -231,7 +273,9 @@ module.exports = (cacheDir) => test(
         assertAssetFiles(false)
       ),
       prodWithoutDevtool(
-        assertNoDebug,
+        assertWebpackOk,
+        assertNoErrors,
+        assertNoMessages,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls([

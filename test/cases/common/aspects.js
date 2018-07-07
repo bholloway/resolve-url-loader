@@ -2,7 +2,7 @@
 
 const {test, layer, env, exec} = require('test-my-cli');
 
-const {assertWebpackOk, saveOutput} = require('../lib/assert');
+const {saveOutput} = require('../lib/assert');
 
 exports.devNormal = (...rest) =>
   test(
@@ -13,7 +13,6 @@ exports.devNormal = (...rest) =>
       }),
       exec('npm run webpack-d'),
       saveOutput,
-      assertWebpackOk,
       ...rest
     )
   );
@@ -29,7 +28,19 @@ exports.devWithoutUrl = (...rest) =>
       }),
       exec('npm run webpack-d'),
       saveOutput,
-      assertWebpackOk,
+      ...rest
+    )
+  );
+
+exports.devBail = (...rest) =>
+  test(
+    'development-bail',
+    layer()(
+      env({
+        OUTPUT: 'development-bail'
+      }),
+      exec('npm run webpack-d-bail'),
+      saveOutput,
       ...rest
     )
   );
@@ -43,7 +54,6 @@ exports.prodNormal = (...rest) =>
       }),
       exec(`npm run webpack-p`),
       saveOutput,
-      assertWebpackOk,
       ...rest
     )
   );
@@ -59,7 +69,6 @@ exports.prodWithoutUrl = (...rest) =>
       }),
       exec(`npm run webpack-p`),
       saveOutput,
-      assertWebpackOk,
       ...rest
     )
   );
@@ -74,7 +83,19 @@ exports.prodWithoutDevtool = (...rest) =>
       }),
       exec(`npm run webpack-p`),
       saveOutput,
-      assertWebpackOk,
+      ...rest
+    )
+  );
+
+exports.prodBail = (...rest) =>
+  test(
+    'production-bail',
+    layer()(
+      env({
+        OUTPUT: 'production-bail'
+      }),
+      exec(`npm run webpack-p-bail`),
+      saveOutput,
       ...rest
     )
   );

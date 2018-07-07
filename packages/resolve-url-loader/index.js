@@ -33,10 +33,9 @@ function resolveUrlLoader(content, sourceMap) {
 
   // a relative loader.context is a problem
   if (/^\./.test(loader.context)) {
-    return handleException(
+    return handleAsError(
       'webpack misconfiguration',
-      'loader.context is relative, expected absolute',
-      true
+      'loader.context is relative, expected absolute'
     );
   }
 
@@ -61,39 +60,34 @@ function resolveUrlLoader(content, sourceMap) {
 
   // defunct options
   if ('attempts' in options) {
-    handleException(
+    handleAsWarning(
       'loader misconfiguration',
-      '"attempts" option is defunct (consider "join" option if search is needed)',
-      false
+      '"attempts" option is defunct (consider "join" option if search is needed)'
     );
   }
   if ('includeRoot' in options) {
-    handleException(
+    handleAsWarning(
       'loader misconfiguration',
-      '"includeRoot" option is defunct (consider "join" option if search is needed)',
-      false
+      '"includeRoot" option is defunct (consider "join" option if search is needed)'
     );
   }
   if ('fail' in options) {
-    handleException(
+    handleAsWarning(
       'loader misconfiguration',
-      '"fail" option is defunct',
-      false
+      '"fail" option is defunct'
     );
   }
 
   // validate join option
   if (typeof options.join !== 'function') {
-    return handleException(
+    return handleAsError(
       'loader misconfiguration',
-      '"join" option must be a Function',
-      true
+      '"join" option must be a Function'
     );
   } else if (options.join.length !== 1) {
-    return handleException(
+    return handleAsError(
       'loader misconfiguration',
-      '"join" Function must take exactly 1 argument, an options hash',
-      true
+      '"join" Function must take exactly 1 argument, an options hash'
     );
   }
 
@@ -103,17 +97,15 @@ function resolveUrlLoader(content, sourceMap) {
       (path.isAbsolute(options.root) && fs.existsSync(options.root) && fs.statSync(options.root).isDirectory());
 
     if (!isValid) {
-      return handleException(
+      return handleAsError(
         'loader misconfiguration',
-        '"root" option must be an empty string or an absolute path to an existing directory',
-        true
+        '"root" option must be an empty string or an absolute path to an existing directory'
       );
     }
   } else if (options.root !== false) {
-    return handleException(
+    handleAsWarning(
       'loader misconfiguration',
-      '"root" option must be string where used or false where unused',
-      false
+      '"root" option must be string where used or false where unused'
     );
   }
 
@@ -130,10 +122,9 @@ function resolveUrlLoader(content, sourceMap) {
         sourceMap = JSON.parse(sourceMap);
       }
       catch (exception) {
-        return handleException(
+        return handleAsError(
           'source-map error',
-          'cannot parse source-map string (from less-loader?)',
-          true
+          'cannot parse source-map string (from less-loader?)'
         );
       }
     }
@@ -144,10 +135,9 @@ function resolveUrlLoader(content, sourceMap) {
       absSourceMap = adjustSourceMap(loader, {format: 'absolute'}, sourceMap);
     }
     catch (exception) {
-      return handleException(
+      return handleAsError(
         'source-map error',
-        exception.message,
-        true
+        exception.message
       );
     }
 
@@ -159,10 +149,9 @@ function resolveUrlLoader(content, sourceMap) {
   var enginePath    = /^\w+/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
   var isValidEngine = fs.existsSync(enginePath);
   if (!isValidEngine) {
-    return handleException(
+    return handleAsError(
       'loader misconfiguration',
-      '"engine" option is not valid',
-      true
+      '"engine" option is not valid'
     );
   }
 
@@ -175,8 +164,8 @@ function resolveUrlLoader(content, sourceMap) {
       absSourceMap        : absSourceMap,
       sourceMapConsumer   : sourceMapConsumer
     }))
-    .then(onSuccess)
-    .catch(onFailure);
+    .catch(onFailure)
+    .then(onSuccess);
 
   function onSuccess(reworked) {
     // complete with source-map
@@ -191,30 +180,49 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   function onFailure(error) {
-    callback(null, handleException('error in CSS', error, true));
+    callback(null, handleAsError('CSS error', error));
   }
 
   /**
-   * Push an error for the given exception and return the original content.
+   * Push a warning for the given exception and return the original content.
    * @param {string} label Summary of the error
    * @param {string|Error} [exception] Optional extended error details
-   * @param {boolean} [isCritical] Optionally force display
    * @returns {string} The original CSS content
    */
-  function handleException(label, exception, isCritical) {
-    var rest = (typeof exception === 'string') ? [exception] :
-               (exception instanceof Error) ? [exception.message, exception.stack.split('\n')[1].trim()] :
-               [];
-    var instance = new Error(PACKAGE_NAME + ': ' + [label].concat(rest).filter(Boolean).join('\n  '));
-    if (isCritical) {
-      loader.emitError(instance);
-    }
-    else if (!options.silent) {
-      loader.emitWarning(instance);
+  function handleAsWarning(label, exception) {
+    if (!options.silent) {
+      loader.emitWarning(encodeError(label, exception));
     }
     return content;
   }
 
+  /**
+   * Push a warning for the given exception and return the original content.
+   * @param {string} label Summary of the error
+   * @param {string|Error} [exception] Optional extended error details
+   * @returns {string} The original CSS content
+   */
+  function handleAsError(label, exception) {
+    loader.emitError(encodeError(label, exception));
+    return content;
+  }
+
+  function encodeError(label, exception) {
+    return new Error(
+      [
+        PACKAGE_NAME,
+        ': ',
+        [label]
+          .concat(
+            (typeof exception === 'string') && exception ||
+            (exception instanceof Error) && [exception.message, exception.stack.split('\n')[1].trim()] ||
+            []
+          )
+          .filter(Boolean)
+          .join('\n  ')
+      ].join('')
+    );
+  }
 }
 
 module.exports = Object.assign(resolveUrlLoader, joinFn);

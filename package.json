@@ -13,6 +13,8 @@
     "blue-tape": "^1.0.0",
     "compose-function": "^3.0.3",
     "es6-promisify": "^6.0.0",
+    "get-value": "^3.0.0",
+    "has-prop": "^0.1.2",
     "joi": "^12.0.0",
     "micromatch": "^3.1.10",
     "ms": "^2.1.1",

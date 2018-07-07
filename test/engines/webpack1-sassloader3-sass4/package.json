@@ -12,6 +12,8 @@
   },
   "scripts": {
     "webpack-d": "webpack -d",
-    "webpack-p": "webpack -p"
+    "webpack-d-bail": "webpack -d --bail",
+    "webpack-p": "webpack -p",
+    "webpack-p-bail": "webpack -p --bail"
   }
 }
