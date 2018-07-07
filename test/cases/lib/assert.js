@@ -5,6 +5,8 @@ const {join, relative} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
 const ms = require('ms');
+const get = require('get-value');
+const has = require('has-prop');
 const outdent = require('outdent');
 const escapeString = require('escape-string-regexp');
 const {assert} = require('test-my-cli');
@@ -15,6 +17,11 @@ const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssA
 
 const subdir = ({root, cwd, env: {OUTPUT}}) =>
   relative(root, join(cwd, OUTPUT));
+
+const resolveValue = (context, candidate) =>
+  (typeof candidate === 'function') ? candidate(context) :
+    (typeof candidate === 'string') && has(context, candidate) ? get(context, candidate) :
+      candidate;
 
 const assertCss = compose(
   assert,
@@ -36,21 +43,26 @@ exports.assertExitCodeZero = (message) =>
     (code === 0) ? pass(`${message} (${ms(Math.round(time), {long: true})})`) : fail(stderr)
   );
 
-exports.assertWebpackOk = sequence(
-  exports.assertExitCodeZero('webpack'),
+exports.assertExitCodeNonZero = (message) =>
+  assert(({pass, fail}, {code}) =>
+    (code === 0) ? fail(`${message} unexpectantly exited cleanly`) : pass(`${message} should not exit cleanly`)
+  );
 
-  assert(({pass, fail}, {stdout}) => {
-    const lines = stdout.split('\n');
-    const start = lines.findIndex(line => /\bERROR\b/.test(line));
-    if (start < 0) {
-      pass('should be free of compile errors');
-    } else {
-      const end = lines.findIndex((line, i) => line.trim() === '' && i > start) || lines.length;
-      const error = lines.slice(start, end).join('\n');
-      return fail(error);
-    }
-  })
-);
+exports.assertWebpackOk = exports.assertExitCodeZero('webpack');
+
+exports.assertWebpackNotOk = exports.assertExitCodeNonZero('webpack');
+
+exports.assertNoErrors = assert(({pass, fail}, {stdout}) => {
+  const lines = stdout.split('\n');
+  const start = lines.findIndex(line => /\bERROR\b/.test(line));
+  if (start < 0) {
+    pass('should be free of compile errors');
+  } else {
+    const end = lines.findIndex((line, i) => line.trim() === '' && i > start) || lines.length;
+    const error = lines.slice(start, end).join('\n');
+    return fail(error);
+  }
+});
 
 exports.saveOutput = assert((_, exec) => {
   const {root, stdout, stderr} = exec;
@@ -64,7 +76,7 @@ exports.saveOutput = assert((_, exec) => {
 
 exports.assertContent = (fieldOrExpected) =>
   assertCss(({equal}, context, list) => {
-    const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+    const expected = resolveValue(context, fieldOrExpected);
     equal(list.length, 1, 'should yield a single css file');
     if (list.length) {
       const [{content}] = list;
@@ -73,26 +85,28 @@ exports.assertContent = (fieldOrExpected) =>
   });
 
 exports.assertCssSourceMap = (fieldOrExpected) => sequence(
-  assertCss(({ok, notOk}, _, list) => {
+  assertCss(({ok, notOk}, context, list) => {
     if (list.length) {
       const [{sourceMappingURL}] = list;
-      (fieldOrExpected ? ok : notOk)(
+      const expected = resolveValue(context, fieldOrExpected);
+      (expected ? ok : notOk)(
         sourceMappingURL,
         `should ${fieldOrExpected ? '' : 'NOT'} yield sourceMappingURL comment`
       );
     }
   }),
 
-  assertSourceMap(({ok, notOk}, _, list) =>
-    (fieldOrExpected ? ok : notOk)(
+  assertSourceMap(({ok, notOk}, context, list) => {
+    const expected = resolveValue(context, fieldOrExpected);
+    (expected ? ok : notOk)(
       list.length,
       `should ${fieldOrExpected ? '' : 'NOT'} yield css source-map file`
-    )
-  ),
+    );
+  }),
 
   assertSourceMap(({deepLooseEqual, pass}, context, list) => {
     if (list.length) {
-      const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+      const expected = resolveValue(context, fieldOrExpected);
       if (expected) {
         const [{sources}] = list;
         const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
@@ -108,7 +122,7 @@ exports.assertAssetUrls = (fieldOrExpected) =>
   assertCss(({deepLooseEqual, pass}, context, list) => {
     const transform = compose(unique, excludingQuotes);
     if (list.length) {
-      const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+      const expected = resolveValue(context, fieldOrExpected);
       if (expected) {
         const [{assets}] = list;
         deepLooseEqual(transform(assets), transform(expected), 'should yield expected url statements');
@@ -121,7 +135,7 @@ exports.assertAssetUrls = (fieldOrExpected) =>
 exports.assertAssetFiles = (fieldOrExpected) =>
   assertCss(({ok, pass, fail}, context, list) => {
     if (list.length) {
-      const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+      const expected = resolveValue(context, fieldOrExpected);
       const [{base}] = list;
       if (!expected) {
         pass('should NOT expect any assets');
@@ -131,19 +145,25 @@ exports.assertAssetFiles = (fieldOrExpected) =>
     }
   });
 
-exports.assertDebugMsg = (strings, ...substitutions) => {
+exports.assertStdout = (kind) => (strings, ...substitutions) => {
   const getRaw = () => [].concat(strings.raw || strings);
   const text = assign(getRaw(), {raw: getRaw()});
   const source = outdent(text, ...substitutions.map(v => escapeString(v)));
   const pattern = new RegExp(source, 'gm');
 
-  return (fieldOrExpected) => assert(({equal}, context) => {
-    const expected = (typeof fieldOrExpected === 'function') ? fieldOrExpected(context) : fieldOrExpected;
+  return (fieldOrExpected) => assert(({ok, equal}, context) => {
+    const expected = resolveValue(context, fieldOrExpected);
     const matches = context.stdout.match(pattern) || [];
     if (!expected) {
-      equal(matches.length, 0, 'should be free of debug messages');
+      equal(matches.length, 0, ['should be free of', kind, 'messages'].filter(Boolean).join(' '));
     } else {
-      equal(matches.length, expected, 'should output expected debug messages');
+      const range = [].concat(expected);
+      const first = range[0];
+      const last = range[range.length - 1];
+      ok(
+        (matches.length >= first) && (matches.length <= last),
+        [`should output ${range.join(' to ')}`, kind, 'messages'].filter(Boolean).join(' ')
+      );
     }
   });
 };

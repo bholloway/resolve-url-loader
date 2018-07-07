@@ -33,6 +33,13 @@ readdirSync(join(__dirname, 'engines'))
 
     if (cases.length) {
 
+      // infer gross package versions in the engine name
+      const version = engineName
+        .match(/\b\w+\d\b/g)
+        .reduce((r, v) => assign(r, {
+          [v.slice(0, -1)]: parseInt(v.slice(-1))
+        }), {});
+
       // common and/or cached node-modules cuts test time drastically
       const cacheDir = join(process.cwd(), 'tmp', '.cache', engineName);
       const engineFiles = readdirSync(engineDir)
@@ -91,7 +98,7 @@ readdirSync(join(__dirname, 'engines'))
               PATH: dirname(process.execPath)
             }),
             layer()(
-              ...cases.map((caseName) => require(`./cases/${caseName}`)(cacheDir))
+              ...cases.map((caseName) => require(`./cases/${caseName}`)(cacheDir, version))
             )
           )
         )
