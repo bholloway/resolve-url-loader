@@ -43,14 +43,14 @@ const assertDebugJoins = assertDebugMsg`
   [ ]+FOUND$
   `;
 
-module.exports = (engineDir) => test(
+module.exports = (cacheDir) => test(
   'deep-asset',
   layer('deep-asset')(
     cwd('.'),
     fs({
-      'package.json': join(engineDir, 'package.json'),
-      'webpack.config.js': join(engineDir, 'webpack.config.js'),
-      'node_modules': compose(withRebase, join)('..', '..', 'node_modules'),
+      'package.json': join(cacheDir, 'package.json'),
+      'webpack.config.js': join(cacheDir, 'webpack.config.js'),
+      'node_modules': join(cacheDir, 'node_modules'),
       'src/index.scss': outdent`
         @import "feature/index.scss";
         .another-class-name {
