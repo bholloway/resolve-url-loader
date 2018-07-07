@@ -2,6 +2,7 @@
   "name": "resolve-url-loader-filesearch",
   "version": "1.0.0",
   "description": "File search 'magic' for resolve-url-loader",
+  "private": true,
   "main": "index.js",
   "repository": {
     "type": "git",
