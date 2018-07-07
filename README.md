@@ -47,6 +47,7 @@ The target for the next major version
   * [Breaking] File search not supported (`join` option available)
   * [Breaking] Multiple options changed
   * [Breaking] Root can only be empty or absolute path (like css-loader)
+  * [Breaking?] Absolute or root-relative url() needs option `root: ''`
 
 - [ ] Publish 3.0.0-alpha1
 

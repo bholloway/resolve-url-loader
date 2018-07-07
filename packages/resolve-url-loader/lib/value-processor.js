@@ -79,8 +79,9 @@ function valueProcessor(filePath, options) {
   };
 
   /**
-   * The loaderUtils.isUrlRequest() doesn't support windows absolute paths on principle.
-   * Lets handle them regardless of the dogma.
+   * The loaderUtils.isUrlRequest() doesn't support windows absolute paths on principle. We do not subscribe to that
+   * dogma so we add path.isAbsolute() check to allow them.
+   * We also eliminate module relative (~) paths.
    * @param {string|undefined} uri A uri string possibly empty or undefined
    * @return {boolean} True for relative uri
    */
@@ -89,13 +90,14 @@ function valueProcessor(filePath, options) {
   }
 
   /**
-   * The loaderUtils.isUrlRequest() doesn't support windows absolute paths on principle.
-   * Lets handle them regardless of the dogma.
+   * The loaderUtils.isUrlRequest() doesn't support windows absolute paths on principle. We do not subscribe to that
+   * dogma so we add path.isAbsolute() check to allow them.
    * @param {string|undefined} uri A uri string possibly empty or undefined
    * @return {boolean} True for absolute uri
    */
   function testIsAbsolute(uri) {
-    return !!uri && (options.root !== false) && loaderUtils.isUrlRequest(uri, options.root) && path.isAbsolute(uri);
+    return !!uri && (options.root !== false) && loaderUtils.isUrlRequest(uri, options.root) &&
+      (/^\//.test(uri) || path.isAbsolute(uri));
   }
 }
 
