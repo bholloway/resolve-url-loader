@@ -10,6 +10,7 @@ const {init, layer, cwd, fs, env, exec} = require('test-my-cli');
 const {assign} = Object;
 
 const {assertExitCodeZero} = require('./cases/lib/assert');
+const {testBase} = require('./cases/common/tests');
 
 const testIncluded = process.env.ONLY ?
   (...v) => {
@@ -93,13 +94,11 @@ readdirSync(join(__dirname, 'engines'))
               keep: (process.env.KEEP === 'true')
             }
           }),
-          layer()(
+          testBase(
             env({
               PATH: dirname(process.execPath)
             }),
-            layer()(
-              ...cases.map((caseName) => require(`./cases/${caseName}`)(cacheDir, version))
-            )
+            ...cases.map((caseName) => require(`./cases/${caseName}`)(cacheDir, version))
           )
         )
       );

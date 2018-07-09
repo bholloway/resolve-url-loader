@@ -12,7 +12,7 @@ const {
   testSilent, testAttempts, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin, testNonStringRoot,
   testNonExistentRoot, testEngineFail
 } = require('./common/tests');
-const {devNormal, devBail, prodNormal, prodBail} = require('./common/aspects');
+const {buildDevNormal, buildDevBail, buildProdNormal, buildProdBail} = require('./common/builds');
 
 const splitWebpack1 = (a, b) => (context, ...rest) =>
   ((context.layer.meta.version.webpack < 2) ? a : b)(context, ...rest);
@@ -84,13 +84,13 @@ module.exports = (cacheDir, version) => test(
     }),
     testAttempts(
       sequence(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"attempts" option is defunct'),
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"attempts" option is defunct'),
@@ -98,13 +98,13 @@ module.exports = (cacheDir, version) => test(
         )
       ),
       testSilent(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
@@ -114,13 +114,13 @@ module.exports = (cacheDir, version) => test(
     ),
     testIncludeRoot(
       sequence(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"includeRoot" option is defunct'),
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"includeRoot" option is defunct'),
@@ -128,13 +128,13 @@ module.exports = (cacheDir, version) => test(
         )
       ),
       testSilent(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
@@ -144,13 +144,13 @@ module.exports = (cacheDir, version) => test(
     ),
     testFail(
       sequence(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"fail" option is defunct'),
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"fail" option is defunct'),
@@ -158,13 +158,13 @@ module.exports = (cacheDir, version) => test(
         )
       ),
       testSilent(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
@@ -175,27 +175,27 @@ module.exports = (cacheDir, version) => test(
     testNonFunctionJoin(
       splitWebpack1(
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertNonFunctionJoinError
           ),
-          devBail(
+          buildDevBail(
             assertWebpackNotOk
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackOk,
             assertNonFunctionJoinError
           ),
-          prodBail(
+          buildProdBail(
             assertWebpackNotOk
           )
         ),
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackNotOk,
             assertNonFunctionJoinError
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackNotOk,
             assertNonFunctionJoinError
           )
@@ -205,27 +205,27 @@ module.exports = (cacheDir, version) => test(
     testWrongArityJoin(
       splitWebpack1(
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertWrongArityJoinError
           ),
-          devBail(
+          buildDevBail(
             assertWebpackNotOk
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackOk,
             assertWrongArityJoinError
           ),
-          prodBail(
+          buildProdBail(
             assertWebpackNotOk
           )
         ),
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackNotOk,
             assertWrongArityJoinError
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackNotOk,
             assertWrongArityJoinError
           )
@@ -234,13 +234,13 @@ module.exports = (cacheDir, version) => test(
     ),
     testNonStringRoot(
       sequence(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"root" option must be string where used or false where unused'),
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"root" option must be string where used or false where unused'),
@@ -248,13 +248,13 @@ module.exports = (cacheDir, version) => test(
         )
       ),
       testSilent(
-        devNormal(
+        buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
           assertContentDev
         ),
-        prodNormal(
+        buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
           assertNoMessages,
@@ -265,27 +265,27 @@ module.exports = (cacheDir, version) => test(
     testNonExistentRoot(
       splitWebpack1(
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertNonExistentRootError
           ),
-          devBail(
+          buildDevBail(
             assertWebpackNotOk
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackOk,
             assertNonExistentRootError
           ),
-          prodBail(
+          buildProdBail(
             assertWebpackNotOk
           )
         ),
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackNotOk,
             assertNonExistentRootError
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackNotOk,
             assertNonExistentRootError
           )
@@ -295,27 +295,27 @@ module.exports = (cacheDir, version) => test(
     testEngineFail(
       splitWebpack1(
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertCssError
           ),
-          devBail(
+          buildDevBail(
             assertWebpackNotOk
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackOk,
             assertCssError
           ),
-          prodBail(
+          buildProdBail(
             assertWebpackNotOk
           )
         ),
         testNormalAndSilent(
-          devNormal(
+          buildDevNormal(
             assertWebpackNotOk,
             assertCssError
           ),
-          prodNormal(
+          buildProdNormal(
             assertWebpackNotOk,
             assertCssError
           )

@@ -10,7 +10,7 @@ const {
   assertWebpackOk, assertNoErrors, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertStdout
 } = require('./lib/assert');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
-const {devNormal, devWithoutUrl, prodNormal, prodWithoutUrl, prodWithoutDevtool} = require('./common/aspects');
+const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 
 const assertContentDev = compose(assertContent, outdent)`
   .some-class-name {
@@ -69,7 +69,7 @@ module.exports = (cacheDir) => test(
       ENTRY: join('src', 'index.scss')
     }),
     testDefault(
-      devNormal(
+      buildDevNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -81,7 +81,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      devWithoutUrl(
+      buildDevNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -94,7 +94,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodNormal(
+      buildProdNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -106,7 +106,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      prodWithoutUrl(
+      buildProdNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -119,7 +119,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodWithoutDevtool(
+      buildProdNoDevtool(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -133,7 +133,7 @@ module.exports = (cacheDir) => test(
       )
     ),
     testAbsolute(
-      devNormal(
+      buildDevNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -145,7 +145,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      devWithoutUrl(
+      buildDevNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -158,7 +158,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodNormal(
+      buildProdNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -170,7 +170,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      prodWithoutUrl(
+      buildProdNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -183,7 +183,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodWithoutDevtool(
+      buildProdNoDevtool(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -197,7 +197,7 @@ module.exports = (cacheDir) => test(
       )
     ),
     testDebug(
-      devNormal(
+      buildDevNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -209,7 +209,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      devWithoutUrl(
+      buildDevNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -222,7 +222,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodNormal(
+      buildProdNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -234,7 +234,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      prodWithoutUrl(
+      buildProdNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -247,7 +247,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodWithoutDevtool(
+      buildProdNoDevtool(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -261,7 +261,7 @@ module.exports = (cacheDir) => test(
       )
     ),
     testKeepQuery(
-      devNormal(
+      buildDevNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -273,7 +273,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      devWithoutUrl(
+      buildDevNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -286,7 +286,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodNormal(
+      buildProdNormal(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -298,7 +298,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
       ),
-      prodWithoutUrl(
+      buildProdNoUrl(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,
@@ -311,7 +311,7 @@ module.exports = (cacheDir) => test(
         ]),
         assertAssetFiles(false)
       ),
-      prodWithoutDevtool(
+      buildProdNoDevtool(
         assertWebpackOk,
         assertNoErrors,
         assertNoMessages,

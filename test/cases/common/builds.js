@@ -4,7 +4,7 @@ const {test, layer, env, exec} = require('test-my-cli');
 
 const {saveOutput} = require('../lib/assert');
 
-exports.devNormal = (...rest) =>
+exports.buildDevNormal = (...rest) =>
   test(
     'development-normal',
     layer()(
@@ -17,7 +17,7 @@ exports.devNormal = (...rest) =>
     )
   );
 
-exports.devWithoutUrl = (...rest) =>
+exports.buildDevNoUrl = (...rest) =>
   test(
     'development-without-url',
     layer()(
@@ -32,7 +32,7 @@ exports.devWithoutUrl = (...rest) =>
     )
   );
 
-exports.devBail = (...rest) =>
+exports.buildDevBail = (...rest) =>
   test(
     'development-bail',
     layer()(
@@ -45,7 +45,7 @@ exports.devBail = (...rest) =>
     )
   );
 
-exports.prodNormal = (...rest) =>
+exports.buildProdNormal = (...rest) =>
   test(
     'production-normal',
     layer()(
@@ -58,7 +58,7 @@ exports.prodNormal = (...rest) =>
     )
   );
 
-exports.prodWithoutUrl = (...rest) =>
+exports.buildProdNoUrl = (...rest) =>
   test(
     'production-without-url',
     layer()(
@@ -73,7 +73,7 @@ exports.prodWithoutUrl = (...rest) =>
     )
   );
 
-exports.prodWithoutDevtool = (...rest) =>
+exports.buildProdNoDevtool = (...rest) =>
   test(
     'production-without-devtool',
     layer()(
@@ -87,7 +87,7 @@ exports.prodWithoutDevtool = (...rest) =>
     )
   );
 
-exports.prodBail = (...rest) =>
+exports.buildProdBail = (...rest) =>
   test(
     'production-bail',
     layer()(
