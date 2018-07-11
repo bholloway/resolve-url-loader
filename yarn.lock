@@ -1079,10 +1079,6 @@ regex-parser@^2.2.9:
   version "2.2.9"
   resolved "https://registry.npmjs.org/regex-parser/-/regex-parser-2.2.9.tgz#a372f45a248b62976a568037c1b6e60a60599192"
 
-regx@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.npmjs.org/regx/-/regx-1.0.4.tgz#a0ee32c308910902019ca1117ed41b9ddd041b2f"
-
 repeat-element@^1.1.2:
   version "1.1.2"
   resolved "https://registry.npmjs.org/repeat-element/-/repeat-element-1.1.2.tgz#ef089a178d1483baae4d93eb98b4f9e4e11d990a"
