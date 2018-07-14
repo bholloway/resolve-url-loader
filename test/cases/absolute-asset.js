@@ -13,6 +13,7 @@ const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 
+// escape windows absolute path containing forward slashes by using a configurable number of back slashes
 const escape = (text, n) =>
   text.replace(/\\/g, new Array(n).fill('\\').join(''));
 
@@ -44,6 +45,11 @@ const assertNoMessages = assertStdout()`
   ^[ ]*resolve-url-loader:
   `(0); /* jshint ignore:line */
 
+const assertDebugMessages = assertStdout('debug')`
+  ^resolve-url-loader:[ ]*${process.cwd()}.*${join('images', 'img.jpg')}
+  [ ]+FOUND$
+  `(1); /* jshint ignore:line */
+
 module.exports = (cacheDir) => test(
   'absolute-asset',
   layer('absolute-asset')(
@@ -59,15 +65,14 @@ module.exports = (cacheDir) => test(
         }
         `,
       'src/feature/index.scss': ({root}) => {
-        const filepath = join(root, 'images', 'img.jpg');
-        // escape windows absolute path with forward slashes
+        const filePath = join(root, 'images', 'img.jpg');
         return outdent`
           .some-class-name {
-            single-quoted: url('${escape(filepath, 2)}');
-            double-quoted: url("${escape(filepath, 2)}");
-            unquoted: url(${escape(filepath, 1)});
-            query: url(${escape(filepath, 1)}?query);
-            hash: url(${escape(filepath, 1)}#hash);
+            single-quoted: url('${escape(filePath, 2)}');
+            double-quoted: url("${escape(filePath, 2)}");
+            unquoted: url(${escape(filePath, 1)});
+            query: url(${escape(filePath, 1)}?query);
+            hash: url(${escape(filePath, 1)}#hash);
           }
           `;
       },
@@ -178,7 +183,7 @@ module.exports = (cacheDir) => test(
       buildDevNormal(
         assertWebpackOk,
         assertNoErrors,
-        assertNoMessages,
+        assertDebugMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -187,7 +192,7 @@ module.exports = (cacheDir) => test(
       buildDevNoUrl(
         assertWebpackOk,
         assertNoErrors,
-        assertNoMessages,
+        assertDebugMessages,
         assertContentDev,
         assertSources,
         assertAssetUrls(['../images/img.jpg']),
@@ -196,7 +201,7 @@ module.exports = (cacheDir) => test(
       buildProdNormal(
         assertWebpackOk,
         assertNoErrors,
-        assertNoMessages,
+        assertDebugMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
@@ -205,7 +210,7 @@ module.exports = (cacheDir) => test(
       buildProdNoUrl(
         assertWebpackOk,
         assertNoErrors,
-        assertNoMessages,
+        assertDebugMessages,
         assertContentProd,
         assertSources,
         assertAssetUrls(['../images/img.jpg']),
@@ -214,7 +219,7 @@ module.exports = (cacheDir) => test(
       buildProdNoDevtool(
         assertWebpackOk,
         assertNoErrors,
-        assertNoMessages,
+        assertDebugMessages,
         assertContentProd,
         assertCssSourceMap(false),
         assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),

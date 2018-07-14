@@ -4,73 +4,135 @@
  */
 'use strict';
 
-var path    = require('path'),
-    fs      = require('fs'),
-    compose = require('compose-function');
+var path = require('path'),
+  fs = require('fs'),
+  compose = require('compose-function');
 
 var PACKAGE_NAME = require('../package.json').name;
 
+var simpleJoin = compose(path.normalize, path.join);
+
+
 /**
- * A factory for a join function with logging.
+ * The default join function iterates over possible base paths until a suitable join is found.
  *
- * @param {{debug:function|boolean}} options An options hash
+ * The first base path is the fallback for the case where no base paths match.
+ *
+ * Where the uri is absolute (base or iterator absent) then `options.root` is used as the base path.
+ *
+ * @type {function}
  */
-function defaultJoin(options) {
-  var simpleJoin = compose(path.normalize, path.join);
-  var log        = createDebugLogger(options.debug);
+exports.defaultJoin = createJoinForPredicate(
+  function predicate(uri, base, i, next) {
+    var absolute = simpleJoin(base, uri);
+    return fs.existsSync(absolute) ? absolute : next((i === 0) ? absolute : null);
+  }
+);
 
+
+/**
+ * Define a join function by a predicate tests possible base paths from an iterator.
+ *
+ * The predicate accepts the `uri`, `base`, `index` and `next` function. Given the uri and base it should either
+ * return an absolute path as a success value or return a call to `next()`. Any value given to `next()` is considered a
+ * fallback value to use if success does not occur.
+ *
+ * You can write a much simpler function than this if you have specific requirements.
+ *
+ * @param {function} predicate A function that tests values
+ */
+function createJoinForPredicate(predicate) {
   /**
-   * Join function proper.
-   * @param {string|Array.<string>} maybeBase A relative or absolute base path, array thereof, or empty string
-   * @param {string} uri A uri path, relative or absolute
-   * @return {string} Just the uri where base is empty or the uri appended to the base
+   * A factory for a join function with logging.
+   *
+   * @param {{debug:function|boolean,root:string}} options An options hash
    */
-  return function defaultJoinProper(maybeBase, uri) {
-    if (!maybeBase) {
-      return uri;
-    } else {
-      var candidates = [].concat(maybeBase);
-      var absolutes  = candidates.map(joinToBase);
-      var index      = absolutes.findIndex(fs.existsSync);
-      var isFound    = (index >= 0);
-      var filtered   = isFound ? candidates.slice(0, index + 1) : candidates;
+  return function join(options) {
+    var log = createDebugLogger(options.debug);
 
-      log(createJoinMsg, [filtered, uri, isFound]);
+    /**
+     * Join function proper.
+     *
+     * For absolute uri only `uri` will be provided. In this case we substitute any `root` given in options.
+     *
+     * @param {string} uri A uri path, relative or absolute
+     * @param {string|{next:function():string}} [baseOrIteratorOrAbsent] Optional absolute base path or iterator thereof
+     * @return {string} Just the uri where base is empty or the uri appended to the base
+     */
+    return function joinProper(uri, baseOrIteratorOrAbsent) {
+      var iterator =
+        (typeof baseOrIteratorOrAbsent === 'undefined') && {next() { return options.root;           }} ||
+        (typeof baseOrIteratorOrAbsent === 'string'   ) && {next() { return baseOrIteratorOrAbsent; }} ||
+        baseOrIteratorOrAbsent;
 
-      return isFound ? absolutes[index] : absolutes[0];
-    }
+      var result = runIterator([]);
+      log(createJoinMsg, [uri, result, result.isFound]);
 
-    function joinToBase(base) {
-      return simpleJoin(base, uri);
-    }
+      return (typeof result.absolute === 'string') ? result.absolute : uri;
+
+      function runIterator(accumulator) {
+        var base = iterator.next();
+        if (typeof base === 'string') {
+          var element = predicate(uri, base, accumulator.length, next);
+
+          if ((typeof element === 'string') && path.isAbsolute(element)) {
+            return Object.assign(
+              accumulator.concat(base),
+              {isFound: true, absolute: element}
+            );
+          } else if (Array.isArray(element)) {
+            return element;
+          } else {
+            throw new Error('predicate must return an absolute path or the result of calling next()');
+          }
+        } else {
+          return accumulator;
+        }
+
+        function next(fallback) {
+          return runIterator(Object.assign(
+            accumulator.concat(base),
+            (typeof fallback === 'string') && {absolute: fallback}
+          ));
+        }
+      }
+    };
   };
 }
 
-exports.defaultJoin = defaultJoin;
+exports.createJoinForIterator = createJoinForPredicate;
 
 
 /**
  * Format a debug message.
  *
- * @param {Array.<string>} bases Absolute base paths up to and including the found one
  * @param {string} uri A uri path, relative or absolute
+ * @param {Array.<string>} bases Absolute base paths up to and including the found one
  * @param {boolean} isFound Indicates the last base was correct
  * @return {string} Formatted message
  */
-function createJoinMsg(bases, uri, isFound) {
+function createJoinMsg(uri, bases, isFound) {
   return [PACKAGE_NAME + ': ' + uri]
-    .concat(bases.map(relativeBase))
+    .concat(bases.map(formatBase).filter(Boolean))
     .concat(isFound ? 'FOUND' : 'NOT FOUND')
     .join('\n  ');
 
-  function relativeBase(base) {
-    var segments = path.relative(process.cwd(), base)
-      .split(path.sep);
+  /**
+   * If given path is within `process.cwd()` then show relative posix path, otherwise show absolute posix path.
+   *
+   * @param {string} absolute An absolute path
+   * @return {string} A relative or absolute path
+   */
+  function formatBase(absolute) {
+    if (!absolute) {
+      return null;
+    } else {
+      var relative = path.relative(process.cwd(), absolute)
+        .split(path.sep);
 
-    return ['.']
-      .concat(segments)
-      .filter(Boolean)
-      .join('/');
+      return ((relative[0] === '..') ? absolute.split(path.sep) : ['.'].concat(relative).filter(Boolean))
+        .join('/');
+    }
   }
 }
 
@@ -90,7 +152,7 @@ exports.createJoinMsg = createJoinMsg;
  * @return {function(function, array)} A logging function possibly degenerate
  */
 function createDebugLogger(debug) {
-  var log   = !!debug && ((typeof debug === 'function') ? debug : console.log);
+  var log = !!debug && ((typeof debug === 'function') ? debug : console.log);
   var cache = {};
   return log ? actuallyLog : noop;
 
