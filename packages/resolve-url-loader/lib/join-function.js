@@ -26,7 +26,8 @@ exports.defaultJoin = createJoinForPredicate(
   function predicate(uri, base, i, next) {
     var absolute = simpleJoin(base, uri);
     return fs.existsSync(absolute) ? absolute : next((i === 0) ? absolute : null);
-  }
+  },
+  'defaultJoin'
 );
 
 
@@ -40,14 +41,15 @@ exports.defaultJoin = createJoinForPredicate(
  * You can write a much simpler function than this if you have specific requirements.
  *
  * @param {function} predicate A function that tests values
+ * @param {string} [name] Optional name for the resulting join function
  */
-function createJoinForPredicate(predicate) {
+function createJoinForPredicate(predicate, name) {
   /**
    * A factory for a join function with logging.
    *
    * @param {{debug:function|boolean,root:string}} options An options hash
    */
-  return function join(options) {
+  function join(options) {
     var log = createDebugLogger(options.debug);
 
     /**
@@ -97,7 +99,16 @@ function createJoinForPredicate(predicate) {
         }
       }
     };
-  };
+  }
+
+  function toString() {
+    return '[Function: ' + name + ']';
+  }
+
+  return Object.assign(join, name && {
+    valueOf: toString,
+    toString: toString
+  });
 }
 
 exports.createJoinForIterator = createJoinForPredicate;

@@ -7,13 +7,11 @@ const sequence = require('promise-compose');
 const ms = require('ms');
 const get = require('get-value');
 const has = require('has-prop');
-const outdent = require('outdent');
-const escapeString = require('escape-string-regexp');
 const {assert} = require('test-my-cli');
-const {assign} = Object;
 
 const {excludingQuotes, unique} = require('./util');
-const {withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} = require('./higher-order');
+const {withPattern, withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
+  require('./higher-order');
 
 const subdir = ({root, cwd, env: {OUTPUT}}) =>
   relative(root, join(cwd, OUTPUT));
@@ -74,15 +72,19 @@ exports.saveOutput = assert((_, exec) => {
   appendFileSync(join(directory, 'stderr.txt'), stderr);
 });
 
-exports.assertContent = (fieldOrExpected) =>
-  assertCss(({equal}, context, list) => {
-    const expected = resolveValue(context, fieldOrExpected);
-    equal(list.length, 1, 'should yield a single css file');
-    if (list.length) {
-      const [{content}] = list;
-      equal(content, expected, 'should yield expected css content');
-    }
-  });
+exports.assertContent = (find, replace) => {
+  const formatter = find ? (v) => v.split(find).join(replace) : (v) => v;
+
+  return (fieldOrExpected) =>
+    assertCss(({equal}, context, list) => {
+      const expected = resolveValue(context, fieldOrExpected);
+      equal(list.length, 1, 'should yield a single css file');
+      if (list.length) {
+        const [{content}] = list;
+        equal(formatter(content), expected, 'should yield expected css content');
+      }
+    });
+};
 
 exports.assertCssSourceMap = (fieldOrExpected) => sequence(
   assertCss(({ok, notOk}, context, list) => {
@@ -145,15 +147,10 @@ exports.assertAssetFiles = (fieldOrExpected) =>
     }
   });
 
-exports.assertStdout = (kind) => (strings, ...substitutions) => {
-  const getRaw = () => [].concat(strings.raw || strings);
-  const text = assign(getRaw(), {raw: getRaw()});
-  const source = outdent(text, ...substitutions.map(v => escapeString(v)));
-  const pattern = new RegExp(source, 'gm');
-
-  return (fieldOrExpected) => assert(({ok, equal}, context) => {
+const assertStream = (stream) => (kind) => (fieldOrExpected) => withPattern(
+  (pattern) => assert(({ok, equal}, context) => {
     const expected = resolveValue(context, fieldOrExpected);
-    const matches = context.stdout.match(pattern) || [];
+    const matches = context[stream].match(pattern) || [];
     if (!expected) {
       equal(matches.length, 0, ['should be free of', kind, 'messages'].filter(Boolean).join(' '));
     } else {
@@ -165,5 +162,9 @@ exports.assertStdout = (kind) => (strings, ...substitutions) => {
         [`should output ${range.join(' to ')}`, kind, 'messages'].filter(Boolean).join(' ')
       );
     }
-  });
-};
+  })
+);
+
+exports.assertStdout = assertStream('stdout');
+
+exports.assertStderr = assertStream('stderr');

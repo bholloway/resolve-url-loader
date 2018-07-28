@@ -33,10 +33,6 @@ function process(sourceFile, sourceContent, params) {
         sourcesContent: false
       }
     })
-    .then(result => {
-      console.error(result.css);
-      return result;
-    })
     .then(result => ({
       content: result.css,
       map    : params.outputSourceMap ? fileProtocol.remove(result.map.toJSON()) : null

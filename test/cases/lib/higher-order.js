@@ -6,11 +6,27 @@ const {promisify} = require('es6-promisify');
 const listDir = require('recursive-readdir');
 const compose = require('compose-function');
 const Joi = require('joi');
+const outdent = require('outdent');
+const escapeString = require('escape-string-regexp');
 const {assign} = Object;
 
 exports.withRebase = (listOrString) => ({root}) => {
   const transform = compose(v => v.replace(/\\/g, '/'), normalize, join);
   return Array.isArray(listOrString) ? listOrString.map((v) => transform(root, v)) : transform(root, listOrString);
+};
+
+/**
+ * A factory for a higher-order-function that wraps a function of RegExp with template literal.
+ *
+ * @param {Array.<string>} strings Template literal strings
+ * @param {...*} substitutions Any number of template literal substitutions
+ * @return {function(function)} A higher-order-function of the assert function
+ */
+exports.withPattern = (next) => (strings, ...substitutions) => {
+  const raw  = [].concat(strings.raw || strings);
+  const text = assign(raw.slice(), {raw});
+  const source = outdent(text, ...substitutions.map(v => escapeString(v)));
+  return next(new RegExp(source, 'gm'));
 };
 
 /**
