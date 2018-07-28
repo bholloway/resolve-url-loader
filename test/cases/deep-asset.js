@@ -13,7 +13,7 @@ const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 
-const assertContentDev = compose(assertContent, outdent)`
+const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
   .some-class-name {
     single-quoted: url($0);
     double-quoted: url($1);
@@ -27,7 +27,7 @@ const assertContentDev = compose(assertContent, outdent)`
   }
   `;
 
-const assertContentProd = compose(assertContent, trim)`
+const assertContentProd = compose(assertContent(), trim)`
   .some-class-name{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
   .another-class-name{display:block}
   `;
@@ -37,15 +37,13 @@ const assertSources = assertCssSourceMap([
   '/src/index.scss'
 ]);
 
-const assertNoMessages = assertStdout()`
-  ^[ ]*resolve-url-loader:
-  `(0); /* jshint ignore:line */
+const assertNoMessages = assertStdout()(0)`resolve-url-loader:`;
 
-const assertDebugMessages = assertStdout('debug')`
+const assertDebugMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[ ]*${'images/img.jpg'}
   [ ]+${'./src/feature'}
   [ ]+FOUND$
-  `(1); /* jshint ignore:line */
+  `;
 
 module.exports = (cacheDir) => test(
   'deep-asset',
