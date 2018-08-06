@@ -24,7 +24,7 @@ The target for the next major version
 
 - [x] Move the file search to a separate package as "opt in"
 
-- [ ] Automated tests I
+- [x] Automated tests I
 
   * test-my-cli
   - [x] basic tests
@@ -46,7 +46,7 @@ The target for the next major version
   - [x] check `silent` option doesn't supresses errors
   - [x] check bad CSS gives expected error
 
-- [ ] Attempt a basic Postcss Engine (to ensure restructure is adequate)
+- [x] Attempt a basic Postcss Engine (to ensure restructure is adequate)
 
 - [ ] Rewrite README.md
   * The `absolute` option requires `css-loader` with option `root: ''`.
@@ -55,19 +55,3 @@ The target for the next major version
   * [Breaking] Multiple options changed
   * [Breaking] Root can only be empty or absolute path (like css-loader)
   * [Breaking?] Absolute or root-relative url() needs option `root: ''`
-
-- [ ] Publish 3.0.0-alpha1
-
-- [ ] Automated tests II
-
-  * test-my-cli
-  - [x] allow `layer` to further nest `root` directory
-
-  * resolve-url-loader-filesearch
-  - [ ] check `searchJoin`
-  - [ ] check `verboseSearchJoin`
-  - [ ] check search works and is limited by `attempts` option
-  - [ ] check `includeRoot` option
-
-- [ ] Rewrite README.md
-  - [ ] resolve-url-loader-filesearch
