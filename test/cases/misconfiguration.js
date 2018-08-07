@@ -20,31 +20,32 @@ const splitWebpack1 = (a, b) => (context, ...rest) =>
 const testNormalAndSilent = (...items) =>
   sequence(...items, testSilent(...items));
 
-const assertContentDev = compose(assertContent, outdent)`
+const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
   .some-class-name {
     display: none;
   }
   `;
 
-const assertContentProd = compose(assertContent, trim)`
+const assertContentProd = compose(assertContent(), trim)`
   .some-class-name{display:none}
   `;
 
-const assertNoMessages = assertStdout()`
-  ^[ ]*resolve-url-loader:
-  `(0); /* jshint ignore:line */
+const assertNoMessages = assertStdout()(0)`resolve-url-loader:`;
 
-const assertMisconfigWarning = (message) => assertStdout('warning')`
-  ^[ ]*(WARNING|Module Warning)[^\n]*
-  [ ]*(Error:[ ]*)?resolve-url-loader:[ ]*loader misconfiguration
+const assertMisconfigWarning = (message) => assertStdout('warning')(1)`
+  ^[ ]*WARNING[^\n]*
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
   [ ]+${message}
-  `(1); /* jshint ignore:line */
+  `;
 
-const assertMisconfigError = (message) => assertStdout('error')`
-  ^[ ]*(ERROR|ModuleError)[^\n]*
-  [ ]*(Error:[ ]*)?resolve-url-loader:[ ]*loader misconfiguration
+// Allow 1-4 errors
+//  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
+//  - webpack may repeat errors with a header line taken from the parent loader
+const assertMisconfigError = (message) => assertStdout('error')([1, 4])`
+  ^[ ]*ERROR[^\n]*
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
   [ ]+${message}
-  `([1, 2]); /* jshint ignore:line *//* some webpack versions repeat error with different header line */
+  `;
 
 const assertNonFunctionJoinError = assertMisconfigError(
   '"join" option must be a Function'
@@ -58,11 +59,14 @@ const assertNonExistentRootError = assertMisconfigError(
   '"root" option must be an empty string or an absolute path to an existing directory'
 );
 
-const assertCssError = assertStdout('error')`
-  ^[ ]*(ERROR|ModuleError)[^\n]*
-  [ ]*(Error:[ ]*)?resolve-url-loader:[ ]*CSS error
+// Allow 1-4 errors
+//  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
+//  - webpack may repeat errors with a header line taken from the parent loader
+const assertCssError = assertStdout('error')([1, 4])`
+  ^[ ]*ERROR[^\n]*
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*CSS error
   [ ]+This "engine" is designed to fail, for testing purposes only
-  `([1, 2]); /* jshint ignore:line *//* some webpack versions repeat error with different header line */
+  `;
 
 module.exports = (cacheDir, version) => test(
   'misconfiguration',
@@ -82,6 +86,36 @@ module.exports = (cacheDir, version) => test(
     env({
       ENTRY: join('src', 'index.scss')
     }),
+    testEngineFail(
+      splitWebpack1(
+        testNormalAndSilent(
+          buildDevBail(
+            assertWebpackNotOk
+          ),
+          buildDevNormal(
+            assertWebpackOk,
+            assertCssError
+          ),
+          buildProdBail(
+            assertWebpackNotOk
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertCssError
+          )
+        ),
+        testNormalAndSilent(
+          buildDevNormal(
+            assertWebpackNotOk,
+            assertCssError
+          ),
+          buildProdNormal(
+            assertWebpackNotOk,
+            assertCssError
+          )
+        )
+      )
+    ),
     testAttempts(
       sequence(
         buildDevNormal(
@@ -175,19 +209,19 @@ module.exports = (cacheDir, version) => test(
     testNonFunctionJoin(
       splitWebpack1(
         testNormalAndSilent(
-          buildDevNormal(
-            assertWebpackOk,
-            assertNonFunctionJoinError
-          ),
           buildDevBail(
             assertWebpackNotOk
           ),
-          buildProdNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertNonFunctionJoinError
           ),
           buildProdBail(
             assertWebpackNotOk
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertNonFunctionJoinError
           )
         ),
         testNormalAndSilent(
@@ -205,19 +239,19 @@ module.exports = (cacheDir, version) => test(
     testWrongArityJoin(
       splitWebpack1(
         testNormalAndSilent(
-          buildDevNormal(
-            assertWebpackOk,
-            assertWrongArityJoinError
-          ),
           buildDevBail(
             assertWebpackNotOk
           ),
-          buildProdNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertWrongArityJoinError
           ),
           buildProdBail(
             assertWebpackNotOk
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertWrongArityJoinError
           )
         ),
         testNormalAndSilent(
@@ -265,19 +299,19 @@ module.exports = (cacheDir, version) => test(
     testNonExistentRoot(
       splitWebpack1(
         testNormalAndSilent(
-          buildDevNormal(
-            assertWebpackOk,
-            assertNonExistentRootError
-          ),
           buildDevBail(
             assertWebpackNotOk
           ),
-          buildProdNormal(
+          buildDevNormal(
             assertWebpackOk,
             assertNonExistentRootError
           ),
           buildProdBail(
             assertWebpackNotOk
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertNonExistentRootError
           )
         ),
         testNormalAndSilent(
@@ -288,36 +322,6 @@ module.exports = (cacheDir, version) => test(
           buildProdNormal(
             assertWebpackNotOk,
             assertNonExistentRootError
-          )
-        )
-      )
-    ),
-    testEngineFail(
-      splitWebpack1(
-        testNormalAndSilent(
-          buildDevNormal(
-            assertWebpackOk,
-            assertCssError
-          ),
-          buildDevBail(
-            assertWebpackNotOk
-          ),
-          buildProdNormal(
-            assertWebpackOk,
-            assertCssError
-          ),
-          buildProdBail(
-            assertWebpackNotOk
-          )
-        ),
-        testNormalAndSilent(
-          buildDevNormal(
-            assertWebpackNotOk,
-            assertCssError
-          ),
-          buildProdNormal(
-            assertWebpackNotOk,
-            assertCssError
           )
         )
       )
