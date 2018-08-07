@@ -13,8 +13,9 @@ var path              = require('path'),
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
-var valueProcessor = require('./lib/value-processor');
-var joinFn         = require('./lib/join-function');
+var valueProcessor   = require('./lib/value-processor');
+var joinFn           = require('./lib/join-function');
+var logToTestHarness = require('./lib/log-to-test-harness');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -57,6 +58,9 @@ function resolveUrlLoader(content, sourceMap) {
       join     : joinFn.defaultJoin
     }
   );
+
+  // maybe log options for the test harness
+  logToTestHarness(options);
 
   // defunct options
   if ('attempts' in options) {
@@ -146,7 +150,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // choose a CSS engine
-  var enginePath    = /^\w+/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
+  var enginePath    = /^\w+$/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
   var isValidEngine = fs.existsSync(enginePath);
   if (!isValidEngine) {
     return handleAsError(
@@ -167,20 +171,23 @@ function resolveUrlLoader(content, sourceMap) {
     .catch(onFailure)
     .then(onSuccess);
 
-  function onSuccess(reworked) {
-    // complete with source-map
-    //  source-map sources are relative to the file being processed
-    if (options.sourceMap) {
-      var finalMap = adjustSourceMap(loader, {format: 'sourceRelative'}, reworked.map);
-      callback(null, reworked.content, finalMap);
-    }
-    else {
-      callback(null, reworked.content);
-    }
+  function onFailure(error) {
+    callback(encodeError('CSS error', error));
   }
 
-  function onFailure(error) {
-    callback(null, handleAsError('CSS error', error));
+  function onSuccess(reworked) {
+    if (reworked) {
+      // complete with source-map
+      //  source-map sources are relative to the file being processed
+      if (options.sourceMap) {
+        var finalMap = adjustSourceMap(loader, {format: 'sourceRelative'}, reworked.map);
+        callback(null, reworked.content, finalMap);
+      }
+      // complete without source-map
+      else {
+        callback(null, reworked.content);
+      }
+    }
   }
 
   /**

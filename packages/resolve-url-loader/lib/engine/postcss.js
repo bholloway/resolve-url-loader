@@ -5,9 +5,7 @@
 'use strict';
 
 var path    = require('path'),
-    convert = require('convert-source-map'),
-    rework  = require('rework'),
-    visit   = require('rework-visit');
+    postcss = require('postcss');
 
 var fileProtocol = require('../file-protocol');
 
@@ -22,49 +20,31 @@ var fileProtocol = require('../file-protocol');
  */
 function process(sourceFile, sourceContent, params) {
 
-  // embed source-map in css
-  //  prepend file protocol to all sources to avoid problems with source map
-  var contentWithMap =
-    sourceContent +
-    convert.fromObject(fileProtocol.prepend(params.absSourceMap)).toComment({multiline: true});
-
-  // need to prepend file protocol to source as well to avoid problems with source map
-  var reworked = rework(contentWithMap, {source: fileProtocol.prepend(sourceFile)})
-    .use(reworkPlugin)
-    .toString({
-      sourcemap        : params.outputSourceMap,
-      sourcemapAsObject: params.outputSourceMap
-    });
-
-  // complete with source-map
-  if (params.outputSourceMap) {
-    return {
-      content: reworked.code,
-      map    : fileProtocol.remove(reworked.map)
-    };
-  }
-  // complete without source-map
-  else {
-    return {
-      content: reworked,
-      map    : null
-    };
-  }
+  // prepend file protocol to all sources to avoid problems with source map
+  return postcss([
+    postcss.plugin('postcss-resolve-url', postcssPlugin)
+  ])
+    .process(sourceContent, {
+      from: fileProtocol.prepend(sourceFile),
+      map : params.outputSourceMap && {
+        prev          : fileProtocol.prepend(params.absSourceMap),
+        inline        : false,
+        annotation    : false,
+        sourcesContent: false
+      }
+    })
+    .then(result => ({
+      content: result.css,
+      map    : params.outputSourceMap ? fileProtocol.remove(result.map.toJSON()) : null
+    }));
 
   /**
-   * Plugin for css rework that follows SASS transpilation.
-   *
-   * @param {object} stylesheet AST for the CSS output from SASS
+   * Plugin for postcss that follows SASS transpilation.
    */
-  function reworkPlugin(stylesheet) {
-
-    // visit each node (selector) in the stylesheet recursively using the official utility method
-    //  each node may have multiple declarations
-    visit(stylesheet, function visitor(declarations) {
-      if (declarations) {
-        declarations.forEach(eachDeclaration);
-      }
-    });
+  function postcssPlugin() {
+    return function(styles) {
+      styles.walkDecls(eachDeclaration);
+    };
 
     /**
      * Process a declaration from the syntax tree.
@@ -75,7 +55,7 @@ function process(sourceFile, sourceContent, params) {
       if (isValid) {
 
         // reverse the original source-map to find the original source file before transpilation
-        var startPosApparent = declaration.position.start,
+        var startPosApparent = declaration.source.start,
             startPosOriginal = params.sourceMapConsumer &&
               params.sourceMapConsumer.originalPositionFor(startPosApparent);
 

@@ -55,24 +55,42 @@ exports.create = (command) => {
     )),
     withTime(({index, root, cwd, env, meta}, {onActivity}) =>
       new Promise((resolve) => {
-        const interval = setInterval(onActivity, 50);
+        let stdout = '', stderr = '', interval = 0;
         const child = spawn(cmd, args, {cwd, env, shell: true, stdio: 'pipe'});
+        addOrRemove(true);
 
-        let stdout = '';
-        child.stdout.on('data', (data) => stdout += data);
+        // use hoisted functions to permit removal of listeners that were added
+        function addOrRemove(isAdd) {
+          const field = isAdd ? 'addListener' : 'removeListener';
+          child.stdout[field]('data', onStdout);
+          child.stderr[field]('data', onStderr);
+          child.on('exit', onExit);
+          child.on('error', onError);
 
-        let stderr = '';
-        child.stderr.on('data', (data) => stderr += data);
+          if (isAdd) {
+            interval = setInterval(onActivity, 50);
+          } else {
+            clearInterval(interval);
+          }
+        }
 
-        child.once('close', (code) => {
-          clearInterval(interval);
+        function onStdout(data) {
+          stdout += data;
+        }
+
+        function onStderr(data) {
+          stderr += data;
+        }
+
+        function onExit(code) {
+          addOrRemove(false);
           resolve({index, root, cwd, env, meta, code, stdout, stderr});
-        });
+        }
 
-        child.once('error', (error) => {
-          clearInterval(interval);
+        function onError(error) {
+          addOrRemove(false);
           resolve({index, root, cwd, env, meta, code: 1, stdout, stderr: error.toString()});
-        });
+        }
       })
     ),
     lens('*', null)(({time, code}, _, log) => log(
