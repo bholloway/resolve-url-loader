@@ -1,7 +1,3 @@
-> :tada: **Version 3 is near, but we need your help!**
->
-> Please install `resolve-url-loader@next` and vote :thumbsup: or :thumbsdown: in the [the discussion issue](https://github.com/bholloway/resolve-url-loader/issues/97#issuecomment-419619431).
-
 # Resolve URL Loader
 
 [![NPM](https://nodei.co/npm/resolve-url-loader.png)](http://github.com/bholloway/resolve-url-loader)
