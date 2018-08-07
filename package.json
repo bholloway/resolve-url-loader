@@ -1,45 +1,29 @@
 {
-  "name": "resolve-url-loader",
-  "version": "2.3.0",
-  "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
-  "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/bholloway/resolve-url-loader.git"
-  },
-  "keywords": [
-    "webpack",
-    "loader",
-    "css",
-    "normalize",
-    "rewrite",
-    "resolve",
-    "url",
-    "sass",
-    "relative",
-    "file"
-  ],
   "author": "bholloway",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/bholloway/resolve-url-loader/issues"
-  },
-  "homepage": "https://github.com/bholloway/resolve-url-loader",
-  "dependencies": {
-    "adjust-sourcemap-loader": "^1.1.0",
-    "camelcase": "^4.1.0",
-    "convert-source-map": "^1.5.1",
-    "loader-utils": "^1.1.0",
-    "lodash.defaults": "^4.0.0",
-    "rework": "^1.0.1",
-    "rework-visit": "^1.0.0",
-    "source-map": "^0.5.7",
-    "urix": "^0.1.0"
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "jshint --exclude **/node_modules test",
+    "test": "tape test | tap-diff"
   },
   "devDependencies": {
-    "jshint": "^2.9.5"
-  },
-  "scripts": {
-    "lint": "jshint index.js lib"
+    "blue-tape": "^1.0.0",
+    "compose-function": "^3.0.3",
+    "cross-env": "^5.1.5",
+    "es6-promisify": "^6.0.0",
+    "escape-string-regexp": "^1.0.5",
+    "get-value": "^3.0.0",
+    "has-prop": "^0.1.2",
+    "joi": "^12.0.0",
+    "jshint": "^2.9.5",
+    "micromatch": "^3.1.10",
+    "ms": "^2.1.1",
+    "outdent": "^0.5.0",
+    "promise-compose": "^1.1.2",
+    "recursive-readdir": "^2.2.2",
+    "tap-diff": "^0.1.1"
   }
 }
