@@ -4,7 +4,7 @@ const {join} = require('path');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
 const outdent = require('outdent');
-const {test, layer, fs, env, cwd, meta} = require('test-my-cli');
+const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
 const {assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertContent, assertStdout} = require('./lib/assert');
@@ -12,6 +12,7 @@ const {
   testSilent, testAttempts, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin, testNonStringRoot,
   testNonExistentRoot, testEngineFail
 } = require('./common/tests');
+const {withCacheBase} = require('./lib/higher-order');
 const {buildDevNormal, buildDevBail, buildProdNormal, buildProdBail} = require('./common/builds');
 
 const splitWebpack1 = (a, b) => (context, ...rest) =>
@@ -68,15 +69,14 @@ const assertCssError = assertStdout('error')([1, 4])`
   [ ]+This "engine" is designed to fail, for testing purposes only
   `;
 
-module.exports = (cacheDir, version) => test(
+module.exports = test(
   'misconfiguration',
   layer('misconfiguration')(
-    meta({version}),
     cwd('.'),
     fs({
-      'package.json': join(cacheDir, 'package.json'),
-      'webpack.config.js': join(cacheDir, 'webpack.config.js'),
-      'node_modules': join(cacheDir, 'node_modules'),
+      'package.json': withCacheBase('package.json'),
+      'webpack.config.js': withCacheBase('webpack.config.js'),
+      'node_modules': withCacheBase('node_modules'),
       'src/index.scss': outdent`
         .some-class-name {
           display: none;

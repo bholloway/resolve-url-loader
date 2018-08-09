@@ -6,7 +6,7 @@ const {platform: os} = require('process');
 const sequence = require('promise-compose');
 const micromatch = require('micromatch');
 const tape = require('blue-tape');
-const {init, layer, cwd, fs, env, exec} = require('test-my-cli');
+const {init, layer, cwd, fs, env, meta, exec} = require('test-my-cli');
 const {assign} = Object;
 
 const {assertExitCodeZero} = require('./cases/lib/assert');
@@ -113,12 +113,12 @@ filterTests()
               PATH: dirname(process.execPath),
               RESOLVE_URL_LOADER_TEST_HARNESS: 'stderr'
             }),
-            ...filterTests(platform, engine).map(caseName =>
-              require(`./cases/${caseName}`)(
-                join(process.cwd(), 'tmp', '.cache', platform),
-                getVersionHash(platform)
-              )
-            )
+            meta({
+              cacheDir: join(process.cwd(), 'tmp', '.cache', platform),
+              version: getVersionHash(platform)
+            }),
+            ...filterTests(platform, engine)
+              .map(caseName => require(`./cases/${caseName}`))
           )
         )
       )

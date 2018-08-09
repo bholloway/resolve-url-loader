@@ -9,6 +9,7 @@ const get = require('get-value');
 const has = require('has-prop');
 const {assert} = require('test-my-cli');
 
+const {mappingsToString} = require('../lib/sourcemap');
 const {excludingQuotes, unique} = require('./util');
 const {withPattern, withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
   require('./higher-order');
@@ -106,13 +107,27 @@ exports.assertCssSourceMap = (fieldOrExpected) => sequence(
     );
   }),
 
-  assertSourceMap(({deepLooseEqual, pass}, context, list) => {
+  assertSourceMap(({deepLooseEqual, equal, pass}, context, list) => {
     if (list.length) {
       const expected = resolveValue(context, fieldOrExpected);
       if (expected) {
-        const [{sources}] = list;
-        const adjusted = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
-        deepLooseEqual(adjusted, expected, 'should yield expected source-map sources');
+        const [{sources, mappings}] = list;
+        const adjustedSources = sources.map((v) => v.endsWith('*') ? v.slice(0, -1) : v).sort();
+        if (Array.isArray(expected)) {
+          deepLooseEqual(
+            adjustedSources,
+            expected,
+            'should yield expected source-map sources'
+          );
+        } else if (typeof expected === 'string') {
+          equal(
+            mappingsToString(mappings)(adjustedSources),
+            expected,
+            'should yield expected source-map mappings'
+          );
+        } else {
+          throw new Error('expectation must be String|Array.<String>');
+        }
       } else {
         pass('should NOT expect source-map sources');
       }

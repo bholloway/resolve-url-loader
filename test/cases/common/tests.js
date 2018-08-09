@@ -2,7 +2,7 @@
 
 const {join} = require('path');
 const sequence = require('promise-compose');
-const {test, layer, env} = require('test-my-cli');
+const {test, layer, meta, env} = require('test-my-cli');
 
 const {assertStderr} = require('../lib/assert');
 
@@ -10,6 +10,9 @@ exports.testBase = (engine) => (...rest) =>
   test(
     `engine=${engine}`,
     layer(engine)(
+      meta({
+        engine
+      }),
       env({
         DEVTOOL: '"source-map"',
         LOADER_QUERY: `sourceMap&engine=${engine}`,

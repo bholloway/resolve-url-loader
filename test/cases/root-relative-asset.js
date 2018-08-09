@@ -9,8 +9,8 @@ const {trim} = require('./lib/util');
 const {
   assertWebpackOk, assertNoErrors, assertContent, assertCssSourceMap, assertAssetUrls, assertAssetFiles, assertStdout
 } = require('./lib/assert');
-const {withRebase} = require('./lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
+const {withRootBase, withCacheBase} = require('./lib/higher-order');
 const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 
 const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
@@ -27,10 +27,112 @@ const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
   }
   `;
 
+const assertSourcemapDev = assertCssSourceMap(({meta: {engine}}) => {
+  switch (true) {
+    case (engine === 'rework'):
+      return outdent`
+        /src/feature/index.scss
+          1:1
+          2:3
+          3:3
+          4:3
+          5:3
+          6:3
+        
+        /src/index.scss
+          2:1->9:1
+          3:3->10:3
+          7:2
+          11:2
+        `;
+    case (engine === 'postcss'):
+      return outdent`
+        /src/feature/index.scss
+          1:1
+          2:3 2:40->2:43
+          3:3 3:40->3:43
+          4:3 4:33->4:36
+          5:3 5:36->5:33
+          6:3 6:34->6:32
+          7:2->6:34
+        
+        /src/index.scss
+          2:1->8:1
+          3:3->9:3 3:17->9:18
+          4:2->9:20
+        `;
+    default:
+      throw new Error('unexpected test configuration');
+  }
+});
+
 const assertContentProd = compose(assertContent(), trim)`
   .some-class-name{single-quoted:url($0);double-quoted:url($1);unquoted:url($2);query:url($3);hash:url($4)}
   .another-class-name{display:block}
   `;
+
+const assertSourcemapProd = assertCssSourceMap(({meta: {engine, version: {webpack}}}) => {
+  switch (true) {
+    case (engine === 'rework') && (webpack < 4):
+      return outdent`
+        /src/feature/index.scss
+          1:1
+          2:3->1:18
+          3:3->1:57
+          4:3->1:96
+          5:3->1:128
+          6:3->1:157
+        
+        /src/index.scss
+          3:3->1:205
+          7:2->1:185
+        `;
+    case (engine === 'rework') && (webpack === 4):
+      return outdent`
+        /src/feature/index.scss
+          1:1
+          2:3->1:18
+          3:3->1:57
+          4:3->1:96
+          5:3->1:128
+          6:3->1:157
+        
+        /src/index.scss
+          3:3->1:205 3:3->1:219
+          7:2->1:185
+        `;
+    case (engine === 'postcss') && (webpack < 4):
+      return outdent`
+        /src/feature/index.scss
+          1:1
+          2:3->1:18
+          3:3->1:57
+          4:3->1:96
+          5:3->1:128
+          6:3->1:157 6:34->1:184
+        
+        /src/index.scss
+          2:1->1:185
+          3:3->1:205 3:17->1:218
+        `;
+    case (engine === 'postcss') && (webpack === 4):
+      return outdent`
+        /src/feature/index.scss
+          1:1
+          2:3->1:18
+          3:3->1:57
+          4:3->1:96
+          5:3->1:128
+          6:3->1:157 6:34->1:184
+        
+        /src/index.scss
+          2:1->1:185
+          3:3->1:205 3:17->1:218 3:17->1:219
+        `;
+    default:
+      throw new Error('unexpected test configuration');
+  }
+});
 
 const assertSources = assertCssSourceMap([
   '/src/feature/index.scss',
@@ -45,14 +147,14 @@ const assertDebugMessages = assertStdout('debug')(1)`
   [ ]+FOUND$
   `;
 
-module.exports = (cacheDir) => test(
+module.exports = test(
   'root-relative-asset',
   layer('root-relative-asset')(
     cwd('.'),
     fs({
-      'package.json': join(cacheDir, 'package.json'),
-      'webpack.config.js': join(cacheDir, 'webpack.config.js'),
-      'node_modules': join(cacheDir, 'node_modules'),
+      'package.json': withCacheBase('package.json'),
+      'webpack.config.js': withCacheBase('webpack.config.js'),
+      'node_modules': withCacheBase('node_modules'),
       'src/index.scss': outdent`
         @import "feature/index.scss";
         .another-class-name {
@@ -92,7 +194,7 @@ module.exports = (cacheDir) => test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSources,
+        assertSourcemapDev,
         assertAssetUrls(['../images/img.jpg']),
         assertAssetFiles(false)
       ),
@@ -110,7 +212,7 @@ module.exports = (cacheDir) => test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSources,
+        assertSourcemapProd,
         assertAssetUrls(['../images/img.jpg']),
         assertAssetFiles(false)
       ),
@@ -140,7 +242,7 @@ module.exports = (cacheDir) => test(
         assertNoMessages,
         assertContentDev,
         assertSources,
-        assertAssetUrls(withRebase(['images/img.jpg'])),
+        assertAssetUrls(withRootBase(['images/img.jpg'])),
         assertAssetFiles(false)
       ),
       buildProdNormal(
@@ -158,7 +260,7 @@ module.exports = (cacheDir) => test(
         assertNoMessages,
         assertContentProd,
         assertSources,
-        assertAssetUrls(withRebase(['images/img.jpg'])),
+        assertAssetUrls(withRootBase(['images/img.jpg'])),
         assertAssetFiles(false)
       ),
       buildProdNoDevtool(
