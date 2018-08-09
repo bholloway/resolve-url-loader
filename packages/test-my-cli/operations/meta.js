@@ -39,8 +39,7 @@ exports.create = (hash) => {
         .reduce((r, k) => assign(r, {[k]: invoke(hash[k])}), {});
 
       // merge the current hash with previous values
-      return Promise.resolve()
-        .then(meta)
+      return Promise.resolve(meta)
         .then((previousHash) => {
           const result = assign(currentHash, previousHash);
 
