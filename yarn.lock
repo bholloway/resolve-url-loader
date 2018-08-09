@@ -1439,6 +1439,10 @@ util@0.10.3:
   dependencies:
     inherits "2.0.1"
 
+vlq@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/vlq/-/vlq-1.0.0.tgz#8101be90843422954c2b13eb27f2f3122bdcc806"
+
 which@^1.2.9:
   version "1.3.0"
   resolved "https://registry.npmjs.org/which/-/which-1.3.0.tgz#ff04bdfc010ee547d780bec38e1ac1c2777d253a"

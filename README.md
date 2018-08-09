@@ -24,7 +24,7 @@ The target for the next major version
 
 - [x] Move the file search to a separate package as "opt in"
 
-- [x] Automated tests I
+- [x] Automated tests E2E
 
   * test-my-cli
   - [x] basic tests
@@ -45,13 +45,14 @@ The target for the next major version
   - [x] check invalid `join` and `root` options lead to errors
   - [x] check `silent` option doesn't supresses errors
   - [x] check bad CSS gives expected error
+  - [x] check sourcemaps
 
 - [x] Attempt a basic Postcss Engine (to ensure restructure is adequate)
 
 - [ ] Rewrite README.md
   * The `absolute` option requires `css-loader` with option `root: ''`.
-  * [Breaking] Errors always fail and are no longer swallowed
-  * [Breaking] File search not supported (`join` option available)
-  * [Breaking] Multiple options changed
+  * Absolute or root-relative source urls need option `root` in either `resolve-url-loader` or `css-loader`.
+  * [Breaking] Errors always fail and are no longer swallowed.
+  * [Breaking] File search not supported (`join` option available).
+  * [Breaking] Multiple options changed.
   * [Breaking] Root can only be empty or absolute path (like css-loader)
-  * [Breaking?] Absolute or root-relative url() needs option `root: ''`

@@ -10,10 +10,16 @@ const outdent = require('outdent');
 const escapeString = require('escape-string-regexp');
 const {assign} = Object;
 
-exports.withRebase = (listOrString) => ({root}) => {
+const withBase = (fn) => (listOrString) => (context) => {
   const transform = compose(v => v.replace(/\\/g, '/'), normalize, join);
-  return Array.isArray(listOrString) ? listOrString.map((v) => transform(root, v)) : transform(root, listOrString);
+  return Array.isArray(listOrString) ?
+    listOrString.map((v) => transform(fn(context), v)) :
+    transform(fn(context), listOrString);
 };
+
+exports.withRootBase = withBase(({root}) => root);
+
+exports.withCacheBase = withBase(({meta: {cacheDir}}) => cacheDir);
 
 /**
  * A factory for a higher-order-function that wraps a function of RegExp with template literal.
