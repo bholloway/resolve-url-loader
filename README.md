@@ -46,9 +46,9 @@ The target for the next major version
 - [x] Attempt a basic Postcss Engine (to ensure restructure is adequate)
 
 - [ ] Rewrite README.md
-  * The `absolute` option requires `css-loader` with option `root: ''`.
-  * Absolute or root-relative source urls need option `root` in either `resolve-url-loader` or `css-loader`.
+  * Windows backslash paths _must_ be processed _before_ css loader.
+  * [Breaking] Multiple options changed or deprecated. Warnings are provided subject to `silent` option.
   * [Breaking] Errors always fail and are no longer swallowed.
   * [Breaking] File search not supported (`join` option available).
-  * [Breaking] Multiple options changed.
-  * [Breaking] Root can only be empty or absolute path (like css-loader)
+  * [Breaking] Processing absolute URI requires `root` option to be set (may be empty string).
+  * [Breaking] Where specified, `root` option must be empty string or absolute path.
