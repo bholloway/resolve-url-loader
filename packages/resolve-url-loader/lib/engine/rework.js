@@ -24,9 +24,11 @@ function process(sourceFile, sourceContent, params) {
 
   // embed source-map in css
   //  prepend file protocol to all sources to avoid problems with source map
-  var contentWithMap =
-    sourceContent +
-    convert.fromObject(fileProtocol.prepend(params.absSourceMap)).toComment({multiline: true});
+  var contentWithMap = sourceContent + (
+    params.absSourceMap ?
+      convert.fromObject(fileProtocol.prepend(params.absSourceMap)).toComment({multiline: true}) :
+      ''
+  );
 
   // need to prepend file protocol to source as well to avoid problems with source map
   var reworked = rework(contentWithMap, {source: fileProtocol.prepend(sourceFile)})
