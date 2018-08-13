@@ -27,7 +27,7 @@ function process(sourceFile, sourceContent, params) {
     .process(sourceContent, {
       from: fileProtocol.prepend(sourceFile),
       map : params.outputSourceMap && {
-        prev          : fileProtocol.prepend(params.absSourceMap),
+        prev          : !!params.absSourceMap && fileProtocol.prepend(params.absSourceMap),
         inline        : false,
         annotation    : false,
         sourcesContent: false
