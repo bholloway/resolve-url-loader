@@ -6,6 +6,9 @@ const {test, layer, meta, env} = require('test-my-cli');
 
 const {assertStderr} = require('../lib/assert');
 
+exports.all = (...tests) => (...rest) =>
+  sequence(...tests.map((test) => test(...rest)));
+
 exports.testBase = (engine) => (...rest) =>
   test(
     `engine=${engine}`,
@@ -81,6 +84,20 @@ exports.testKeepQuery = (...rest) =>
       }),
       ...rest,
       test('validate', assertStderr('options.keepQuery')(1)`keepQuery: true`)
+    )
+  );
+
+exports.testRoot = (...rest) =>
+  test(
+    'root=empty',
+    layer()(
+      env({
+        LOADER_QUERY: 'root=',
+        LOADER_OPTIONS: {root: ''},
+        OUTPUT: 'root'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.root')(1)`root: ""`)
     )
   );
 

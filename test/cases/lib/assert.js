@@ -37,6 +37,20 @@ const assertSourceMap = compose(
   withJson
 );
 
+exports.onlyVersion = (equation) => (...fn) => {
+  /*jshint evil:true */
+  const predicate = new Function('version', `return version.${equation.replace('=', '===')}`);
+  return (context, ...rest) => {
+    const isPass = predicate(context.layer.meta.version);
+    return (isPass ? sequence(...fn) : (x => x))(context, ...rest);
+  };
+};
+
+exports.onlyOS = (name) => (...fn) => {
+  const isPass = (/^win(dows)?$/.test(name) === (process.platform === 'win32'));
+  return isPass ? sequence(...fn) : (x => x);
+};
+
 exports.assertExitCodeZero = (message) =>
   assert(({pass, fail}, {code, stderr, time}) =>
     (code === 0) ? pass(`${message} (${ms(Math.round(time), {long: true})})`) : fail(stderr)

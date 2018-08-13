@@ -2,24 +2,19 @@
 
 const {join} = require('path');
 const compose = require('compose-function');
-const sequence = require('promise-compose');
 const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('./lib/util');
-const {assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertContent, assertStdout} = require('./lib/assert');
 const {
-  testSilent, testAttempts, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin, testNonStringRoot,
-  testNonExistentRoot, testEngineFail
+  onlyVersion, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertContent, assertStdout
+} = require('./lib/assert');
+const {
+  all, testDefault, testSilent, testAttempts, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin,
+  testNonStringRoot, testNonExistentRoot, testEngineFail
 } = require('./common/tests');
 const {withCacheBase} = require('./lib/higher-order');
 const {buildDevNormal, buildDevBail, buildProdNormal, buildProdBail} = require('./common/builds');
-
-const splitWebpack1 = (a, b) => (context, ...rest) =>
-  ((context.layer.meta.version.webpack < 2) ? a : b)(context, ...rest);
-
-const testNormalAndSilent = (...items) =>
-  sequence(...items, testSilent(...items));
 
 const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
   .some-class-name {
@@ -87,8 +82,8 @@ module.exports = test(
       ENTRY: join('src', 'index.scss')
     }),
     testEngineFail(
-      splitWebpack1(
-        testNormalAndSilent(
+      all(testDefault, testSilent)(
+        onlyVersion('webpack=1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -104,7 +99,7 @@ module.exports = test(
             assertCssError
           )
         ),
-        testNormalAndSilent(
+        onlyVersion('webpack>1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertCssError
@@ -117,7 +112,7 @@ module.exports = test(
       )
     ),
     testAttempts(
-      sequence(
+      testDefault(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
@@ -147,7 +142,7 @@ module.exports = test(
       )
     ),
     testIncludeRoot(
-      sequence(
+      testDefault(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
@@ -177,7 +172,7 @@ module.exports = test(
       )
     ),
     testFail(
-      sequence(
+      testDefault(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
@@ -207,8 +202,8 @@ module.exports = test(
       )
     ),
     testNonFunctionJoin(
-      splitWebpack1(
-        testNormalAndSilent(
+      all(testDefault, testSilent)(
+        onlyVersion('webpack=1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -224,7 +219,7 @@ module.exports = test(
             assertNonFunctionJoinError
           )
         ),
-        testNormalAndSilent(
+        onlyVersion('webpack>1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertNonFunctionJoinError
@@ -237,8 +232,8 @@ module.exports = test(
       )
     ),
     testWrongArityJoin(
-      splitWebpack1(
-        testNormalAndSilent(
+      all(testDefault, testSilent)(
+        onlyVersion('webpack=1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -254,7 +249,7 @@ module.exports = test(
             assertWrongArityJoinError
           )
         ),
-        testNormalAndSilent(
+        onlyVersion('webpack>1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertWrongArityJoinError
@@ -267,7 +262,7 @@ module.exports = test(
       )
     ),
     testNonStringRoot(
-      sequence(
+      testDefault(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
@@ -297,8 +292,8 @@ module.exports = test(
       )
     ),
     testNonExistentRoot(
-      splitWebpack1(
-        testNormalAndSilent(
+      all(testDefault, testSilent)(
+        onlyVersion('webpack=1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -314,7 +309,7 @@ module.exports = test(
             assertNonExistentRootError
           )
         ),
-        testNormalAndSilent(
+        onlyVersion('webpack>1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertNonExistentRootError
