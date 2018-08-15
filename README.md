@@ -4,55 +4,42 @@
 
 # Resolve URL Loader
 
-Webpack loader that resolves relative paths in url() statements based on the original source file.
+A **webpack loader** that rewrites relative paths in url() statements based on the original source file.
 
-Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loader) and specify your asset `url()` relative to the `.scss` file in question.
+## Why?
 
-This loader will use the source-map from the SASS compiler to locate the original `.scss` source file and write a more Webpack-friendly path for your asset. The CSS loader can then locate your asset for individual processing.
+> **TL;DR** Making Sass work with a feature based project structure
 
+With webpack you can import a `.scss` file (or some other compile-to-css file) and have a loader take care of the transpilation. With **Sass** (at least) this file can include a whole tree of source files into a single output.
+
+We can imagine a virtual `.css` file at the location the original `.scss` import. Webpack expects any **assets** found in this CSS to be relative to the original imported file.
+
+For projects with a **feature based structure** this will be a problem, since you will want to **co-locate** your assets with your `.scss` partials.
+
+**Example** - webpack imports `index.scss` which includes feature `foo`.
+
+| files                              | content                |
+|------------------------------------|------------------------|
+|src /                               |                        |
+|&nbsp;&nbsp;index.scss              | `@import features/foo` |
+|&nbsp;&nbsp;features /              |                        |
+|&nbsp;&nbsp;&nbsp;&nbsp;_foo.scss   | `url(bar.png)`         |
+|&nbsp;&nbsp;&nbsp;&nbsp;bar.png     |                        |
+
+Intuatively we want the assets in partial `_foo.scss` relative to the partial, meaning `url(bar.png)`.
+
+However webpack's `css-loader` will encounter `url(bar.png)` and expect to find `src/bar.png`. This is **not** the correct location and the build will fail.
+
+Thankfully `resolve-url-loader` provides the "url rewriting" that Sass is missing. Use it _after_ the transpiler (such as [sass-loader](https://www.npmjs.com/package/sass-loader)). It makes use of the [source-map](http://www.mattzeunert.com/2016/02/14/how-do-source-maps-work.html) to find the original source file and rewrite `url()` statements.
+
+In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required.
 
 ## Getting started
 
-See [resolve-url-loader](packages/resolve-url-loader/README.md) package in this mono-repo.
+See [resolve-url-loader](packages/resolve-url-loader/README.md) package.
 
+## Other stuff
 
-## Version 3.0.0
+See [test-my-cli](packages/test-my-cli/README.md) package for a functional programming framework for cli-testing. An unpublished work in progress.
 
-The target for the next major version
-
-- [x] Allow additional CSS "engines" (e.g. postcss)
-
-- [x] Move the file search to a separate package as "opt in"
-
-- [x] Automated tests E2E
-
-  * test-my-cli
-  - [x] basic tests
-  - [x] tests run on both Mac and Windows
-  - [x] better ENV `append` (rename to `merge`)
-    - [x] regex key matching
-    - [x] custom merge fn
-
-  * resolve-url-loader
-  - [x] check some typical directory structures
-  - [x] check `keepQuery` option
-  - [x] check URIs with protocols are not processed
-  - [x] check `absolute` option
-  - [x] check `debug` option
-  - [x] check `root` option
-  - [x] check defunct options lead to warnings
-  - [x] check `silent` option supresses warnings
-  - [x] check invalid `join` and `root` options lead to errors
-  - [x] check `silent` option doesn't supresses errors
-  - [x] check bad CSS gives expected error
-  - [x] check sourcemaps
-
-- [x] Attempt a basic Postcss Engine (to ensure restructure is adequate)
-
-- [ ] Rewrite README.md
-  * Windows backslash paths _must_ be processed _before_ css loader.
-  * [Breaking] Multiple options changed or deprecated. Warnings are provided subject to `silent` option.
-  * [Breaking] Errors always fail and are no longer swallowed.
-  * [Breaking] File search not supported (`join` option available).
-  * [Breaking] Processing absolute URI requires `root` option to be set (may be empty string).
-  * [Breaking] Where specified, `root` option must be empty string or absolute path.
+See [resolve-url-loader-filesearch](packages/resolve-url-loader-filesearch/README.md) package for the now defunct file search "magic" from `resolve-url-loader@<3.0.0`. This is currently unpublished. It needs to be adapted as a `join` function to be useful to anyone.

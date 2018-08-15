@@ -13,7 +13,7 @@ framework.
 To test a shell program, such as running **Webpack CLI** on an actual
 file-system.
 
-**When _not_ to use**
+**Why _not_ to use**
 
 If you are developing a loader or plugin for Webpack this might be a bit
 excessive.
