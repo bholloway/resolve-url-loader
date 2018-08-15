@@ -1,192 +1,180 @@
 # Resolve URL Loader
 
-[![NPM](https://nodei.co/npm/resolve-url-loader.png)](http://github.com/bholloway/resolve-url-loader)
+[![NPM](https://nodei.co/npm/resolve-url-loader.png)](https://www.npmjs.com/package/resolve-url-loader)
 
-Webpack loader that resolves relative paths in url() statements based on the original source file.
+A **webpack loader** that rewrites relative paths in url() statements based on the original source file.
 
-Use in conjunction with the [sass-loader](https://www.npmjs.com/package/sass-loader) and specify your asset `url()` relative to the `.scss` file in question.
+## Why?
 
-This loader will use the source-map from the SASS compiler to locate the original `.scss` source file and write a more Webpack-friendly path for your asset. The CSS loader can then locate your asset for individual processing.
+> **TL;DR** Making Sass work with a feature based project structure
 
+With webpack you can import a `.scss` file (or some other compile-to-css file) and have a loader take care of the transpilation. With **Sass** (at least) this file can include a whole tree of source files into a single output.
+
+We can imagine a virtual `.css` file at the location the original `.scss` import. Webpack expects any **assets** found in this CSS to be relative to the original imported file.
+
+For projects with a **feature based structure** this will be a problem, since you will want to **co-locate** your assets with your `.scss` partials.
+
+**Example** - webpack imports `index.scss` which includes feature `foo`.
+
+| files                              | content                |
+|------------------------------------|------------------------|
+|src /                               |                        |
+|&nbsp;&nbsp;index.scss              | `@import features/foo` |
+|&nbsp;&nbsp;features /              |                        |
+|&nbsp;&nbsp;&nbsp;&nbsp;_foo.scss   | `url(bar.png)`         |
+|&nbsp;&nbsp;&nbsp;&nbsp;bar.png     |                        |
+
+Intuatively we want the assets in partial `_foo.scss` relative to the partial, meaning `url(bar.png)`.
+
+However webpack's `css-loader` will encounter `url(bar.png)` and expect to find `src/bar.png`. This is **not** the correct location and the build will fail.
+
+Thankfully `resolve-url-loader` provides the "url rewriting" that Sass is missing. Use it _after_ the transpiler (such as [sass-loader](https://www.npmjs.com/package/sass-loader)). It makes use of the [source-map](http://www.mattzeunert.com/2016/02/14/how-do-source-maps-work.html) to find the original source file and rewrite `url()` statements.
+
+In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required.
+
+## Version 3
+
+**Features**
+
+* Use `postcss` parser by default. This is long overdue as the old `rework` parser doesn't cope with modern css.
+
+* Lots of automated tests running actual webpack builds. If you have an interesting use-case let me know.
+
+**Breaking Changes**
+* Multiple options changed or deprecated.
+* Removed file search "magic" in favour of `join` option.
+* Errors always fail and are no longer swallowed.
+* Processing absolute asset paths requires `root` option to be set.
+
+**Migrating**
+
+Initially set option `engine: 'rework'` for parity with your existing build. Once working you can remove this option **or** set `engine: 'postcss'` explicitly.
+
+Retain `keepQuery` option if you are already using it.
+
+The `root` option now has a different meaning. Previously it limited file search. Now it is the base path for absolute or root-relative URIs, consistent with `css-loader`. If you are already using it you can probably remove it.
+
+If you build on Windows platform **and** your content contains absolute asset paths, then `css-loader` could fail. The `root` option here may fix the URIs before they get to `css-loader`. Try to leave it unspecified, otherwise (windows only) set to empty string `root: ''`.
 
 ## Getting started
 
-```bash
-# via yarn
-yarn add resolve-url-loader --dev
+### Install
 
-# via npm
+via npm
+
+```bash
 npm install resolve-url-loader --save-dev
 ```
 
+via yarn
 
-## Usage
-
-Plain CSS works fine:
-
-``` javascript
-var css = require('!css-loader!resolve-url-loader!./file.css');
+```bash
+yarn add resolve-url-loader --dev
 ```
 
-or using [sass-loader](https://github.com/jtangelder/sass-loader):
+### Configure Webpack
+
+The typical use case is `resolve-url-loader` between `sass-loader` and `css-loader`.
+
+**:warning: IMPORTANT**
+* **source-maps required** for loaders preceding `resolve-url-loader` (regardless of `devtool`).
+* Always use **full loader package name** (don't omit `-loader`) otherwise you can get errors that are hard to debug.
+
 
 ``` javascript
-var css = require('!css-loader!resolve-url-loader!sass-loader?sourceMap!./file.scss');
-```
-
-Use in tandem with the [`style-loader`](https://github.com/webpack/style-loader) to compile sass and to add the css rules to your document:
-
-``` javascript
-require('!style!css!resolve-url!./file.css');
-```
-
-and
-
-``` javascript
-require('!style-loader!css-loader!resolve-url-loader!sass-loader?sourceMap!./file.scss');
-```
-
-### Apply via webpack config
-
-It is preferable to adjust your `webpack.config` so to avoid having to prefix every `require()` statement:
-
-``` javascript
-module.exports = {
-  module: {
-    loaders: [
+rules: [
+  {
+    test: /\.scss$/,
+    use: [
+      ...
       {
-        test   : /\.css$/,
-        loaders: ['style-loader', 'css-loader', 'resolve-url-loader']
+        loader: 'css-loader',
+        options: {...}
       }, {
-        test   : /\.scss$/,
-        loaders: ['style-loader', 'css-loader', 'resolve-url-loader', 'sass-loader?sourceMap']
+        loader: 'resolve-url-loader',
+        options: {...}
+      }, {
+        loader: 'sass-loader',
+        options: {
+          sourceMap: true,
+          sourceMapContents: false
+        }
       }
     ]
-  }
-};
+  },
+  ...
+]
 ```
 
-### IMPORTANT
+Refer to `test` directory for full webpack configurations (as used in automated tests).
 
-#### Source maps required
+## Options
 
-Note that **source maps** must be enabled on any preceding loader. In the above example we use `sass?sourceMap`.
-
-In some use cases (no preceding transpiler) there will be no incoming source map. Therefore we do not warn if the source-map is missing.
-
-However if there is an incoming source-map then it must imply `source` information at each CSS `url()` statement.
-
-#### Don't omit `-loader`
-
-> Your `Webpack.config.js` should **always** use the long-form of the loader name (i.e. the `-loader` suffix).
-
-There is another package called `resolve-url` which Webpack can confuse with `resolve-url-loader`.
-
-There are other common examples. Such as `jshint` and `jshint-loader` packages being confused.
-
-These conflicts are **very hard to debug** and will send you crazy. Your `Webpack.config.js` should **always** use the long-form of the loader name (i.e. the `-loader` suffix)
-
-### Options
-
-Options may be set using [query parameters](https://webpack.github.io/docs/using-loaders.html#query-parameters) or by using [programmatic parameters](https://webpack.github.io/docs/how-to-write-a-loader.html#programmable-objects-as-query-option). Programmatic means the following in your `webpack.config`.
-
-``` javascript
-module.exports = {
-   resolveUrlLoader: {
-      ...
-   }
-}
-```
-
-Where `...` is a hash of any of the following options.
-
-* `sourceMap` Generate a source-map.
-
-* `attempts` Limit searching for any files not where they are expected to be. This is unlimited by default so you will want to set it `1` or some small value.
-
-* `silent` Do not display warnings on CSS syntax or source-map error.
-
-* `fail` Syntax or source-map errors will result in an error.
-
-* `keepQuery` Keep query string and hash within url. I.e. `url('./MyFont.eot?#iefix')`, `url('./MyFont.svg#oldiosfix')`.
-
-* `debug` Show verbose information on the file paths being searched.
-
-* `root` An optional directory within which search may be performed. Relative paths are permitted. Where omitted `process.cwd()` is used and should be sufficient for most use cases.
-
-There are some additional hacks available without support. Only do this if you know what you are doing.
-
-* `absolute` Forces the url() to be resolved to an absolute path. This is considered 
-[bad practice](http://webpack.github.io/docs/how-to-write-a-loader.html#should-not-embed-absolute-paths).
-
-* `includeRoot` (experimental, non-performant) Include the project `root` in file search. The `root` option need not be specified but `includeRoot` is only really useful if your `root` directory is shallower than your build working directory.
-
-Note that query parameters take precedence over programmatic parameters.
+| option     | type                       | default     |          |  description                                                                                                                                                                     |
+|------------|----------------------------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|`engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` |          | The css parser engine.                                                                                                                                                           |
+|`sourceMap` | boolean                    | `false`     |          | Generate a source-map.                                                                                                                                                           |
+|`keepQuery` | boolean                    | `false`     |          | Keep query-string and/or hash suffixes.<br/>e.g. `url('./MyFont.eot?#iefix')`<br/>Be aware downstream loaders may remove query-string or hash.                                   |
+|`debug`     | boolean                    | `false`     |          | Display debug information.                                                                                                                                                       |
+|`silent`    | boolean                    | `false`     |          | Do **not** display warnings.                                                                                                                                                     |
+|`root`      | string                     | _unset_     |          | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
+|`join`      | function                   | _inbuilt_   | advanced | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the default implementation for more information.                            |
+|`absolute`  | boolean                    | `false`     | useless  | Forces URIs to be output as absolute file paths.<br/>This is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.      |
 
 ## How it works
 
-A [rework](https://github.com/reworkcss/rework) process is run on incoming CSS.
+A [rework](https://github.com/reworkcss/rework) or [postcss](https://postcss.org/) process is run on incoming CSS.
 
-Each `url()` statement that implies an asset triggers a file search using node `fs` operations. The asset should be relative to the original source file that was transpiled. This original source is determined by consulting the incoming source-map at the point of the `url()` statement.
+Each `url()` statement may imply an asset or may not. Generally only relative URIs are considered. However if `root` is specified then absolute or root-relative URIs are considered.
 
-Usually the asset is found relative to the original source file `O(1)`.
+For each URI considered, the incomming source-map is consulted to determine the original file where the `url()` was specified. This becomes the `base` argument to the `join` function, whose default implementation is something like the following pseudocode.
 
-However in cases where there is no immediate match, we start searching both deeper and shallower from the starting directory `O(n)`. Note that `n` may be limited by the `attempts` option.
+```javascript
+join(uri, base?) =>
+  compose(path.normalize, path.join)(base || options.join, uri);
+```
 
-This file search "magic" is mainly for historic reasons, to work around broken packages whose assets are not where we would expect.
+Not that for absolute `uri` then the `base` is absent. In the default implementation the `root` option is used instead.
 
-Shallower paths must be limited to avoid the whole file system from being considered. Progressively shallower paths within the `root` will be considered. Paths featuring a `package.json` or `bower.json` file will not be considered.
+Full file search has been discontinued in version 3, however it is possible to specify a custom `join` function.
 
-If the asset is not found then the `url()` statement will not be updated with a Webpack module-relative path. However if the `url()` statement has no source-map `source` information the loader will fail.
+There is the added complexity that `base` may be an iterator. However `resolve-url-loader` exports some useful functions that makes a custom `join` easier.
 
-The loader will also fail when input source-map `sources` cannot all be resolved relative to some consistent path within `root`.
+Following `join` the URI has become an absolute path. Back-slashes are then converted to forward-slashes and the path is made relative to the initial resource being considered.
 
-Use the `debug` option to see exactly what paths are being searched.
+Use the `debug` option to see verbose information from the `join` function.
 
 ## Limitations / Known-issues
-
-### File search "magic"
-
-Failure to find an asset will trigger a file search of your project.
-
-This feature was for historic reasons, to work around broken packages, whose assets are not where we would expect. Such problems are rare now and many users may not be aware of the search feature.
-
-We now have the `attempts` option to limit this feature. However by default it is unlimited (`attempts=0`) which could make your build non-performant.
-
-You should explicitly set `attempts=1` and increase the value only if needed. We will look to make this the default in the next major release.
-
 
 ### Mixins
 
 Where `url()` statements are created in a mixin the source file may then be the mixin file, and not the file calling the mixin. Obviously this is **not** the desired behaviour.
 
-The incoming source map can vary greatly with different transpilers and their mixins. Use a [source map visualiser](http://sokra.github.io/source-map-visualization/#custom-choose) to see more.  If the source-map shows the correct original file and the mixin still doesn't work then raise an issue and point to the visualisation.
-
-Ultimately you will need to work around this. Try to avoid the mixin. Worst case you can try the `includeRoot` option to force a search of your project sources.
+Ensure this is indeed the problem as there are many ways to misconfigure webpack. Try inlining the mixin and check that everything works correctly. However ultimately you will need to work around this.
 
 ### Compatiblity
 
-#### Webpack
+Tested in `node 6.x` against `webpack1`-`webpack4` and a set of contemporaneous loaders/plugins.
 
-This loader was written for Webpack 1 and has been tweaked to also support with Webpack 2.
+Refer to `test` directory for full webpack configurations (as used in automated tests).
 
-If you find any Webpack 2 problems please comment on any similar existing issue or raise a new one.
+### Absolute URIs
 
-#### Node-sass
+By "absolute URIs" we more correctly mean assets with root-relative URLs or absolute file paths.
 
-> **IMPORTANT**
-> 
-> Avoid the combination of **Webpack 1** with **node-sass@^4.0.0**.
->
-> Use **Webpack 2** if you need latest **node-sass**
+> Absolute paths are **not** processed by default
 
-Since `node-sass@>=4.0.0` source-maps have sometimes featured negative column values. Since this loader relies on source-maps this can cause a fatal error.
+These are **not** processed unless a `root` is specified.
 
-I don't have a lot of data on this. If you are stuck in Webpack 1 and find that this combination actually works ok for you please let me know.
+However recall that any paths that _are_ processed will have windows back-slash converted to posix forward-slash. This can be useful since some webpack loaders can choke on windows paths. By using `root: ''` then `resolve-url-loader` effectively does nothing to absolute paths except change the back-slash.
+
+It can also be useful to process absolute URIs if you have a custom `join` function and want to process all paths. However this is perhaps better done with some separate `postcss` plugin.
 
 ## Getting help
 
 Webpack is difficult to configure but extremely rewarding.
+
+> Remove this loader and make sure it is not a problem with a different loader in your config (most often the case)
 
 I am happy for you to **raise an issue** to ask a question regarding this package. However ensure you follow the check-list first.
 
@@ -198,19 +186,18 @@ I am happy this loader helps so many people. Open-source is provided as-is so pl
 
 Before raising a new issue:
 
-* remove this loader and make sure it is not a problem with a different loader in your config (most often the case)
-* check [stack overflow](http://stackoverflow.com/search?q=resolve-url-loader) for an answer
-* review [previous issues](/issues?utf8=%E2%9C%93&q=is%3Aissue) that may be similar
-* be prepared to create a **simple open-source project** that exhibits your problem, should the solution not be immediately obvious to us
-* be prepared to use a [source map visualisation](http://sokra.github.io/source-map-visualization/#custom-choose) to check the transpiler has correct source maps coming out
-* (ideally) debug some code and let me know where the problem sits
+* Remove this loader and make sure it is not a problem with a different loader in your config (most often the case).
+* Check [stack overflow](http://stackoverflow.com/search?q=resolve-url-loader) for an answer.
+* Review [previous issues](/issues?utf8=%E2%9C%93&q=is%3Aissue) that may be similar.
+* Be prepared to create a **simple open-source project** that exhibits your problem, should the solution not be immediately obvious to us.
+* (ideally) Debug some code and let me know where the problem sits.
 
 ### Pull requests
 
 I am happy to take **pull requests**, however:
 
 * Ensure your change is **backwards compatible** - not all users will be using the same version of Webpack or SASS that you do.
-* Follow the **existing code style**.
+* Follow the **existing code style**. I know it is old but it maintains backwards compatibility.
 * Uncomon use-cases/fixes should be opt-in per a new **option**.
 * Do **not** overwrite existing variables with new values. I would prefer your change variable names elsewhere if necessary.
 * Add **comments** that describe why the code is necessary - i.e. what edge case are we solving. Otherwise we may rewrite later and break your use-case.
