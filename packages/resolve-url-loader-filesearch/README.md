@@ -1,20 +1,19 @@
 # Resolve URL Loader filesearch
 
-This is the custom `join` function for [https://www.npmjs.com/package/resolve-url-loader](resolve-url-loader)
+This is the now defunct file search "magic" from `resolve-url-loader@<3.0.0`.
 
-It provides legacy file-search "magic" for `resolve-url-loader@>=3.0`.
+**DISCLAIMER**
 
-> **WORK IN PROGRESS** This is currently just a dump of the old file-search code.
-> There are no immediate plans to release it.
-> Open an issue if you need this released.
+* Needs to be adapted as a `join` function to be useful to anyone.
+* Currently unpublished.
+* Currently no plans to work on this.
 
-## TODO
+## This is not the fix you are looking for!
 
-- [ ] migrate `fileSearch` to new `join` API
+The file-search "magic" was always a hack and solved problems back in the days when `.css` was distributed by [Bower](https://bower.io/). Back then it was common for packages to be broken.
 
-- [ ] tests
-  - [ ] check search works and is limited by `attempts` option
-  - [ ] check `includeRoot` option
-  - [ ] ...
+Now days bundling CSS is common place and broken packages are quickly fixed. It should be possible to solve your use-case without a full file search.
 
-- [ ] Rewrite README.md
+The author recommends you use the `join` option in `resolve-url-loader@>=3.0.0` to make a more targeted fix.
+
+If you need a full file-search for some other application feel free to canabalise this code.

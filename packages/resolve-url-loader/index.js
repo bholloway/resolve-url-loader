@@ -49,7 +49,7 @@ function resolveUrlLoader(content, sourceMap) {
     !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
     {
       sourceMap: loader.sourceMap,
-      engine   : 'rework',
+      engine   : 'postcss',
       silent   : false,
       absolute : false,
       keepQuery: false,
