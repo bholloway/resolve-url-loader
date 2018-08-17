@@ -2,8 +2,7 @@
 
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const templateFn = require('adjust-sourcemap-loader')
-  .moduleFilenameTemplate({format: 'projectRelative'});
+const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRelative'});
 
 module.exports = {
   entry: path.join(__dirname, process.env.ENTRY),

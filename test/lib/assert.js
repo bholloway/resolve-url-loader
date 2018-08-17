@@ -9,7 +9,7 @@ const get = require('get-value');
 const has = require('has-prop');
 const {assert} = require('test-my-cli');
 
-const {mappingsToString} = require('../lib/sourcemap');
+const {mappingsToString} = require('./sourcemap');
 const {excludingQuotes, unique} = require('./util');
 const {withPattern, withFiles, withFileContent, withJson, withSourceMappingURL, withSplitCssAssets} =
   require('./higher-order');
@@ -39,7 +39,7 @@ const assertSourceMap = compose(
 
 exports.onlyVersion = (equation) => (...fn) => {
   /*jshint evil:true */
-  const predicate = new Function('version', `return version.${equation.replace('=', '===')}`);
+  const predicate = new Function('version', `return version.${equation.replace(/\b=+\b/, '===')}`);
   return (context, ...rest) => {
     const isPass = predicate(context.layer.meta.version);
     return (isPass ? sequence(...fn) : (x => x))(context, ...rest);
@@ -101,7 +101,7 @@ exports.assertContent = (find, replace) => {
     });
 };
 
-exports.assertCssSourceMap = (fieldOrExpected) => sequence(
+exports.assertSourceMapComment = (fieldOrExpected) =>
   assertCss(({ok, notOk}, context, list) => {
     if (list.length) {
       const [{sourceMappingURL}] = list;
@@ -111,8 +111,9 @@ exports.assertCssSourceMap = (fieldOrExpected) => sequence(
         `should ${fieldOrExpected ? '' : 'NOT'} yield sourceMappingURL comment`
       );
     }
-  }),
+  });
 
+exports.assertSourceMapContent = (fieldOrExpected) => sequence(
   assertSourceMap(({ok, notOk}, context, list) => {
     const expected = resolveValue(context, fieldOrExpected);
     (expected ? ok : notOk)(
@@ -147,6 +148,11 @@ exports.assertCssSourceMap = (fieldOrExpected) => sequence(
       }
     }
   })
+);
+
+exports.assertNoSourceMap = sequence(
+  exports.assertSourceMapComment(false),
+  exports.assertSourceMapContent(false)
 );
 
 exports.assertAssetUrls = (fieldOrExpected) =>
@@ -197,3 +203,5 @@ const assertStream = (stream) => (kind) => (fieldOrExpected) => withPattern(
 exports.assertStdout = assertStream('stdout');
 
 exports.assertStderr = assertStream('stderr');
+
+exports.assertNoMessages = exports.assertStdout()(0)`resolve-url-loader:`;

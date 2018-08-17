@@ -1,10 +1,11 @@
 'use strict';
 
 const path = require('path');
-const sassLoader = require.resolve('sass-loader');
+const LastCallWebpackPlugin = require('last-call-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const templateFn = require('adjust-sourcemap-loader')
-  .moduleFilenameTemplate({format: 'projectRelative'});
+const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRelative'});
+const processFn = require('adjust-sourcemap-loader/lib/process');
 
 module.exports = {
   entry: path.join(__dirname, process.env.ENTRY),
@@ -31,7 +32,7 @@ module.exports = {
               undefined
           })
         }, {
-          loader: sassLoader,
+          loader: 'sass-loader',
           options: {
             sourceMap: true,
             sourceMapContents: false
@@ -48,6 +49,27 @@ module.exports = {
   plugins: [
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css'
+    }),
+    // currently devtoolModuleFilenameTemplate is not respected by OptimizeCSSAssetsPlugin so we must do it ourselves
+    new LastCallWebpackPlugin({
+      assetProcessors: [{
+        regExp: /\.css\.map/,
+        processor: (assetName, asset) => Promise.resolve(JSON.parse(asset.source()))
+          .then(obj => processFn({}, {format: 'projectRelative'}, obj))
+          .then(obj => JSON.stringify(obj))
+      }]
     })
-  ]
+  ],
+  optimization: {
+    minimizer: [
+      new OptimizeCSSAssetsPlugin({
+        cssProcessorOptions: {
+          map: !!JSON.parse(process.env.DEVTOOL),
+          // the following optimisations are fine but e2e assertions are easier without them
+          cssDeclarationSorter: false,
+          normalizeUrl: false
+        }
+      })
+    ]
+  }
 };
