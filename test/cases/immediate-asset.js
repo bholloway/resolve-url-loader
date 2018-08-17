@@ -156,7 +156,7 @@ const assertSourceMapSources = assertSourceMapContent([
 ]);
 
 const assertDebugMessages = assertStdout('debug')(1)`
-  ^resolve-url-loader:[ ]*${'img.jpg'}
+  ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
   [ ]+${'./src/feature'}
   [ ]+FOUND$
   `;

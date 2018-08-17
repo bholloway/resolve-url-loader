@@ -88,16 +88,16 @@ function resolveUrlLoader(content, sourceMap) {
       'loader misconfiguration',
       '"join" option must be a Function'
     );
-  } else if (options.join.length !== 1) {
+  } else if (options.join.length !== 2) {
     return handleAsError(
       'loader misconfiguration',
-      '"join" Function must take exactly 1 argument, an options hash'
+      '"join" Function must take exactly 2 arguments (filename and options hash)'
     );
   }
 
   // validate root option
   if (typeof options.root === 'string') {
-    const isValid = (options.root === '') ||
+    var isValid = (options.root === '') ||
       (path.isAbsolute(options.root) && fs.existsSync(options.root) && fs.statSync(options.root).isDirectory());
 
     if (!isValid) {
@@ -164,7 +164,7 @@ function resolveUrlLoader(content, sourceMap) {
   Promise
     .resolve(require(enginePath)(loader.resourcePath, content, {
       outputSourceMap     : !!options.sourceMap,
-      transformDeclaration: valueProcessor(loader.context, options),
+      transformDeclaration: valueProcessor(loader.resourcePath, options),
       absSourceMap        : absSourceMap,
       sourceMapConsumer   : sourceMapConsumer
     }))

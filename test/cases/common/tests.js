@@ -161,10 +161,10 @@ exports.testNonFunctionJoin = (...rest) =>
 
 exports.testWrongArityJoin = (...rest) =>
   test(
-    'join=!arity1',
+    'join=!arity2',
     layer()(
       env({
-        LOADER_JOIN: 'return (a, b) => a;',
+        LOADER_JOIN: 'return (a) => a;',
         OUTPUT: 'wrong-arity-join'
       }),
       ...rest,
