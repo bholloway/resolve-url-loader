@@ -46,7 +46,7 @@ const assertNonFunctionJoinError = assertMisconfigError(
 );
 
 const assertWrongArityJoinError = assertMisconfigError(
-  '"join" Function must take exactly 1 argument, an options hash'
+  '"join" Function must take exactly 2 arguments (filename and options hash)'
 );
 
 const assertNonExistentRootError = assertMisconfigError(

@@ -167,7 +167,7 @@ const assertSourceMapSources = assertSourceMapContent([
 ]);
 
 const assertDebugMessages = assertStdout('debug')(1)`
-  ^resolve-url-loader:[ ]*${process.cwd()}.*${join('images', 'img.jpg')}
+  ^resolve-url-loader:[^:]+:[ ]*${process.cwd()}.*${join('images', 'img.jpg')}
   [ ]+FOUND$
   `;
 
