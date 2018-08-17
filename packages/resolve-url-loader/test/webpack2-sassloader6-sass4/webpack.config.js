@@ -1,10 +1,8 @@
 'use strict';
 
 const path = require('path');
-const sassLoader = require.resolve('sass-loader');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const templateFn = require('adjust-sourcemap-loader')
-  .moduleFilenameTemplate({format: 'projectRelative'});
+const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRelative'});
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].[contenthash].css',
@@ -37,7 +35,7 @@ module.exports = {
                 undefined
             })
           }, {
-            loader: sassLoader,
+            loader: 'sass-loader',
             options: {
               sourceMap: true,
               sourceMapContents: false

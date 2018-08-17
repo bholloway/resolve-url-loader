@@ -2,7 +2,7 @@
 
 const {test, layer, env, exec} = require('test-my-cli');
 
-const {saveOutput} = require('../lib/assert');
+const {saveOutput} = require('../../lib/assert');
 
 exports.buildDevNormal = (...rest) =>
   test(
