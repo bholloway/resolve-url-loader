@@ -7,13 +7,14 @@ const outdent = require('outdent');
 const {test, layer, fs, env, meta, cwd} = require('test-my-cli');
 
 const {trim} = require('../lib/util');
-const {
-  onlyVersion, onlyOS, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertSourceMapComment,
-  assertSourceMapContent, assertNoSourceMap, assertAssetUrls, assertAssetFiles, assertStdout
-} = require('../lib/assert');
 const {withRootBase, withCacheBase} = require('../lib/higher-order');
-const {all, testDefault, testAbsolute, testDebug, testKeepQuery, testRoot} = require('./common/tests');
+const {all, testDefault, testAbsolute, testDebug, testKeepQuery, testRoot, testWithLabel} = require('./common/tests');
 const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
+const {moduleNotFound} = require('./common/partials');
+const {
+  onlyVersion, onlyOS, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent,
+  assertSourceMapComment, assertSourceMapContent, assertNoSourceMap, assertAssetUrls, assertAssetFiles, assertStdout
+} = require('../lib/assert');
 
 // escape windows absolute path containing forward slashes by using a configurable number of back slashes
 const escape = (text, n) =>
@@ -196,19 +197,235 @@ module.exports = test(
             hash: url(${escape(filePath, 1)}#hash);
           }
           `;
-      },
-      'images/img.jpg': require.resolve('./assets/blank.jpg')
+      }
     }),
     env({
       ENTRY: join('src', 'index.scss')
     }),
-    meta({
-      asset: join('images', 'img.jpg')
-    }),
-    // omitting options.root doesn't work with windows paths
-    onlyOS('posix')(
-      testAbsolute(
-        all(testDefault, testDebug, testKeepQuery)(
+    testWithLabel('asset-missing')(
+      all(compose(onlyOS('posix'), testAbsolute), testRoot)(
+        moduleNotFound
+      )
+    ),
+    layer()(
+      fs({
+        'images/img.jpg': require.resolve('./assets/blank.jpg')
+      }),
+      meta({
+        asset: join('images', 'img.jpg')
+      }),
+      // omitting options.root doesn't work with windows paths
+      onlyOS('posix')(
+        testAbsolute(
+          all(testDefault, testDebug, testKeepQuery)(
+            buildDevNormal(
+              assertWebpackOk,
+              assertNoErrors,
+              assertNoMessages,
+              assertContentDev,
+              assertSourceMapSources,
+              assertAssetUrls([
+                'd68e763c825dc0e388929ae1b375ce18.jpg',
+                'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
+              ]),
+              assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+            ),
+            buildDevNoUrl(
+              assertWebpackOk,
+              assertNoErrors,
+              assertNoMessages,
+              assertContentDev,
+              assertSourceMapSources,
+              assertAssetUrls(withRootBase([
+                'images/img.jpg',
+                'images/img.jpg?query',
+                'images/img.jpg#hash'
+              ])),
+              assertAssetFiles(false)
+            ),
+            buildProdNormal(
+              assertWebpackOk,
+              assertNoErrors,
+              assertNoMessages,
+              assertContentProd,
+              assertSourceMapSources,
+              assertAssetUrls([
+                'd68e763c825dc0e388929ae1b375ce18.jpg',
+                'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
+              ]),
+              assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+            ),
+            buildProdNoUrl(
+              assertWebpackOk,
+              assertNoErrors,
+              assertNoMessages,
+              assertContentProd,
+              assertSourceMapSources,
+              assertAssetUrls(withRootBase([
+                'images/img.jpg',
+                'images/img.jpg?query',
+                'images/img.jpg#hash'
+              ])),
+              assertAssetFiles(false)
+            ),
+            buildProdNoDevtool(
+              assertWebpackOk,
+              assertNoErrors,
+              assertNoMessages,
+              assertContentProd,
+              assertSourceMapContent(false),
+              assertAssetUrls([
+                'd68e763c825dc0e388929ae1b375ce18.jpg',
+                'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
+              ]),
+              assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+            )
+          )
+        )
+      ),
+      testRoot(
+        testDefault(
+          buildDevNormal(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentDev,
+            assertSourceMapSources,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          ),
+          buildDevNoUrl(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentDev,
+            assertSourcemapDev,
+            assertAssetUrls(['../images/img.jpg']),
+            assertAssetFiles(false)
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentProd,
+            assertSourceMapSources,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          ),
+          buildProdNoUrl(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentProd,
+            assertSourcemapProd,
+            assertAssetUrls(['../images/img.jpg']),
+            assertAssetFiles(false)
+          ),
+          buildProdNoDevtool(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentProd,
+            assertNoSourceMap,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          )
+        ),
+        testAbsolute(
+          buildDevNormal(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentDev,
+            assertSourceMapSources,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          ),
+          buildDevNoUrl(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentDev,
+            assertSourceMapSources,
+            assertAssetUrls(withRootBase(['images/img.jpg'])),
+            assertAssetFiles(false)
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentProd,
+            assertSourceMapSources,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          ),
+          buildProdNoUrl(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentProd,
+            assertSourceMapSources,
+            assertAssetUrls(withRootBase(['images/img.jpg'])),
+            assertAssetFiles(false)
+          ),
+          buildProdNoDevtool(
+            assertWebpackOk,
+            assertNoErrors,
+            assertNoMessages,
+            assertContentProd,
+            assertNoSourceMap,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          )
+        ),
+        testDebug(
+          buildDevNormal(
+            assertWebpackOk,
+            assertNoErrors,
+            assertDebugMessages,
+            assertContentDev,
+            assertSourceMapSources,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          ),
+          buildDevNoUrl(
+            assertWebpackOk,
+            assertNoErrors,
+            assertDebugMessages,
+            assertContentDev,
+            assertSourceMapSources,
+            assertAssetUrls(['../images/img.jpg']),
+            assertAssetFiles(false)
+          ),
+          buildProdNormal(
+            assertWebpackOk,
+            assertNoErrors,
+            assertDebugMessages,
+            assertContentProd,
+            assertSourceMapSources,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          ),
+          buildProdNoUrl(
+            assertWebpackOk,
+            assertNoErrors,
+            assertDebugMessages,
+            assertContentProd,
+            assertSourceMapSources,
+            assertAssetUrls(['../images/img.jpg']),
+            assertAssetFiles(false)
+          ),
+          buildProdNoDevtool(
+            assertWebpackOk,
+            assertNoErrors,
+            assertDebugMessages,
+            assertContentProd,
+            assertNoSourceMap,
+            assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
+            assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          )
+        ),
+        testKeepQuery(
           buildDevNormal(
             assertWebpackOk,
             assertNoErrors,
@@ -227,11 +444,11 @@ module.exports = test(
             assertNoMessages,
             assertContentDev,
             assertSourceMapSources,
-            assertAssetUrls(withRootBase([
-              'images/img.jpg',
-              'images/img.jpg?query',
-              'images/img.jpg#hash'
-            ])),
+            assertAssetUrls([
+              '../images/img.jpg',
+              '../images/img.jpg?query',
+              '../images/img.jpg#hash'
+            ]),
             assertAssetFiles(false)
           ),
           buildProdNormal(
@@ -252,11 +469,11 @@ module.exports = test(
             assertNoMessages,
             assertContentProd,
             assertSourceMapSources,
-            assertAssetUrls(withRootBase([
-              'images/img.jpg',
-              'images/img.jpg?query',
-              'images/img.jpg#hash'
-            ])),
+            assertAssetUrls([
+              '../images/img.jpg',
+              '../images/img.jpg?query',
+              '../images/img.jpg#hash'
+            ]),
             assertAssetFiles(false)
           ),
           buildProdNoDevtool(
@@ -264,220 +481,13 @@ module.exports = test(
             assertNoErrors,
             assertNoMessages,
             assertContentProd,
-            assertSourceMapContent(false),
+            assertNoSourceMap,
             assertAssetUrls([
               'd68e763c825dc0e388929ae1b375ce18.jpg',
               'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
             ]),
             assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
           )
-        )
-      )
-    ),
-    testRoot(
-      testDefault(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          assertSourcemapDev,
-          assertAssetUrls(['../images/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertSourcemapProd,
-          assertAssetUrls(['../images/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        )
-      ),
-      testAbsolute(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls(withRootBase(['images/img.jpg'])),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls(withRootBase(['images/img.jpg'])),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        )
-      ),
-      testDebug(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertDebugMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertDebugMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls(['../images/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertDebugMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertDebugMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls(['../images/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertDebugMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        )
-      ),
-      testKeepQuery(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls([
-            'd68e763c825dc0e388929ae1b375ce18.jpg',
-            'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
-          ]),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          assertSourceMapSources,
-          assertAssetUrls([
-            '../images/img.jpg',
-            '../images/img.jpg?query',
-            '../images/img.jpg#hash'
-          ]),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls([
-            'd68e763c825dc0e388929ae1b375ce18.jpg',
-            'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
-          ]),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertSourceMapSources,
-          assertAssetUrls([
-            '../images/img.jpg',
-            '../images/img.jpg?query',
-            '../images/img.jpg#hash'
-          ]),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls([
-            'd68e763c825dc0e388929ae1b375ce18.jpg',
-            'd68e763c825dc0e388929ae1b375ce18.jpg#hash'
-          ]),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
         )
       )
     )

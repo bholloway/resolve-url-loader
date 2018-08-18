@@ -7,13 +7,13 @@ const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('../lib/util');
+const {withCacheBase} = require('../lib/higher-order');
+const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
+const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 const {
   onlyVersion, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertSourceMapComment,
   assertSourceMapContent, assertNoSourceMap, assertAssetUrls, assertAssetFiles
 } = require('../lib/assert');
-const {withCacheBase} = require('../lib/higher-order');
-const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
-const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 
 const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
   .some-class-name {

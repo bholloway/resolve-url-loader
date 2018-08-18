@@ -32,6 +32,17 @@ exports.testBase = (engine) => (...rest) =>
     )
   );
 
+exports.testWithLabel = (label) => (...rest) =>
+  test(
+    label,
+    layer()(
+      env({
+        OUTPUT: label
+      }),
+      ...rest
+    )
+  );
+
 exports.testDefault = (...rest) =>
   test(
     'default',

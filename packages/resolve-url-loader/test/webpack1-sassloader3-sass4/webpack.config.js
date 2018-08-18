@@ -14,6 +14,9 @@ module.exports = {
     devtoolFallbackModuleFilenameTemplate: templateFn
   },
   devtool: JSON.parse(process.env.DEVTOOL),
+  resolve: {
+    root: path.join(__dirname, 'modules') // specifically for isolation in module-relative test
+  },
   module: {
     loaders: [{
       test: /\.scss$/,
