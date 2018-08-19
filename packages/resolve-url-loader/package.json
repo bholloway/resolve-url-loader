@@ -37,6 +37,7 @@
     "camelcase": "^4.1.0",
     "compose-function": "^3.0.3",
     "convert-source-map": "^1.5.1",
+    "es6-iterator": "^2.0.3",
     "loader-utils": "^1.1.0",
     "lodash.defaults": "^4.0.0",
     "postcss": "^7.0.0",

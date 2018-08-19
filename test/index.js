@@ -9,8 +9,11 @@ const tape = require('blue-tape');
 const {init, layer, cwd, fs, env, meta, exec} = require('test-my-cli');
 const {assign} = Object;
 
-const {assertExitCodeZero} = require('./cases/lib/assert');
+const {assertExitCodeZero} = require('./lib/assert');
 const {testBase} = require('./cases/common/tests');
+
+const PLATFORMS_DIR = join(dirname(require.resolve('resolve-url-loader')), 'test');
+const CASES_DIR = join(__dirname, 'cases');
 
 const testIncluded = process.env.ONLY ?
   (arr) => {
@@ -37,9 +40,9 @@ console.log(`timestamp: ${epoch}`);
 
 // platforms, engines, cases
 const tests = permute(
-  readdirSync(join(__dirname, 'platforms')),
+  readdirSync(PLATFORMS_DIR),
   ['rework', 'postcss'],
-  readdirSync(join(__dirname, 'cases')).filter((v) => v.endsWith('.js')).map((v) => v.split('.').shift())
+  readdirSync(CASES_DIR).filter((v) => v.endsWith('.js')).map((v) => v.split('.').shift())
 )
   .filter(testIncluded);
 
@@ -55,7 +58,7 @@ tests.forEach((test) => console.log(...test));
 filterTests()
   .forEach(platform => {
     // common and/or cached node-modules cuts test time drastically
-    const platformDir = join(__dirname, 'platforms', platform);
+    const platformDir = join(PLATFORMS_DIR, platform);
     const platformFiles = readdirSync(platformDir)
       .reduce((r, file) => assign(r, {[file]: join(platformDir, file)}), {});
 
@@ -117,8 +120,7 @@ filterTests()
               cacheDir: join(process.cwd(), 'tmp', '.cache', platform),
               version: getVersionHash(platform)
             }),
-            ...filterTests(platform, engine)
-              .map(caseName => require(`./cases/${caseName}`))
+            ...filterTests(platform, engine).map(caseName => require(join(CASES_DIR, caseName)))
           )
         )
       )

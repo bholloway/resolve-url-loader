@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "jshint --exclude **/node_modules test",
+    "lint": "jshint packages --exclude **/node_modules",
     "test:unit": "tape **/*.spec.js | tap-diff",
     "test:e2e": "tape test | tap-diff"
   },
