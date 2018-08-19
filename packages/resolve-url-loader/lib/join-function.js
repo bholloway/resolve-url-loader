@@ -4,39 +4,47 @@
  */
 'use strict';
 
-var path = require('path'),
-  fs = require('fs'),
-  compose = require('compose-function');
+var path     = require('path'),
+    fs       = require('fs'),
+    compose  = require('compose-function'),
+    Iterator = require('es6-iterator');
 
 var PACKAGE_NAME = require('../package.json').name;
 
 var simpleJoin = compose(path.normalize, path.join);
 
-
 /**
  * The default join function iterates over possible base paths until a suitable join is found.
  *
- * The first base path is the fallback for the case where no base paths match.
- *
- * Where the uri is absolute (base or iterator absent) then `options.root` is used as the base path.
+ * The first base path is used as fallback for the case where none of the base paths can locate the actual file.
  *
  * @type {function}
  */
 exports.defaultJoin = createJoinForPredicate(
-  function predicate(uri, base, i, next) {
+  function predicate(_, uri, base, i, next) {
     var absolute = simpleJoin(base, uri);
     return fs.existsSync(absolute) ? absolute : next((i === 0) ? absolute : null);
   },
   'defaultJoin'
 );
 
-
 /**
- * Define a join function by a predicate tests possible base paths from an iterator.
+ * Define a join function by a predicate that tests possible base paths from an iterator.
  *
- * The predicate accepts the `uri`, `base`, `index` and `next` function. Given the uri and base it should either
- * return an absolute path as a success value or return a call to `next()`. Any value given to `next()` is considered a
- * fallback value to use if success does not occur.
+ * The `predicate` is of the form:
+ *
+ * ```
+ * function(filename, uri, base, i, next):string|null
+ * ```
+ *
+ * Given the uri and base it should either return:
+ * - an absolute path success
+ * - a call to `next(null)` as failure
+ * - a call to `next(absolute)` where absolute is placeholder and the iterator continues
+ *
+ * The value given to `next(...)` is only used if success does not eventually occur.
+ *
+ * The `file` value is typically unused but useful if you would like to differentiate behaviour.
  *
  * You can write a much simpler function than this if you have specific requirements.
  *
@@ -47,9 +55,10 @@ function createJoinForPredicate(predicate, name) {
   /**
    * A factory for a join function with logging.
    *
+   * @param {string} filename The current file being processed
    * @param {{debug:function|boolean,root:string}} options An options hash
    */
-  function join(options) {
+  function join(filename, options) {
     var log = createDebugLogger(options.debug);
 
     /**
@@ -58,24 +67,25 @@ function createJoinForPredicate(predicate, name) {
      * For absolute uri only `uri` will be provided. In this case we substitute any `root` given in options.
      *
      * @param {string} uri A uri path, relative or absolute
-     * @param {string|{next:function():string}} [baseOrIteratorOrAbsent] Optional absolute base path or iterator thereof
+     * @param {string|Iterator.<string>} [baseOrIteratorOrAbsent] Optional absolute base path or iterator thereof
      * @return {string} Just the uri where base is empty or the uri appended to the base
      */
     return function joinProper(uri, baseOrIteratorOrAbsent) {
       var iterator =
-        (typeof baseOrIteratorOrAbsent === 'undefined') && {next() { return options.root;           }} ||
-        (typeof baseOrIteratorOrAbsent === 'string'   ) && {next() { return baseOrIteratorOrAbsent; }} ||
+        (typeof baseOrIteratorOrAbsent === 'undefined') && new Iterator([options.root          ]) ||
+        (typeof baseOrIteratorOrAbsent === 'string'   ) && new Iterator([baseOrIteratorOrAbsent]) ||
         baseOrIteratorOrAbsent;
 
       var result = runIterator([]);
-      log(createJoinMsg, [uri, result, result.isFound]);
+      log(createJoinMsg, [filename, uri, result, result.isFound]);
 
       return (typeof result.absolute === 'string') ? result.absolute : uri;
 
       function runIterator(accumulator) {
-        var base = iterator.next();
+        var nextItem = iterator.next();
+        var base     = !nextItem.done && nextItem.value;
         if (typeof base === 'string') {
-          var element = predicate(uri, base, accumulator.length, next);
+          var element = predicate(filename, uri, base, accumulator.length, next);
 
           if ((typeof element === 'string') && path.isAbsolute(element)) {
             return Object.assign(
@@ -106,25 +116,25 @@ function createJoinForPredicate(predicate, name) {
   }
 
   return Object.assign(join, name && {
-    valueOf: toString,
+    valueOf : toString,
     toString: toString
   });
 }
 
-exports.createJoinForIterator = createJoinForPredicate;
-
+exports.createJoinForPredicate = createJoinForPredicate;
 
 /**
  * Format a debug message.
  *
+ * @param {string} file The file being processed by webpack
  * @param {string} uri A uri path, relative or absolute
  * @param {Array.<string>} bases Absolute base paths up to and including the found one
  * @param {boolean} isFound Indicates the last base was correct
  * @return {string} Formatted message
  */
-function createJoinMsg(uri, bases, isFound) {
-  return [PACKAGE_NAME + ': ' + uri]
-    .concat(bases.map(formatBase).filter(Boolean))
+function createJoinMsg(file, uri, bases, isFound) {
+  return [PACKAGE_NAME + ': ' + pathToString(file) + ': ' + uri]
+    .concat(bases.map(pathToString).filter(Boolean))
     .concat(isFound ? 'FOUND' : 'NOT FOUND')
     .join('\n  ');
 
@@ -134,7 +144,7 @@ function createJoinMsg(uri, bases, isFound) {
    * @param {string} absolute An absolute path
    * @return {string} A relative or absolute path
    */
-  function formatBase(absolute) {
+  function pathToString(absolute) {
     if (!absolute) {
       return null;
     } else {
@@ -148,7 +158,6 @@ function createJoinMsg(uri, bases, isFound) {
 }
 
 exports.createJoinMsg = createJoinMsg;
-
 
 /**
  * A factory for a log function predicated on the given debug parameter.

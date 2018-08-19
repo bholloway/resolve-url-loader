@@ -2,8 +2,7 @@
 
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const templateFn = require('adjust-sourcemap-loader')
-  .moduleFilenameTemplate({format: 'projectRelative'});
+const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRelative'});
 
 module.exports = {
   entry: path.join(__dirname, process.env.ENTRY),
@@ -15,6 +14,9 @@ module.exports = {
     devtoolFallbackModuleFilenameTemplate: templateFn
   },
   devtool: JSON.parse(process.env.DEVTOOL),
+  resolve: {
+    root: path.join(__dirname, 'modules') // specifically for isolation in module-relative test
+  },
   module: {
     loaders: [{
       test: /\.scss$/,

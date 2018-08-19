@@ -5,16 +5,16 @@ const compose = require('compose-function');
 const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
-const {trim} = require('./lib/util');
-const {
-  onlyVersion, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertContent, assertStdout
-} = require('./lib/assert');
+const {trim} = require('../lib/util');
+const {withCacheBase} = require('../lib/higher-order');
 const {
   all, testDefault, testSilent, testAttempts, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin,
   testNonStringRoot, testNonExistentRoot, testEngineFail
 } = require('./common/tests');
-const {withCacheBase} = require('./lib/higher-order');
 const {buildDevNormal, buildDevBail, buildProdNormal, buildProdBail} = require('./common/builds');
+const {
+  onlyVersion, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertContent, assertStdout
+} = require('../lib/assert');
 
 const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
   .some-class-name {
@@ -25,8 +25,6 @@ const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
 const assertContentProd = compose(assertContent(), trim)`
   .some-class-name{display:none}
   `;
-
-const assertNoMessages = assertStdout()(0)`resolve-url-loader:`;
 
 const assertMisconfigWarning = (message) => assertStdout('warning')(1)`
   ^[ ]*WARNING[^\n]*
@@ -48,7 +46,7 @@ const assertNonFunctionJoinError = assertMisconfigError(
 );
 
 const assertWrongArityJoinError = assertMisconfigError(
-  '"join" Function must take exactly 1 argument, an options hash'
+  '"join" Function must take exactly 2 arguments (filename and options hash)'
 );
 
 const assertNonExistentRootError = assertMisconfigError(

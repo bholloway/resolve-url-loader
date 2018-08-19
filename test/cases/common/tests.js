@@ -4,7 +4,7 @@ const {join} = require('path');
 const sequence = require('promise-compose');
 const {test, layer, meta, env} = require('test-my-cli');
 
-const {assertStderr} = require('../lib/assert');
+const {onlyVersion, assertStderr} = require('../../lib/assert');
 
 exports.all = (...tests) => (...rest) =>
   sequence(...tests.map((test) => test(...rest)));
@@ -32,6 +32,17 @@ exports.testBase = (engine) => (...rest) =>
     )
   );
 
+exports.testWithLabel = (label) => (...rest) =>
+  test(
+    label,
+    layer()(
+      env({
+        OUTPUT: label
+      }),
+      ...rest
+    )
+  );
+
 exports.testDefault = (...rest) =>
   test(
     'default',
@@ -43,19 +54,22 @@ exports.testDefault = (...rest) =>
     )
   );
 
+// css-loader deprecated options.root around the time of webpack@4
 exports.testAbsolute = (...rest) =>
-  test(
-    'absolute=true',
-    layer()(
-      env({
-        LOADER_QUERY: 'absolute',
-        LOADER_OPTIONS: {absolute: true},
-        CSS_QUERY: 'root=',
-        CSS_OPTIONS: {root: ''},
-        OUTPUT: 'absolute'
-      }),
-      ...rest,
-      test('validate', assertStderr('options.absolute')(1)`absolute: true`)
+  onlyVersion('webpack<4')(
+    test(
+      'absolute=true',
+      layer()(
+        env({
+          LOADER_QUERY: 'absolute',
+          LOADER_OPTIONS: {absolute: true},
+          CSS_QUERY: 'root=',
+          CSS_OPTIONS: {root: ''},
+          OUTPUT: 'absolute'
+        }),
+        ...rest,
+        test('validate', assertStderr('options.absolute')(1)`absolute: true`)
+      )
     )
   );
 
@@ -158,10 +172,10 @@ exports.testNonFunctionJoin = (...rest) =>
 
 exports.testWrongArityJoin = (...rest) =>
   test(
-    'join=!arity1',
+    'join=!arity2',
     layer()(
       env({
-        LOADER_JOIN: 'return (a, b) => a;',
+        LOADER_JOIN: 'return (a) => a;',
         OUTPUT: 'wrong-arity-join'
       }),
       ...rest,

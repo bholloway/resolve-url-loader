@@ -10,13 +10,14 @@ var path        = require('path'),
 /**
  * Create a value processing function for a given file path.
  *
- * @param {string} directory The directory of the current file being processed
+ * @param {string} filename The current file being processed
  * @param {{absolute:string, keepQuery:boolean, join:function, root:string}} options Options hash
  * @return {function} value processing function
  */
-function valueProcessor(directory, options) {
+function valueProcessor(filename, options) {
   var URL_STATEMENT_REGEX = /(url\s*\()\s*(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))\s*(\))/g;
-  var join = options.join(options);
+  var directory = path.dirname(filename);
+  var join      = options.join(filename, options);
 
   /**
    * Process the given CSS declaration value.
