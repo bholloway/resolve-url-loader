@@ -12,7 +12,7 @@ const {testDefault, testAbsolute, testDebug, testKeepQuery, testWithLabel} = req
 const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 const {moduleNotFound} = require('./common/partials');
 const {
-  onlyVersion, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertSourceMapComment,
+  onlyMeta, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertSourceMapComment,
   assertSourceMapContent, assertNoSourceMap, assertAssetUrls, assertAssetFiles, assertStdout
 } = require('../lib/assert');
 
@@ -78,10 +78,10 @@ const assertContentProd = compose(assertContent(), trim)`
   `;
 
 const assertSourcemapProd = sequence(
-  onlyVersion('webpack<4')(
+  onlyMeta('meta.version.webpack < 4')(
     assertSourceMapComment(true)
   ),
-  onlyVersion('webpack>=4')(
+  onlyMeta('meta.version.webpack >= 4')(
     assertSourceMapComment(false)
   ),
   assertSourceMapContent(({meta: {engine, version: {webpack}}}) => {
