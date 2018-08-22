@@ -15,6 +15,11 @@ const {testBase} = require('./cases/common/tests');
 const PLATFORMS_DIR = join(dirname(require.resolve('resolve-url-loader')), 'test');
 const CASES_DIR = join(__dirname, 'cases');
 
+const testCaseVsEngine = ([_, engineName, caseName]) => {
+  const split = caseName.split('.');
+  return (split.length === 1) || (split[1] === engineName);
+};
+
 const testIncluded = process.env.ONLY ?
   (arr) => {
     const patterns = process.env.ONLY.split(' ').map(v => v.trim());
@@ -42,8 +47,9 @@ console.log(`timestamp: ${epoch}`);
 const tests = permute(
   readdirSync(PLATFORMS_DIR),
   ['rework', 'postcss'],
-  readdirSync(CASES_DIR).filter((v) => v.endsWith('.js')).map((v) => v.split('.').shift())
+  readdirSync(CASES_DIR).filter((v) => v.endsWith('.js')).map((v) => v.split('.').slice(0, -1).join('.'))
 )
+  .filter(testCaseVsEngine)
   .filter(testIncluded);
 
 const filterTests = (...terms) =>

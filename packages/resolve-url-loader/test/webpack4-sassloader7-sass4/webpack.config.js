@@ -70,7 +70,8 @@ module.exports = {
           map: !!JSON.parse(process.env.DEVTOOL),
           // the following optimisations are fine but e2e assertions are easier without them
           cssDeclarationSorter: false,
-          normalizeUrl: false
+          normalizeUrl: false,
+          discardUnused: false
         }
       })
     ]

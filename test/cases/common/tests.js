@@ -4,7 +4,7 @@ const {join} = require('path');
 const sequence = require('promise-compose');
 const {test, layer, meta, env} = require('test-my-cli');
 
-const {onlyVersion, assertStderr} = require('../../lib/assert');
+const {onlyMeta, assertStderr} = require('../../lib/assert');
 
 exports.all = (...tests) => (...rest) =>
   sequence(...tests.map((test) => test(...rest)));
@@ -56,7 +56,7 @@ exports.testDefault = (...rest) =>
 
 // css-loader deprecated options.root around the time of webpack@4
 exports.testAbsolute = (...rest) =>
-  onlyVersion('webpack<4')(
+  onlyMeta('meta.version.webpack < 4')(
     test(
       'absolute=true',
       layer()(
