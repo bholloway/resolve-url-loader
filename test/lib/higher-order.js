@@ -181,10 +181,13 @@ exports.withSplitCssAssets = (next) => {
       exec,
       list.map((file) => {
         const {content: raw} = file;
-        const [content, assets] = raw.split(/url\(([^)]+)\)/).reduce(
-          ([c, a], v, i) => (i % 2 === 0) ? [`${c}${v}`, a] : [`${c}url($${a.length})`, [...a, v]],
-          ['', []]
-        );
+        const [content, assets] = raw
+          .split(/url\(((["'])(?:(?!\2).)+\2|[^)]+)\)/)
+          .filter((_, i) => (i % 3 < 2))
+          .reduce(
+            ([c, a], v, i) => (i % 2 === 0) ? [`${c}${v}`, a] : [`${c}url($${a.length})`, [...a, v]],
+            ['', []]
+          );
 
         return assign({}, file, {content, assets});
       })

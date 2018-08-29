@@ -11,7 +11,7 @@ const {withCacheBase} = require('../lib/higher-order');
 const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
 const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
 const {
-  onlyVersion, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertSourceMapComment,
+  onlyMeta, assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertSourceMapComment,
   assertSourceMapContent, assertNoSourceMap, assertAssetUrls, assertAssetFiles
 } = require('../lib/assert');
 
@@ -77,10 +77,10 @@ const assertContentProd = compose(assertContent(), trim)`
   `;
 
 const assertSourcemapProd = sequence(
-  onlyVersion('webpack<4')(
+  onlyMeta('meta.version.webpack < 4')(
     assertSourceMapComment(true)
   ),
-  onlyVersion('webpack>=4')(
+  onlyMeta('meta.version.webpack >= 4')(
     assertSourceMapComment(false)
   ),
   assertSourceMapContent(({meta: {engine, version: {webpack}}}) => {
