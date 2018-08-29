@@ -30,7 +30,7 @@ function process(sourceFile, sourceContent, params) {
         prev          : !!params.absSourceMap && fileProtocol.prepend(params.absSourceMap),
         inline        : false,
         annotation    : false,
-        sourcesContent: false
+        sourcesContent: true  // #98 sourcesContent missing from output map
       }
     })
     .then(result => ({
