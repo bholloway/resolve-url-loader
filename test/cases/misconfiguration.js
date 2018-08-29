@@ -13,7 +13,7 @@ const {
 } = require('./common/tests');
 const {buildDevNormal, buildDevBail, buildProdNormal, buildProdBail} = require('./common/builds');
 const {
-  onlyVersion, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertContent, assertStdout
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertContent, assertStdout
 } = require('../lib/assert');
 
 const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
@@ -81,7 +81,7 @@ module.exports = test(
     }),
     testEngineFail(
       all(testDefault, testSilent)(
-        onlyVersion('webpack=1')(
+        onlyMeta('meta.version.webpack == 1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -97,7 +97,7 @@ module.exports = test(
             assertCssError
           )
         ),
-        onlyVersion('webpack>1')(
+        onlyMeta('meta.version.webpack > 1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertCssError
@@ -201,7 +201,7 @@ module.exports = test(
     ),
     testNonFunctionJoin(
       all(testDefault, testSilent)(
-        onlyVersion('webpack=1')(
+        onlyMeta('meta.version.webpack == 1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -217,7 +217,7 @@ module.exports = test(
             assertNonFunctionJoinError
           )
         ),
-        onlyVersion('webpack>1')(
+        onlyMeta('meta.version.webpack > 1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertNonFunctionJoinError
@@ -231,7 +231,7 @@ module.exports = test(
     ),
     testWrongArityJoin(
       all(testDefault, testSilent)(
-        onlyVersion('webpack=1')(
+        onlyMeta('meta.version.webpack == 1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -247,7 +247,7 @@ module.exports = test(
             assertWrongArityJoinError
           )
         ),
-        onlyVersion('webpack>1')(
+        onlyMeta('meta.version.webpack > 1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertWrongArityJoinError
@@ -291,7 +291,7 @@ module.exports = test(
     ),
     testNonExistentRoot(
       all(testDefault, testSilent)(
-        onlyVersion('webpack=1')(
+        onlyMeta('meta.version.webpack == 1')(
           buildDevBail(
             assertWebpackNotOk
           ),
@@ -307,7 +307,7 @@ module.exports = test(
             assertNonExistentRootError
           )
         ),
-        onlyVersion('webpack>1')(
+        onlyMeta('meta.version.webpack > 1')(
           buildDevNormal(
             assertWebpackNotOk,
             assertNonExistentRootError

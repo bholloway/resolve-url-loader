@@ -1,7 +1,7 @@
 'use strict';
 
-exports.trim = (strings) =>
-  strings.join('').split(/\s+/).join('');
+exports.trim = ({raw}, ...substitutions) =>
+  String.raw({raw: raw.map(v => v.split(/\s+/).join(''))}, ...substitutions);
 
 exports.countQueries = (list) =>
   list.filter((v) => /[?#]/.test(v)).length;

@@ -37,11 +37,15 @@ const assertSourceMap = compose(
   withJson
 );
 
-exports.onlyVersion = (equation) => (...fn) => {
+exports.onlyMeta = (equation) => (...fn) => {
   /*jshint evil:true */
-  const predicate = new Function('version', `return version.${equation.replace(/\b=+\b/, '===')}`);
+  const predicate = new Function('cwd', 'env', 'meta', `return (${equation})`);
   return (context, ...rest) => {
-    const isPass = predicate(context.layer.meta.version);
+    const {cwd, env, meta} = context.layer;
+    const isPass = predicate(cwd, env, meta);
+    if (typeof isPass !== 'boolean') {
+      throw new Error(`predicate "${equation}" must evaluate to boolean.`);
+    }
     return (isPass ? sequence(...fn) : (x => x))(context, ...rest);
   };
 };
