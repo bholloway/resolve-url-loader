@@ -134,7 +134,7 @@ join(uri, base?) =>
   compose(path.normalize, path.join)(base || options.join, uri);
 ```
 
-Not that for absolute `uri` then the `base` is absent. In the default implementation the `root` option is used instead.
+Note that for absolute `uri` then the `base` is absent. In the default implementation the `root` option is used instead.
 
 Full file search has been discontinued in version 3, however it is possible to specify a custom `join` function.
 
@@ -154,9 +154,19 @@ Ensure this is indeed the problem as there are many ways to misconfigure webpack
 
 ### Compatiblity
 
-Tested in `node 6.x` against `webpack1`-`webpack4` and a set of contemporaneous loaders/plugins.
+Tested `macOS` and `Windows` for `node 6.x`.
+
+All `webpack1`-`webpack4` with contemporaneous loaders/plugins.
 
 Refer to `test` directory for full webpack configurations (as used in automated tests).
+
+### Engines
+
+The `engine:postcss` is by far the more reliable option.
+
+The `engine:rework` option is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.
+
+If you need production css source-map it is best to avoid the combination `webpack4` with `engine:rework`. Tests show a systematic flaw in the outgoing source-map mappings.
 
 ### Absolute URIs
 
