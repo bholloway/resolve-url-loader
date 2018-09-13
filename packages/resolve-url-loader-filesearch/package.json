@@ -1,0 +1,39 @@
+{
+  "name": "resolve-url-loader-filesearch",
+  "version": "1.0.0",
+  "description": "File search 'magic' for resolve-url-loader",
+  "private": true,
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bholloway/resolve-url-loader.git"
+  },
+  "keywords": [
+    "webpack",
+    "loader",
+    "css",
+    "normalize",
+    "rewrite",
+    "resolve",
+    "url",
+    "sass",
+    "relative",
+    "file"
+  ],
+  "author": "bholloway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bholloway/resolve-url-loader/issues"
+  },
+  "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "files": [
+    "index.js",
+    "lib"
+  ],
+  "scripts": {
+    "lint": "jshint --exclude **/node_modules index.js"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.5"
+  }
+}
