@@ -39,7 +39,7 @@
     "convert-source-map": "^1.5.1",
     "es6-iterator": "^2.0.3",
     "loader-utils": "^1.1.0",
-    "lodash.defaults": "^4.0.0",
+    "lodash": "^4.17.11",
     "postcss": "^7.0.0",
     "rework": "^1.0.1",
     "rework-visit": "^1.0.0",

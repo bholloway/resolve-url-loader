@@ -8,7 +8,7 @@ var path              = require('path'),
     fs                = require('fs'),
     loaderUtils       = require('loader-utils'),
     camelcase         = require('camelcase'),
-    defaults          = require('lodash.defaults'),
+    defaults          = require('lodash/defaults'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
