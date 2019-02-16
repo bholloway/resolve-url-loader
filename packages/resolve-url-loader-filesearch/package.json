@@ -34,9 +34,5 @@
     "lib"
   ],
   "scripts": {
-    "lint": "jshint --exclude **/node_modules index.js"
-  },
-  "devDependencies": {
-    "jshint": "^2.9.5"
   }
 }
