@@ -8,7 +8,6 @@ var path              = require('path'),
     fs                = require('fs'),
     loaderUtils       = require('loader-utils'),
     camelcase         = require('camelcase'),
-    defaults          = require('lodash.defaults'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
@@ -44,9 +43,7 @@ function resolveUrlLoader(content, sourceMap) {
   // webpack 2: prefer loader options
   // webpack 3: deprecate loader.options object
   // webpack 4: loader.options no longer defined
-  var options = defaults(
-    loaderUtils.getOptions(loader),
-    !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
+  var options = Object.assign(
     {
       sourceMap: loader.sourceMap,
       engine   : 'postcss',
@@ -56,7 +53,9 @@ function resolveUrlLoader(content, sourceMap) {
       root     : false,
       debug    : false,
       join     : joinFn.defaultJoin
-    }
+    },
+    !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
+    loaderUtils.getOptions(loader)
   );
 
   // maybe log options for the test harness

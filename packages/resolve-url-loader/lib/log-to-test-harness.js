@@ -15,10 +15,11 @@ function logToTestHarness(options) {
   }
 
   function eachOptionKey(key) {
-    maybeStream.write(key);
-    maybeStream.write(': ');
-    maybeStream.write(JSON.stringify(options[key].valueOf()) || '-unstringifyable-');
-    maybeStream.write('\n');
+    var value = options[key];
+    var text  = (typeof value === 'undefined') ?
+      String(value) :
+      (JSON.stringify(value.valueOf()) || '-unstringifyable-');
+    maybeStream.write(key + ': ' + text + '\n');
   }
 }
 

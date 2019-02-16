@@ -26,6 +26,9 @@
     "url": "https://github.com/bholloway/resolve-url-loader/issues"
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "engines": {
+    "node": ">=6.0.0"
+  },
   "files": [
     "index.js",
     "lib"

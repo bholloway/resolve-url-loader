@@ -35,9 +35,10 @@ module.exports = {
   plugins: [
     new ExtractTextPlugin('css', '[name].[md5:contenthash:hex].css', { allChunks: true })
   ],
-  resolveUrlLoader: {
-    join: process.env.LOADER_JOIN ?
-      new Function('require', process.env.LOADER_JOIN)(require) : // jshint ignore:line
-      undefined
-  }
+  resolveUrlLoader: Object.assign(
+    {},
+    process.env.LOADER_JOIN && {
+      join: new Function('require', process.env.LOADER_JOIN)(require) // jshint ignore:line
+    }
+  )
 };

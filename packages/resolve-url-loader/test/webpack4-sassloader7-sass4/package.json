@@ -2,7 +2,7 @@
   "name": "webpack4-sassloader7-sass4",
   "version": "1.0.0",
   "dependencies": {
-    "adjust-sourcemap-loader": "^1.2.0",
+    "adjust-sourcemap-loader": "^2.0.0",
     "css-loader": "^1.0.0",
     "file-loader": "^1.1.10",
     "mini-css-extract-plugin": "0.4.0",
