@@ -12,21 +12,24 @@
     "debug:e2e": "node $NODE_DEBUG_OPTION $(npm bin)/tape test | tap-diff"
   },
   "devDependencies": {
-    "blue-tape": "^1.0.0",
-    "compose-function": "^3.0.3",
-    "cross-env": "^5.1.5",
-    "es6-promisify": "^6.0.0",
-    "escape-string-regexp": "^1.0.5",
-    "get-value": "^3.0.0",
-    "has-prop": "^0.1.2",
-    "joi": "^12.0.0",
-    "jshint": "^2.9.5",
-    "micromatch": "^3.1.10",
-    "ms": "^2.1.1",
-    "outdent": "^0.5.0",
-    "promise-compose": "^1.1.2",
-    "recursive-readdir": "^2.2.2",
-    "tap-diff": "^0.1.1",
-    "vlq": "^1.0.0"
+    "blue-tape": "1.0.0",
+    "compose-function": "3.0.3",
+    "cross-env": "5.2.0",
+    "es6-promisify": "6.0.1",
+    "escape-string-regexp": "1.0.5",
+    "get-value": "3.0.1",
+    "has-prop": "0.1.2",
+    "joi": "12.0.0",
+    "jshint": "2.10.1",
+    "micromatch": "3.1.10",
+    "ms": "2.1.1",
+    "outdent": "0.7.0",
+    "promise-compose": "1.1.2",
+    "recursive-readdir": "2.2.2",
+    "tap-diff": "0.1.1",
+    "vlq": "1.0.0"
+  },
+  "engines": {
+    "node": ">=6.0.0"
   }
 }

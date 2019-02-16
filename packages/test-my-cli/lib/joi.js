@@ -38,7 +38,7 @@ module.exports = Joi
       {
         name: 'relative',
         validate(params, value, state, options) {
-          const split = value.replace(/^\.($|[\\/])/, '').split(/[\\/]/);
+          const split = value.replace(/^\.($|[\\\/])/, '').split(/[\\\/]/);
           const isValid = (split.length === 1) && (split[0] === '') ||
             split.every((v) => /^(\.?\w[\w-_.]*)$/.test(v));
           if (isValid) {

@@ -69,12 +69,10 @@ const assertSourcemapDev = sequence(
             4:3 4:${b + 18}->4:36
             5:3 5:${b + 21}->5:33
             6:3 6:${b + 19}->6:32
-            7:2->6:34
           
           /src/index.scss
             2:1->8:1
             3:3->9:3 3:17->9:18
-            4:2->9:20
           `;
       default:
         throw new Error('unexpected test configuration');
@@ -153,8 +151,7 @@ const assertSourcemapProd = sequence(
           
           /src/index.scss
             2:1->1:185
-            3:3->1:205 3:17->1:218
-            4:2->1:219
+            3:3->1:205 3:17->1:218 3:17->1:219
           `;
       default:
         throw new Error('unexpected test configuration');

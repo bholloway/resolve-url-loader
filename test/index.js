@@ -1,8 +1,9 @@
 'use strict';
 
-const {dirname, join} = require('path');
+const {dirname, normalize, join} = require('path');
 const {readdirSync} = require('fs');
 const {platform: os} = require('process');
+const compose = require('compose-function');
 const sequence = require('promise-compose');
 const micromatch = require('micromatch');
 const tape = require('blue-tape');
@@ -12,7 +13,8 @@ const {assign} = Object;
 const {assertExitCodeZero} = require('./lib/assert');
 const {testBase} = require('./cases/common/tests');
 
-const PLATFORMS_DIR = join(dirname(require.resolve('resolve-url-loader')), 'test');
+// tests are located in resolve-url-loader package which might differ from package under test
+const PLATFORMS_DIR = compose(normalize, join)(__dirname, '..', 'packages', 'resolve-url-loader', 'test');
 const CASES_DIR = join(__dirname, 'cases');
 
 const testCaseVsEngine = ([_, engineName, caseName]) => {

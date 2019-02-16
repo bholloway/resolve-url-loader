@@ -25,6 +25,9 @@
     "url": "https://github.com/bholloway/resolve-url-loader/issues"
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "engines": {
+    "node": ">=6.0.0"
+  },
   "files": [
     "index.js",
     "lib"
@@ -33,16 +36,15 @@
     "lint": "jshint --exclude **/node_modules index.js lib"
   },
   "dependencies": {
-    "adjust-sourcemap-loader": "^1.1.0",
-    "camelcase": "^4.1.0",
-    "compose-function": "^3.0.3",
-    "convert-source-map": "^1.5.1",
-    "es6-iterator": "^2.0.3",
-    "loader-utils": "^1.1.0",
-    "lodash.defaults": "^4.0.0",
-    "postcss": "^7.0.0",
-    "rework": "^1.0.1",
-    "rework-visit": "^1.0.0",
-    "source-map": "^0.5.7"
+    "adjust-sourcemap-loader": "2.0.0",
+    "camelcase": "5.0.0",
+    "compose-function": "3.0.3",
+    "convert-source-map": "1.6.0",
+    "es6-iterator": "2.0.3",
+    "loader-utils": "1.2.3",
+    "postcss": "7.0.14",
+    "rework": "1.0.1",
+    "rework-visit": "1.0.0",
+    "source-map": "0.6.1"
   }
 }

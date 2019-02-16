@@ -45,7 +45,7 @@ const assertSourcemapDev = sequence(
           
           /src/index.scss
             1:1->2:3
-            3:2->3:180
+            3:2->3:182
             4:1->5:1
             5:3->6:3
             6:5->7:5 6:41->7:44
@@ -53,7 +53,7 @@ const assertSourcemapDev = sequence(
             8:5->9:5 8:34->9:37
             9:5->10:5 9:37->10:34
             10:5->11:5 10:35->11:33
-            11:4->11:35
+            11:4->11:37
           `;
       default:
         throw new Error('unexpected test configuration');
