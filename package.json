@@ -39,6 +39,10 @@
   "devDependencies": {
     "jshint": "^2.9.5"
   },
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "scripts": {
     "lint": "jshint index.js lib"
   }
