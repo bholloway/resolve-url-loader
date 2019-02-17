@@ -110,16 +110,17 @@ Refer to `test` directory for full webpack configurations (as used in automated 
 
 ## Options
 
-| option     | type                       | default     |          |  description                                                                                                                                                                     |
-|------------|----------------------------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|`engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` |          | The css parser engine.                                                                                                                                                           |
-|`sourceMap` | boolean                    | `false`     |          | Generate a source-map.                                                                                                                                                           |
-|`keepQuery` | boolean                    | `false`     |          | Keep query-string and/or hash suffixes.<br/>e.g. `url('./MyFont.eot?#iefix')`<br/>Be aware downstream loaders may remove query-string or hash.                                   |
-|`debug`     | boolean                    | `false`     |          | Display debug information.                                                                                                                                                       |
-|`silent`    | boolean                    | `false`     |          | Do **not** display warnings.                                                                                                                                                     |
-|`root`      | string                     | _unset_     |          | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
-|`join`      | function                   | _inbuilt_   | advanced | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the default implementation for more information.                            |
-|`absolute`  | boolean                    | `false`     | useless  | Forces URIs to be output as absolute file paths.<br/>This is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.      |
+| option      | type                       | default     |          |  description                                                                                                                                                                     |
+|-------------|----------------------------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` |          | The css parser engine.                                                                                                                                                           |
+| `sourceMap` | boolean                    | `false`     |          | Generate a source-map.                                                                                                                                                           |
+| `keepQuery` | boolean                    | `false`     |          | Keep query-string and/or hash suffixes.<br/>e.g. `url('./MyFont.eot?#iefix')`<br/>Be aware downstream loaders may remove query-string or hash.                                   |
+| `removeCR`  | boolean                    | `false`     |          | Convert orphan CR to whitespace (postcss only).<br/>See known issues below.                                                                                                          |
+| `debug`     | boolean                    | `false`     |          | Display debug information.                                                                                                                                                       |
+| `silent`    | boolean                    | `false`     |          | Do **not** display warnings.                                                                                                                                                     |
+| `root`      | string                     | _unset_     |          | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
+| `join`      | function                   | _inbuilt_   | advanced | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the default implementation for more information.                            |
+| `absolute`  | boolean                    | `false`     | useless  | Forces URIs to be output as absolute file paths.<br/>This is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.      |
 
 ## How it works
 
@@ -179,6 +180,19 @@ These are **not** processed unless a `root` is specified.
 However recall that any paths that _are_ processed will have windows back-slash converted to posix forward-slash. This can be useful since some webpack loaders can choke on windows paths. By using `root: ''` then `resolve-url-loader` effectively does nothing to absolute paths except change the back-slash.
 
 It can also be useful to process absolute URIs if you have a custom `join` function and want to process all paths. However this is perhaps better done with some separate `postcss` plugin.
+
+## Orphan carriage-return characters
+
+Under some conditions libsass outputs naked `CR` characters which it does **not** consider newlines. However `postcss` does consider these newlines. The result in a source-map offset which can crash `resolve-url-loader`.
+
+This is not fully understood but is associated with multiline declarations.
+
+**Solutions**
+* Try the node-sass [linefeed](https://github.com/sass/node-sass#linefeed--v300) option by way of `sass-loader`.
+
+**Work arounds** 
+* Enable `removeCR` option [here](#option).
+* Remove linebreaks in declarations.
 
 ## Getting help
 

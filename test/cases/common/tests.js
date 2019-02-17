@@ -101,6 +101,20 @@ exports.testKeepQuery = (...rest) =>
     )
   );
 
+exports.testRemoveCR = (...rest) =>
+  test(
+    'removeCR=true',
+    layer()(
+      env({
+        LOADER_QUERY: 'removeCR',
+        LOADER_OPTIONS: {removeCR: true},
+        OUTPUT: 'remove-CR'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.removeCR')(1)`removeCR: true`)
+    )
+  );
+
 exports.testRoot = (...rest) =>
   test(
     'root=empty',

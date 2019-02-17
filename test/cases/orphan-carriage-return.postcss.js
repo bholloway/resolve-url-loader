@@ -5,9 +5,22 @@ const outdent = require('outdent');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {withCacheBase} = require('../lib/higher-order');
-const {testDefault, testAbsolute, testDebug, testKeepQuery} = require('./common/tests');
-const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
-const {assertWebpackOk, assertNoErrors, assertNoMessages} = require('../lib/assert');
+const {testDefault, testRemoveCR} = require('./common/tests');
+const {
+  buildDevNormal, buildDevBail, buildDevNoUrl, buildProdNormal, buildProdBail, buildProdNoUrl, buildProdNoDevtool
+} = require('./common/builds');
+const {
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertStdout, assertNoErrors, assertNoMessages
+} = require('../lib/assert');
+
+// Allow 1-4 errors
+//  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
+//  - webpack may repeat errors with a header line taken from the parent loader
+const assertCssError = assertStdout('error')([1, 4])`
+  ^[ ]*ERROR[^\n]*
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*CSS error
+  [ ]+source-map information is not available at url\(\) declaration \(found orphan CR, try removeCR option\)
+  `;
 
 module.exports = test(
   'orphan-carriage-return',
@@ -30,87 +43,34 @@ module.exports = test(
       ENTRY: join('src', 'index.scss')
     }),
     testDefault(
-      buildDevNormal(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
+      onlyMeta('meta.version.webpack == 1')(
+        buildDevBail(
+          assertWebpackNotOk
+        ),
+        buildDevNormal(
+          assertWebpackOk,
+          assertCssError
+        ),
+        buildProdBail(
+          assertWebpackNotOk
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertCssError
+        )
       ),
-      buildDevNoUrl(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNormal(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNoUrl(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNoDevtool(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
+      onlyMeta('meta.version.webpack > 1')(
+        buildDevNormal(
+          assertWebpackNotOk,
+          assertCssError
+        ),
+        buildProdNormal(
+          assertWebpackNotOk,
+          assertCssError
+        )
       )
     ),
-    testAbsolute(
-      buildDevNormal(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildDevNoUrl(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNormal(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNoUrl(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNoDevtool(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      )
-    ),
-    testDebug(
-      buildDevNormal(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildDevNoUrl(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNormal(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNoUrl(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      ),
-      buildProdNoDevtool(
-        assertWebpackOk,
-        assertNoErrors,
-        assertNoMessages
-      )
-    ),
-    testKeepQuery(
+    testRemoveCR(
       buildDevNormal(
         assertWebpackOk,
         assertNoErrors,
