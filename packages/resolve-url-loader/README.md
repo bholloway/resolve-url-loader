@@ -161,6 +161,8 @@ All `webpack1`-`webpack4` with contemporaneous loaders/plugins.
 
 Refer to `test` directory for full webpack configurations (as used in automated tests).
 
+Some edge cases with `libsass` on `Windows` (see below).
+
 ### Engines
 
 The `engine:postcss` is by far the more reliable option.
@@ -181,11 +183,22 @@ However recall that any paths that _are_ processed will have windows back-slash 
 
 It can also be useful to process absolute URIs if you have a custom `join` function and want to process all paths. However this is perhaps better done with some separate `postcss` plugin.
 
-## Orphan carriage-return characters
+### Windows line breaks
 
-Under some conditions libsass outputs naked `CR` characters which it does **not** consider newlines. However `postcss` does consider these newlines. The result in a source-map offset which can crash `resolve-url-loader`.
+Normal windows linebreaks are `CRLF`. But sometimes libsass will output single `CR` characters.
 
-This is not fully understood but is associated with multiline declarations.
+This problem is specific to multiline declarations. Refer to the [libsass bug #2693](https://github.com/sass/libsass/issues/2693).
+
+If you have _any_ such multiline declarations preceding `url()` statements it will fail your build.
+ 
+Libsass doesn't consider these orphan `CR` to be newlines but `postcss` engine does.  The result being an offset in source-map line-numbers which crashes `resolve-url-loader`.
+
+```
+Module build failed: Error: resolve-url-loader: CSS error
+  source-map information is not available at url() declaration
+```
+
+Some users find the node-sass `linefeed` option solves the problem.
 
 **Solutions**
 * Try the node-sass [linefeed](https://github.com/sass/node-sass#linefeed--v300) option by way of `sass-loader`.
@@ -193,6 +206,11 @@ This is not fully understood but is associated with multiline declarations.
 **Work arounds** 
 * Enable `removeCR` option [here](#option).
 * Remove linebreaks in declarations.
+
+**Diagnosis**
+1. Run a stand-alone sass build `npx node-sass index.scss output.css`
+2. Use a hex editor to check line endings `Format-Hex output.css` 
+3. Expect `0DOA` (or desired) line endings. Single `0D` confirms this problem.
 
 ## Getting help
 
