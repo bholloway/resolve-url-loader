@@ -50,6 +50,7 @@ function resolveUrlLoader(content, sourceMap) {
       silent   : false,
       absolute : false,
       keepQuery: false,
+      removeCR : false,
       root     : false,
       debug    : false,
       join     : joinFn.defaultJoin
@@ -165,7 +166,8 @@ function resolveUrlLoader(content, sourceMap) {
       outputSourceMap     : !!options.sourceMap,
       transformDeclaration: valueProcessor(loader.resourcePath, options),
       absSourceMap        : absSourceMap,
-      sourceMapConsumer   : sourceMapConsumer
+      sourceMapConsumer   : sourceMapConsumer,
+      removeCR            : options.removeCR
     }))
     .catch(onFailure)
     .then(onSuccess);
