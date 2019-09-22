@@ -102,7 +102,7 @@ const assertSourcemapProd = sequence(
         return outdent`
           /src/feature/index.scss
             1:1
-            2:3->1:64 2:3->1:18
+            2:3->1:18 2:3->1:64
             3:3->1:64 3:3->1:110
             4:3->1:110 4:3->1:149
             5:3->1:149 5:3->1:185

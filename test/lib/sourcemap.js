@@ -81,7 +81,13 @@ exports.absoluteToString = (absolute) => {
     .map((filename, i) => {
       const linesHash = elements
         .filter(({file}) => file === i)
-        .sort(({from: [la, ca]}, {from: [lb, cb]}) => (la - lb) || (ca - cb))
+        .sort(
+          ({from: [l1, c1], to: [l3, c3]}, {from: [l2, c2], to: [l4, c4]}) =>
+            (l1 - l2) ||
+            (c1 - c2) ||
+            (l3 - l4) ||
+            (c3 - c4)
+        )
         .reduce((r, el) => {
           const [fromLine] = el.from;
           const list = (r[fromLine] || []).concat(el);
