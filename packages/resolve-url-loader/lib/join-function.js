@@ -67,14 +67,11 @@ function createJoinForPredicate(predicate, name) {
      * For absolute uri only `uri` will be provided. In this case we substitute any `root` given in options.
      *
      * @param {string} uri A uri path, relative or absolute
-     * @param {string|Iterator.<string>} [baseOrIteratorOrAbsent] Optional absolute base path or iterator thereof
+     * @param {Iterator.<string>} [maybeIterator] Optional iterator of absolute base path strings
      * @return {string} Just the uri where base is empty or the uri appended to the base
      */
-    return function joinProper(uri, baseOrIteratorOrAbsent) {
-      var iterator =
-        (typeof baseOrIteratorOrAbsent === 'undefined') && new Iterator([options.root          ]) ||
-        (typeof baseOrIteratorOrAbsent === 'string'   ) && new Iterator([baseOrIteratorOrAbsent]) ||
-        baseOrIteratorOrAbsent;
+    return function joinProper(uri, maybeIterator) {
+      var iterator = typeof maybeIterator === 'undefined' ? new Iterator([options.root]) : maybeIterator;
 
       var result = runIterator([]);
       log(createJoinMsg, [filename, uri, result, result.isFound]);
