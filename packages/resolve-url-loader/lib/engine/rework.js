@@ -75,26 +75,51 @@ function process(sourceFile, sourceContent, params) {
     function eachDeclaration(declaration) {
       var isValid = declaration.value && (declaration.value.indexOf('url') >= 0);
       if (isValid) {
+        declaration.value = params.transformDeclaration(declaration.value, getPathsAtChar);
+      }
 
-        // reverse the original source-map to find the original source file before transpilation
-        var startPosApparent = declaration.position.start,
-            startPosOriginal = params.sourceMapConsumer &&
-              params.sourceMapConsumer.originalPositionFor(startPosApparent);
-
-        // we require a valid directory for the specified file
-        var directory =
-          startPosOriginal &&
-          startPosOriginal.source &&
-          fileProtocol.remove(path.dirname(startPosOriginal.source));
+      /**
+       * Create a list of base path strings.
+       *
+       * Position in the declaration is not supported since rework does not refine sourcemaps to this detail.
+       *
+       * @throws Error on invalid source map
+       * @returns {string[]} Iterable of base path strings possibly empty
+       */
+      function getPathsAtChar() {
+        var directory = positionToOriginalDirectory(declaration.position.start);
         if (directory) {
-          declaration.value = params.transformDeclaration(declaration.value, directory);
+          return [directory];
         }
         // source-map present but invalid entry
         else if (params.sourceMapConsumer) {
           throw new Error('source-map information is not available at url() declaration');
+        } else {
+          return [];
         }
       }
     }
+  }
+
+  /**
+   * Given an apparent position find the directory of the original file.
+   *
+   * @param startPosApparent {{line: number, column: number}}
+   * @returns {false|string} Directory of original file or false on invalid
+   */
+  function positionToOriginalDirectory(startPosApparent) {
+    // reverse the original source-map to find the original source file before transpilation
+    var startPosOriginal =
+      !!params.sourceMapConsumer &&
+      params.sourceMapConsumer.originalPositionFor(startPosApparent);
+
+    // we require a valid directory for the specified file
+    var directory =
+      !!startPosOriginal &&
+      !!startPosOriginal.source &&
+      fileProtocol.remove(path.dirname(startPosOriginal.source));
+
+    return directory;
   }
 }
 

@@ -5,7 +5,8 @@
 'use strict';
 
 var path        = require('path'),
-    loaderUtils = require('loader-utils');
+    loaderUtils = require('loader-utils'),
+    Iterator    = require('es6-iterator');
 
 /**
  * Create a value processing function for a given file path.
@@ -15,17 +16,20 @@ var path        = require('path'),
  * @return {function} value processing function
  */
 function valueProcessor(filename, options) {
-  var URL_STATEMENT_REGEX = /(url\s*\()\s*(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))\s*(\))/g;
-  var directory = path.dirname(filename);
-  var join      = options.join(filename, options);
+  var URL_STATEMENT_REGEX = /(url\s*\(\s*)(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))(\s*\))/g,
+      QUERY_REGEX         = /([?#])/g;
+
+  var directory = path.dirname(filename),
+      join      = options.join(filename, options);
 
   /**
    * Process the given CSS declaration value.
    *
    * @param {string} value A declaration value that may or may not contain a url() statement
-   * @param {string|Iterator.<string>} candidate An absolute path that may be the correct base or an Iterator thereof
+   * @param {function(number|number[]):string[]} getPathsAtChar Given an offset in the declaration value get a
+   *  list of possible absolute path strings
    */
-  return function transformValue(value, candidate) {
+  return function transformValue(value, getPathsAtChar) {
 
     // allow multiple url() values in the declaration
     //  split by url statements and process the content
@@ -33,43 +37,65 @@ function valueProcessor(filename, options) {
     //  escaped quotations are not considered
     return value
       .split(URL_STATEMENT_REGEX)
+      .map(initialise)
       .map(eachSplitOrGroup)
       .join('');
 
     /**
-     * Encode the content portion of <code>url()</code> statements.
-     * There are 4 capture groups in the split making every 5th unmatched.
+     * Ensure all capture group tokens are a valid string.
      *
-     * @param {string} token A single split item
+     * @param {string|undefined} token A capture group or uncaptured token
+     * @returns {string}
+     */
+    function initialise(token) {
+      return typeof token === 'string' ? token : '';
+    }
+
+    /**
+     * An Array reduce function that accumulates string length.
+     */
+    function accumulateLength(accumulator, element) {
+      return accumulator + element.length;
+    }
+
+    /**
+     * Encode the content portion of <code>url()</code> statements.
+     * There are 6 capture groups in the split making every 7th unmatched.
+     *
+     * @param {string} element A single split item
      * @param {number} i The index of the item in the split
      * @param {Array} arr The array of split values
      * @returns {string} Every 3 or 5 items is an encoded url everything else is as is
      */
-    function eachSplitOrGroup(token, i, arr) {
-
-      // we can get groups as undefined under certain match circumstances
-      var initialised = token || '';
+    function eachSplitOrGroup(element, i, arr) {
 
       // the content of the url() statement is either in group 3 or group 5
       var mod = i % 7;
-      if ((mod === 3) || (mod === 5)) {
+
+      // only one of the capture groups 3 or 5 will match the other will be falsey
+      if (element && ((mod === 3) || (mod === 5))) {
+
+        // calculate the offset of the match from the front of the string
+        var position = arr.slice(0, i - mod + 1).reduce(accumulateLength, 0);
 
         // detect quoted url and unescape backslashes
         var before    = arr[i - 1],
             after     = arr[i + 1],
             isQuoted  = (before === after) && ((before === '\'') || (before === '"')),
-            unescaped = isQuoted ? initialised.replace(/\\{2}/g, '\\') : initialised;
+            unescaped = isQuoted ? element.replace(/\\{2}/g, '\\') : element;
 
         // split into uri and query/hash and then find the absolute path to the uri
-        var split    = unescaped.split(/([?#])/g),
+        //  construct iterator as late as possible in case sourcemap is invalid at this location
+        var split    = unescaped.split(QUERY_REGEX),
             uri      = split[0],
-            absolute = testIsRelative(uri) && join(uri, candidate) || testIsAbsolute(uri) && join(uri),
-            query    = options.keepQuery ? split.slice(1).join('') : '';
+            query    = options.keepQuery ? split.slice(1).join('') : '',
+            absolute = testIsRelative(uri) && join(uri, new Iterator(getPathsAtChar(position))) ||
+                       testIsAbsolute(uri) && join(uri);
 
         // use the absolute path in absolute mode or else relative path (or default to initialised)
         // #6 - backslashes are not legal in URI
         if (!absolute) {
-          return initialised;
+          return element;
         } else if (options.absolute) {
           return absolute.replace(/\\/g, '/') + query;
         } else {
@@ -80,7 +106,7 @@ function valueProcessor(filename, options) {
       }
       // everything else, including parentheses and quotation (where present) and media statements
       else {
-        return initialised;
+        return element;
       }
     }
   };

@@ -30,7 +30,7 @@
   },
   "files": [
     "index.js",
-    "lib"
+    "lib/**/+([a-z-]).js"
   ],
   "scripts": {
     "lint": "jshint --exclude **/node_modules index.js lib"
