@@ -67,7 +67,7 @@ function createJoinForPredicate(predicate, name) {
      * For absolute uri only `uri` will be provided. In this case we substitute any `root` given in options.
      *
      * @param {string} uri A uri path, relative or absolute
-     * @param {Iterator.<string>} [maybeIterator] Optional iterator of absolute base path strings
+     * @param {Iterator<string>} [maybeIterator] Optional iterator of absolute base path strings
      * @return {string} Just the uri where base is empty or the uri appended to the base
      */
     return function joinProper(uri, maybeIterator) {
@@ -125,7 +125,7 @@ exports.createJoinForPredicate = createJoinForPredicate;
  *
  * @param {string} file The file being processed by webpack
  * @param {string} uri A uri path, relative or absolute
- * @param {Array.<string>} bases Absolute base paths up to and including the found one
+ * @param {string[]} bases Absolute base paths up to and including the found one
  * @param {boolean} isFound Indicates the last base was correct
  * @return {string} Formatted message
  */

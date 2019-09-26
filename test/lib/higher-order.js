@@ -24,8 +24,9 @@ exports.withCacheBase = withBase(({meta: {cacheDir}}) => cacheDir);
 /**
  * A factory for a higher-order-function that wraps a function of RegExp with template literal.
  *
- * @param {Array.<string>} strings Template literal strings
- * @param {...*} substitutions Any number of template literal substitutions
+ * @param {function} next The function to call with the pattern regex
+ * @param {string[]} strings Template literal strings
+ * @param {...*} Any number of template literal substitutions
  * @return {function(function)} A higher-order-function of the assert function
  */
 exports.withPattern = (next) => (strings, ...substitutions) => {
