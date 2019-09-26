@@ -145,7 +145,7 @@ exports.assertSourceMapContent = (fieldOrExpected) => sequence(
             'should yield expected source-map mappings'
           );
         } else {
-          throw new Error('expectation must be String|Array.<String>');
+          throw new Error('expectation must be String|String[]');
         }
       } else {
         pass('should NOT expect source-map sources');
