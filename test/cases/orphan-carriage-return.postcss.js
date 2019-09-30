@@ -34,8 +34,11 @@ module.exports = test(
       'src/index.scss': outdent`
         .some-class-name {
           font-size: calc(${'\r'}
-            (1px)${'\r'}
+            (${'\r'}1px${'\r'})${'\r'}
           );
+        }
+        
+        .another-class-name {
           background-image: url('img.jpg');
         }
         `,
