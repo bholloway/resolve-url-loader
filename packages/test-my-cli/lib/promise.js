@@ -29,7 +29,7 @@ exports.withTime = (next) => (...v) => {
  * a second argument to each function in the sequence. Additional arguments to the overall function
  * are available as additional arguments to each function.
  *
- * @param {string|function|Array.<string|function>} gets The field to get or a getter function
+ * @param {string|function|(string|function)[]} gets The field to get or a getter function
  * @param {string|function} set The field to set or a setter function
  * @return {function(...function):function(...*):Promise}
  */
