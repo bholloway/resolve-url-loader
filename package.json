@@ -1,7 +1,10 @@
 {
+  "name": "resolve-url-loader",
+  "description": "monorepo of all things resolve-url-loader",
+  "private": true,
   "author": "bholloway",
   "license": "MIT",
-  "private": true,
+  "main": "packages/resolve-url-loader",
   "workspaces": [
     "packages/*"
   ],
