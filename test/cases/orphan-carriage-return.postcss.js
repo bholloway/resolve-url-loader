@@ -30,14 +30,19 @@ module.exports = test(
       'package.json': withCacheBase('package.json'),
       'webpack.config.js': withCacheBase('webpack.config.js'),
       'node_modules': withCacheBase('node_modules'),
+      // NOTE - the CR in the calc() statement induce an offset before the url() statement is hit
       'src/index.scss': outdent`
         .some-class-name {
           font-size: calc(${'\r'}
-            (1px)${'\r'}
+            (${'\r'}1px${'\r'})${'\r'}
           );
-          background-image: url(data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==);
         }
-        `
+        
+        .another-class-name {
+          background-image: url('img.jpg');
+        }
+        `,
+      'src/img.jpg': require.resolve('./assets/blank.jpg'),
     }),
     env({
       ENTRY: join('src', 'index.scss')

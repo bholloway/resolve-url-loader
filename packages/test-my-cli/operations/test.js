@@ -29,12 +29,22 @@ exports.create = (name, fn) => {
     'the test implementation function'
   );
 
+  // find the shallowest absolute filename in the call stack
+  const callerFilename = new Error().stack
+    .match(/\(((?:\w\:)?[\\\/][^)]+)\)/g)
+    .pop();
+
   return compose(operation(NAME, name), sequence)(
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
     (context0, {onActivity}, log) => {
       const {test: test0} = context0;
+      const {assertCount, pass} = test0;
 
       onActivity();
+
+      const maybeAssertFilename = (assertCount > 0) ?
+        () => pass(callerFilename) :
+        () => {};
 
       const innerTestWithOuterContext = (test1) =>
         assign({}, context0, {test: test1});
@@ -53,6 +63,7 @@ exports.create = (name, fn) => {
         `${test0.name}/${name}`,
         (t) => Promise.resolve(t)
           .then(onActivity)
+          .then(lens(null, null)(maybeAssertFilename))
           .then(lens(innerTestWithOuterContext, outerTestWithInnerContext)(fn))
           .then(resolve)
           .catch(reject)

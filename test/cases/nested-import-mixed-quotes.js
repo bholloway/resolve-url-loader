@@ -29,10 +29,10 @@ const assertSourcemapDev = sequence(
         return outdent`
           /src/feature/index.scss
             1:1
-            2:3
+            3:2
           
           /src/index.scss
-            3:2
+            2:3
           `;
       case (engine === 'postcss'):
         return outdent`
@@ -48,7 +48,7 @@ const assertSourcemapDev = sequence(
   })
 );
 
-const assertSourceMapSourcesDev = assertSourceMapContent([
+const assertSourceMapSources = assertSourceMapContent([
   '/src/feature/index.scss',
   '/src/index.scss'
 ]);
@@ -72,16 +72,18 @@ const assertSourcemapProd = sequence(
         return outdent`
           /src/feature/index.scss
             1:1
+          
+          /src/index.scss
             2:3->1:38
           `;
       case (engine === 'rework') && (webpack === 4):
         return outdent`
           /src/feature/index.scss
             1:1
-            2:3->1:38 2:3->1:282
+            3:2->1:283
           
           /src/index.scss
-            3:2->1:283
+            2:3->1:38 2:3->1:282
           `;
       case (engine === 'postcss') && (webpack < 4):
         return outdent`
@@ -104,21 +106,6 @@ const assertSourcemapProd = sequence(
     }
   })
 );
-
-const assertSourceMapSourcesProd = assertSourceMapContent(({meta: {engine, version: {webpack}}}) => {
-  switch (true) {
-    case (engine === 'rework') && (webpack < 4):
-      // known issue with reworkcss dropping sourcemap sources (#52)
-      return [
-        '/src/feature/index.scss',
-      ];
-    default:
-      return [
-        '/src/feature/index.scss',
-        '/src/index.scss'
-      ];
-  }
-});
 
 const assertAssets = sequence(
   assertAssetUrls([
@@ -163,7 +150,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildDevNoUrl(
@@ -179,7 +166,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoUrl(
@@ -205,7 +192,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildDevNoUrl(
@@ -213,7 +200,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNormal(
@@ -221,7 +208,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoUrl(
@@ -229,7 +216,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoDevtool(
@@ -247,7 +234,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildDevNoUrl(
@@ -255,7 +242,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNormal(
@@ -263,7 +250,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoUrl(
@@ -271,7 +258,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoDevtool(
@@ -289,7 +276,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildDevNoUrl(
@@ -297,7 +284,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentDev,
-        assertSourceMapSourcesDev,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNormal(
@@ -305,7 +292,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoUrl(
@@ -313,7 +300,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertContentProd,
-        assertSourceMapSourcesProd,
+        assertSourceMapSources,
         assertAssets
       ),
       buildProdNoDevtool(

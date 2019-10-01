@@ -1,33 +1,36 @@
 {
+  "name": "resolve-url-loader",
+  "description": "monorepo of all things resolve-url-loader",
+  "private": true,
   "author": "bholloway",
   "license": "MIT",
-  "private": true,
+  "main": "packages/resolve-url-loader",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "lint": "jshint packages --exclude **/node_modules",
-    "test:unit": "tape **/*.spec.js | tap-diff",
+    "test:unit": "tape **/*.test.js | tap-diff",
     "test:e2e": "tape test | tap-diff",
     "debug:e2e": "node $NODE_DEBUG_OPTION $(npm bin)/tape test | tap-diff"
   },
   "devDependencies": {
     "blue-tape": "1.0.0",
     "compose-function": "3.0.3",
-    "cross-env": "5.2.0",
-    "es6-promisify": "6.0.1",
+    "cross-env": "5.2.1",
+    "es6-promisify": "6.0.2",
     "escape-string-regexp": "1.0.5",
     "get-value": "3.0.1",
     "has-prop": "0.1.2",
-    "joi": "12.0.0",
-    "jshint": "2.10.1",
+    "joi": "14.3.1",
+    "jshint": "2.10.2",
     "micromatch": "3.1.10",
-    "ms": "2.1.1",
+    "ms": "2.1.2",
     "outdent": "0.7.0",
     "promise-compose": "1.1.2",
     "recursive-readdir": "2.2.2",
     "tap-diff": "0.1.1",
-    "vlq": "1.0.0"
+    "vlq": "1.0.1"
   },
   "engines": {
     "node": ">=6.0.0"
