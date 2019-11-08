@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "sources": [
+    "feature/index.scss",
+    "index.scss"
+  ],
+  "names": [],
+  "mappings": "AAAA;EACE,sCAAuC;EACvC,sCAAuC;EACvC,+BAAgC;EAChC,kCAAmC;EACnC,gCAAiC;;ACJnC;EACE,cAAc",
+  "file": "main.58a7ea10d6a0a517963d.css"
+}
