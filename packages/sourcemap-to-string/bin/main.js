@@ -10,6 +10,7 @@ const {join, resolve} = require('path');
 const sequence = require('promise-compose');
 const convert = require('convert-source-map');
 
+require('object.entries').shim();
 require('util.promisify').shim();
 const {promisify} = require('util');
 
@@ -20,33 +21,32 @@ const {parse: parseDirectory} = require('../config/extant-directory');
 const lensTo = (field) => (fn) => (context) =>
   Promise.resolve(context)
     .then(fn)
-    .then(v => Object.assign({}, context, field && {[field]: v}));
+    .then(v => Object.assign({}, context, field ? {[field]: v} : v));
 
 module.exports = sequence(
   lensTo('content')(({read}) =>
     readStream(read.stream)
   ),
-  lensTo('mapBase')(({read, sourceRoot}) =>
+  lensTo('mapBase')(({read, sourceRootOverride}) =>
     read && read.isFile && read.dirname ||
-    sourceRoot && sourceRoot.isDirectory && sourceRoot.dirname ||
+    sourceRootOverride && sourceRootOverride.isDirectory && sourceRootOverride.dirname ||
     process.cwd()
   ),
-  lensTo('sourcemap')(({content, mapBase}) => {
+  lensTo()(({content, mapBase}) => {
     const instance = convert.fromMapFileSource(content, mapBase);
     if (!instance) {
       throw new Error(`cannot resolve source-map from base ${mapBase}`);
     }
     return instance.toObject();
   }),
-  lensTo('mapRoot')(({sourcemap: {sourceRoot}}) => parseDirectory(sourceRoot)),
-  lensTo('mappings')(({ sourcemap: { mappings }}) => mappings),
-  lensTo('sourcesContent')(({read, sourceRoot, mapRoot, sourcemap: {sources, sourceRoot: relativeRoot}}) => {
+  lensTo('sourcesContent')(({read, sourceRootOverride, sources, sourceRoot}) => {
+    const sourceRootAbsolute = parseDirectory(sourceRoot);
     const actualRoot = [
-      sourceRoot && sourceRoot.isDirectory && sourceRoot.path,
-      mapRoot && mapRoot.isDirectory && mapRoot.path,
+      sourceRootOverride && sourceRootOverride.isDirectory && sourceRootOverride.path,
+      sourceRootAbsolute && sourceRootAbsolute.isDirectory && sourceRootAbsolute.path,
       read && read.isFile && read.dirname,
-      sourceRoot && relativeRoot && join(sourceRoot.path, relativeRoot),
-      read && relativeRoot && join(read.dirname, relativeRoot)
+      sourceRootOverride && sourceRoot && join(sourceRootOverride.path, sourceRoot),
+      read && sourceRoot && join(read.dirname, sourceRoot)
     ]
       .filter(Boolean)
       .map(v => resolve(v))

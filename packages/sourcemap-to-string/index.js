@@ -10,10 +10,8 @@ const {mappingsToAbsolute, absoluteToObj, objToString} = require('./lib/sourcema
 
 const mappingsToObj = compose(absoluteToObj, mappingsToAbsolute);
 
-const toString = ({ width, mappings, content, sourcesContent }) => {
-  const objects = mappingsToObj(mappings);
-  return objToString(80, objects, content, sourcesContent);
-};
+const toString = ({ width, mappings, content, sources, sourcesContent }) =>
+  objToString(width, mappingsToObj(mappings), content, sources, sourcesContent);
 
 module.exports = Object.assign(
   toString,
