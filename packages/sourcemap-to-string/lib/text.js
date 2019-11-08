@@ -21,7 +21,7 @@ exports.formatMultilineText = (value, width) =>
     .map(v => v.padEnd(width));
 
 exports.formatSourceText = (offset, text, width) =>
-  (''.padEnd((offset - 1) % width, '░') + text )
+  (''.padEnd((offset - 1) % width, '░') + text)
     .split(EOL)
     .map((v, i, a) => (v === last(a)) ? v : (v + '⏎'))
     .flatMap((line) =>

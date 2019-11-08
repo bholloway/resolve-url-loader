@@ -13,7 +13,7 @@ process.on('uncaughtException', die);
 process.on('unhandledRejection', die);
 
 const {config, schema} = require('../config');
-const {errors, help, read, write, map, sourceRoot} = config;
+const {errors, help} = config;
 
 const command = process.argv[1]
   .split(/[\\\/]/)
@@ -26,5 +26,5 @@ else if (errors) {
   require('./fail')(command, schema, errors);
 }
 else {
-  require('./main')({read, write, map, sourceRoot});
+  require('./main')(config);
 }

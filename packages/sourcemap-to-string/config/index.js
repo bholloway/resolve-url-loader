@@ -38,7 +38,7 @@ module.exports = require('../lib/conviction')({
     ],
     default: undefined
   },
-  sourceRoot: {
+  sourceRootOverride: {
     arg: 'source-root',
     env: 'SOURCE_ROOT',
     example: '<directory>',

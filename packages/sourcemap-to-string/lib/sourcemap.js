@@ -11,7 +11,7 @@ const compose = require('compose-function');
 require('array.prototype.flatmap').shim();
 
 const table = require('./table');
-const {formatInt, formatSourceText} = require('./text');
+const {formatInt, formatSourceText, formatMultilineText} = require('./text');
 const {repeatArray, aperture, last} = require('./array');
 
 const findTuple = (list, [r1, c1]) =>
@@ -131,7 +131,7 @@ exports.tuplesWithSubstring = (sortedTuples, text) => {
     });
 };
 
-exports.objToString = (maxWidth, objects, content, sourcesContent) => {
+exports.objToString = (maxWidth, objects, content, sources, sourcesContent) => {
   const toTuples = (field, predicate = null) => (text, i) =>
     exports.tuplesWithSubstring(
       objects
@@ -146,24 +146,34 @@ exports.objToString = (maxWidth, objects, content, sourcesContent) => {
   const inputTuples = sourcesContent
     .map(toTuples('from', ({file}, i) => file === i));
 
-  return table({
+  const tableForFile = table({
     width: maxWidth,
-    pattern: [0, 0, 0, 1, 0, 0, 1],
-    padding: (col) => (col > 0) && (col % 2 === 0) ? '░' : ' ',
-    formatTable: (rows, widths) => aperture(2)([null, ...rows])
-      .map(([rowA, rowB]) => !rowA || (rowA[0] !== rowB[0]) ? rowB :  [NaN, ...rowB.slice(1)])
-      .map((row) => [
-        formatInt(row[0], widths[0]),
-        `${formatInt(row[1], widths[1])}:${formatInt(row[2], widths[2])}`,
-        formatSourceText(row[2], row[3], widths[3]),
-        `${formatInt(row[4], widths[4])}:${formatInt(row[5], widths[5])}`,
-        formatSourceText(row[5], row[6], widths[6])
-      ])
-  })(
-    objects.map(({ from, to, file }) => [
-      file,
-      ...findTuple(inputTuples[file], from),
-      ...findTuple(outputTuples, to),
+    pattern: [0, 0, 1, 0, 0, 1],
+    padding: (col) => (col % 2 === 1) ? '░' : ' ',
+    formatTable: (rows, widths) => rows.map((row) => [
+      `${formatInt(row[0], widths[0])}:${formatInt(row[1], widths[1])}`,
+      formatSourceText(row[1], row[2], widths[2]),
+      `${formatInt(row[3], widths[3])}:${formatInt(row[4], widths[4])}`,
+      formatSourceText(row[4], row[5], widths[5])
     ])
-  );
+  });
+
+  return objects
+    .reduce(
+      (r, { from, to, file }) => {
+        r[file].push([
+          ...findTuple(inputTuples[file], from),
+          ...findTuple(outputTuples, to),
+        ]);
+        return r;
+      },
+      repeatArray(sourcesContent.length).map(() => [])
+    )
+    .map((obj, file) => [
+        formatMultilineText(sources[file], maxWidth),
+        ''.padEnd(maxWidth, '-'),
+        tableForFile(obj)
+      ].join('\n')
+    )
+    .join('\n\n');
 };
