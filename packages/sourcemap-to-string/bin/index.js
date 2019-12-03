@@ -12,19 +12,20 @@ const die = ({message, stack}) => {
 process.on('uncaughtException', die);
 process.on('unhandledRejection', die);
 
-const {config, schema} = require('../config');
+const {config, schema, visitConfig} = require('../config');
 const {errors, help} = config;
 
 const command = process.argv[1]
   .split(/[\\\/]/)
   .pop();
 
-if (help) {
-  require('./help')(command, schema);
-}
-else if (errors) {
-  require('./fail')(command, schema, errors);
-}
-else {
-  require('./main')(config);
-}
+new Promise((resolve, reject) => {
+  if (help) {
+    resolve(require('./help')({command, schema, visitConfig}));
+  } else if (errors) {
+    reject(require('./fail')({command, schema, errors}));
+  } else {
+    resolve(require('./main')(config));
+  }
+})
+  .catch(die);

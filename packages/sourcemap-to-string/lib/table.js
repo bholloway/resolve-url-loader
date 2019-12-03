@@ -27,11 +27,12 @@ module.exports = ({
 
   return (rows) => {
     const widths = getColumnWidths(rows);
-    return formatTable(rows, widths)
+    const overallWidth = widths.reduce((r, v, i) => r + (i === 0 ? 0 : gap) + v, 0);
+    return formatTable(rows, widths, overallWidth)
       .map((r) => r.map((v, i) => formatCell(v, widths[i])))
       .flatMap(normaliseRowHeight(padding))
       .map(row => row.join(''.padEnd(gap, ' ')))
-      .map(value => ''.padEnd(indent, ' ') + value)
+      .map(value => value.padStart(indent + value.length, ' '))
       .join('\n');
   };
 };

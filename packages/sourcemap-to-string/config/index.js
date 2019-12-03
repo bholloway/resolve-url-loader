@@ -28,15 +28,27 @@ module.exports = require('../lib/conviction')({
     default: require('./stdout')
   },
   map: {
-    arg: 'map',
-    env: 'MAP',
-    example: '<file>',
-    doc: 'Optional map file relative to input file (default ".")',
-    format: [
-      require('./extant-file-relative-to')('read'),
-      require('./extant-file')
-    ],
-    default: undefined
+    file: {
+      arg: 'map',
+      env: 'MAP',
+      example: '<file>',
+      doc: 'Optional map file relative to input file (default unspecified)',
+      format: [
+        require('./extant-file-relative-to')('read'),
+        require('./extant-file')
+      ],
+      default: undefined
+    },
+    ext: {
+      arg: 'map-ext',
+      env: 'MAP_EXT',
+      example: '<.ext>',
+      doc: 'Optional extension file relative to input file (default unspecified)',
+      format: [
+        require('./extant-extension-relative-to')('read'),
+      ],
+      default: undefined
+    }
   },
   sourceRootOverride: {
     arg: 'source-root',

@@ -12,7 +12,7 @@ require('object.entries').shim();
 const {formatMultilineText} = require('../lib/text');
 const table = require('../lib/table');
 
-module.exports = (command, schema, errors) => {
+module.exports = ({command, schema, errors}) => {
   const message = table({
     width: 80,
     indent: 2,
@@ -28,7 +28,7 @@ module.exports = (command, schema, errors) => {
       .map(([{arg, env}, v]) => [`--${arg}`, env || '', v])
   ]);
 
-  console.error(
+  throw new Error(
     outdent`
     error in command-line options:
 

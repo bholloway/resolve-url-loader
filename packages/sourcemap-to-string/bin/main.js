@@ -5,8 +5,9 @@
 'use strict';
 
 const {existsSync, readFile} = require('fs');
-const {join, resolve} = require('path');
+const {join, resolve, normalize} = require('path');
 
+const compose = require('compose-function');
 const sequence = require('promise-compose');
 const convert = require('convert-source-map');
 
@@ -23,6 +24,9 @@ const lensTo = (field) => (fn) => (context) =>
     .then(fn)
     .then(v => Object.assign({}, context, field ? {[field]: v} : v));
 
+const rebaseTo = (base) => (filename) =>
+  compose(normalize, join)(base, filename);
+
 module.exports = sequence(
   lensTo('content')(({read}) =>
     readStream(read.stream)
@@ -32,13 +36,23 @@ module.exports = sequence(
     sourceRootOverride && sourceRootOverride.isDirectory && sourceRootOverride.dirname ||
     process.cwd()
   ),
-  lensTo()(({content, mapBase}) => {
-    const instance = convert.fromMapFileSource(content, mapBase);
-    if (!instance) {
-      throw new Error(`cannot resolve source-map from base ${mapBase}`);
+  lensTo()(({content, mapBase, map: { file: mapFile1, ext: mapFile2 }}) => {
+    const explicitFile = mapFile1 || mapFile2;
+    if (explicitFile) {
+      return readStream(explicitFile.stream)
+        .then(mapContent => JSON.parse(mapContent))
+        .catch(() => {
+          throw new Error(`cannot read source-map file ${explicitFile}`);
+        });
+    } else {
+      const instance = convert.fromMapFileSource(content, mapBase);
+      if (!instance) {
+        throw new Error(`cannot resolve source-map from base ${mapBase}`);
+      }
+      return instance.toObject();
     }
-    return instance.toObject();
   }),
+  lensTo('sources')(({ sources }) => sources.map(v => v.replace(/\*$/g, ''))),
   lensTo('sourcesContent')(({read, sourceRootOverride, sources, sourceRoot}) => {
     const sourceRootAbsolute = parseDirectory(sourceRoot);
     const actualRoot = [
@@ -50,21 +64,20 @@ module.exports = sequence(
     ]
       .filter(Boolean)
       .map(v => resolve(v))
-      .find(base => sources.map(v => join(base, v)).every(v => existsSync(v)));
+      .find(base => sources.map(rebaseTo(base)).every(v => existsSync(v)));
 
     if (!actualRoot) {
       throw new Error('viable sourceRoot not found');
     }
 
     return Promise.all(
-      sources.map((v) => join(actualRoot, v)).map((v) => promisify(readFile)(v, 'utf8'))
+      sources.map(rebaseTo(actualRoot)).map((v) => promisify(readFile)(v, 'utf8'))
     );
   }),
   lensTo('result')(toString),
   lensTo()(({ result, write }) => write.stream.write(result)),
-  ({ read, write }) => {
-    read.isFile && read.stream.destroy();
-    write.isFile && write.stream.destroy();
+  ({ read, write, map: { file: mapFile1, ext: mapFile2 } }) => {
+    [read, write, mapFile1, mapFile2]
+      .forEach((stream) => stream && stream.destroy && stream.destroy());
   }
 );
-

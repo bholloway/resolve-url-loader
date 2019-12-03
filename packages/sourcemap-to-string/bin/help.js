@@ -11,8 +11,13 @@ require('object.values').shim();
 const {formatMultilineText} = require('../lib/text');
 const table = require('../lib/table');
 
-module.exports = (command, schema) => {
-  const args = Object.values(schema)
+module.exports = ({command, schema, visitConfig}) => {
+  const values = [];
+  visitConfig({
+    doc: (_, node) => values.push(node) && null
+  })(schema);
+
+  const args = values
     .filter(({arg}) => (arg !== 'help'))
     .map(({isOptional, arg, example}) =>
       [
@@ -44,7 +49,7 @@ module.exports = (command, schema) => {
   })([
     ['ARG', 'ENV', 'DESCRIPTION'],
     [],
-    ...Object.values(schema).map(({arg, env, doc}) => [`--${arg}`, env || '', doc])
+    ...values.map(({arg, env, doc}) => [`--${arg}`, env || '', doc])
   ]);
 
   console.error(

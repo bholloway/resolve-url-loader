@@ -6,6 +6,9 @@
 
 const {repeatArray, first, last} = require('./array');
 
+const isStringifyable = v =>
+  (v !== null) && !isNaN(v) || (typeof v === 'string');
+
 module.exports = ({width, pattern, gap = 1}) => {
   const constraints = [].concat(width);
   const minWidth = first(constraints);
@@ -15,7 +18,7 @@ module.exports = ({width, pattern, gap = 1}) => {
     const widths = rows
       .reduce(
         (maximums, row) => pattern
-          .map((_, i) => Array.isArray(row) && (i in row) ? String(row[i]) : '')
+          .map((_, i) => Array.isArray(row) && (i in row) && isStringifyable(row[i])  ? String(row[i]) : '')
           .map((v, i) => Math.max(maximums[i], v.length)),
         repeatArray(pattern.length, 0)
       );
