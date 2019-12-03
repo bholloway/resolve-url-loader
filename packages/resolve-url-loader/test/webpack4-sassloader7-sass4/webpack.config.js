@@ -15,7 +15,7 @@ module.exports = {
     devtoolModuleFilenameTemplate: templateFn,
     devtoolFallbackModuleFilenameTemplate: templateFn
   },
-  devtool: JSON.parse(process.env.DEVTOOL),
+  devtool: JSON.parse(process.env.DEVTOOL) && 'nosources-source-map',
   resolve: {
     modules: [path.join(__dirname, 'modules'), 'node_modules'] // specifically for isolation in module-relative test
   },
@@ -39,7 +39,9 @@ module.exports = {
           loader: 'sass-loader',
           options: {
             sourceMap: true,
-            sourceMapContents: false
+            sassOptions: {
+              sourceMapContents: true
+            }
           }
         }
       ]
