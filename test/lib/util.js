@@ -1,7 +1,20 @@
 'use strict';
 
-exports.trim = ({raw}, ...substitutions) =>
-  String.raw({raw: raw.map(v => v.split(/\s+/).join(''))}, ...substitutions);
+const collapseLines = v =>
+  v.split(/\s+\n|\n\s+/).join('');
+
+const escapeXml = v =>
+  v.replace(/"/g, '\'').replace(/</g, '%3C').replace(/>/g, '%3E');
+
+const createTemplateLiteral = (...fns) => ({raw}, ...substitutions) =>
+  String.raw({raw: fns.reduce((r, fn) => r.map(fn), raw)}, ...substitutions);
+
+exports.trim = createTemplateLiteral(collapseLines);
+
+exports.encodeXml = createTemplateLiteral(collapseLines, escapeXml);
+
+exports.escapeStr = (text) =>
+  JSON.stringify(text).slice(1, -1);
 
 exports.countQueries = (list) =>
   list.filter((v) => /[?#]/.test(v)).length;
@@ -14,9 +27,6 @@ exports.excludingQuery = (list) =>
 
 exports.excludingQuotes = (list) =>
   list.map(v => v.replace(/(^"|"$)/g, ''));
-
-exports.isConsistent = (list) =>
-  list.every((v, i, a) => (v === a[0]));
 
 exports.unique = (list) =>
   list.filter((v, i, a) => (a.indexOf(v) === i));

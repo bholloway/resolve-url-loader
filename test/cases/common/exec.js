@@ -12,7 +12,7 @@ exports.buildDevNormal = (...rest) =>
         OUTPUT: 'development-normal'
       }),
       exec('npm run webpack-d'),
-      saveOutput,
+      saveOutput('webpack'),
       ...rest
     )
   );
@@ -22,25 +22,11 @@ exports.buildDevNoUrl = (...rest) =>
     'development-without-url',
     layer()(
       env({
-        CSS_QUERY: 'url=false',
         CSS_OPTIONS: {url: false},
         OUTPUT: 'development-without-url'
       }),
       exec('npm run webpack-d'),
-      saveOutput,
-      ...rest
-    )
-  );
-
-exports.buildDevBail = (...rest) =>
-  test(
-    'development-bail',
-    layer()(
-      env({
-        OUTPUT: 'development-bail'
-      }),
-      exec('npm run webpack-d-bail'),
-      saveOutput,
+      saveOutput('webpack'),
       ...rest
     )
   );
@@ -53,7 +39,7 @@ exports.buildProdNormal = (...rest) =>
         OUTPUT: 'production-normal'
       }),
       exec(`npm run webpack-p`),
-      saveOutput,
+      saveOutput('webpack'),
       ...rest
     )
   );
@@ -63,12 +49,11 @@ exports.buildProdNoUrl = (...rest) =>
     'production-without-url',
     layer()(
       env({
-        CSS_QUERY: 'url=false',
         CSS_OPTIONS: {url: false},
         OUTPUT: 'production-without-url'
       }),
       exec(`npm run webpack-p`),
-      saveOutput,
+      saveOutput('webpack'),
       ...rest
     )
   );
@@ -82,20 +67,7 @@ exports.buildProdNoDevtool = (...rest) =>
         OUTPUT: 'production-without-devtool'
       }),
       exec(`npm run webpack-p`),
-      saveOutput,
-      ...rest
-    )
-  );
-
-exports.buildProdBail = (...rest) =>
-  test(
-    'production-bail',
-    layer()(
-      env({
-        OUTPUT: 'production-bail'
-      }),
-      exec(`npm run webpack-p-bail`),
-      saveOutput,
+      saveOutput('webpack'),
       ...rest
     )
   );
