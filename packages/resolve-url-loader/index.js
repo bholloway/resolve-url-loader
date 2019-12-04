@@ -48,8 +48,6 @@ function resolveUrlLoader(content, sourceMap) {
       sourceMap: loader.sourceMap,
       engine   : 'postcss',
       silent   : false,
-      absolute : false,
-      keepQuery: false,
       removeCR : false,
       root     : false,
       debug    : false,
@@ -63,6 +61,18 @@ function resolveUrlLoader(content, sourceMap) {
   logToTestHarness(options);
 
   // defunct options
+  if ('keepQuery' in options) {
+    handleAsWarning(
+      'loader misconfiguration',
+      '"keepQuery" option is defunct (consider "join" option if search is needed)'
+    );
+  }
+  if ('absolute' in options) {
+    handleAsWarning(
+      'loader misconfiguration',
+      '"absolute" option is defunct (consider "join" option if search is needed)'
+    );
+  }
   if ('attempts' in options) {
     handleAsWarning(
       'loader misconfiguration',

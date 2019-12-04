@@ -9,8 +9,8 @@ const {test, layer, fs, env, cwd} = require('test-my-cli');
 const {trim} = require('../lib/util');
 const {rebaseToCache} = require('../lib/higher-order');
 const {
-  all, testDefault, testSilent, testAttempts, testEngineFail, testIncludeRoot, testFail, testNonFunctionJoin,
-  testWrongArityJoin, testNonStringRoot, testNonExistentRoot
+  all, testDefault, testSilent, testKeepQuery, testAbsolute, testAttempts, testEngineFail, testIncludeRoot, testFail,
+  testNonFunctionJoin, testWrongArityJoin, testNonStringRoot, testNonExistentRoot
 } = require('./common/test');
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
@@ -48,18 +48,6 @@ const assertMisconfigError = (message) => assertStdout('error')([1, 4])`
   ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
   [ ]+${message}
   `;
-
-const assertNonFunctionJoinError = assertMisconfigError(
-  '"join" option must be a Function'
-);
-
-const assertWrongArityJoinError = assertMisconfigError(
-  '"join" Function must take exactly 2 arguments (filename and options hash)'
-);
-
-const assertNonExistentRootError = assertMisconfigError(
-  '"root" option must be an empty string or an absolute path to an existing directory'
-);
 
 // Allow 1-4 errors
 //  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
@@ -107,6 +95,66 @@ module.exports = test(
           assertWebpackOk,
           assertNoErrors,
           assertMisconfigWarning('"attempts" option is defunct'),
+          assertContentProd
+        )
+      ),
+      testSilent(
+        buildDevNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages,
+          assertContentDev
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages,
+          assertContentProd
+        )
+      )
+    ),
+    testKeepQuery(
+      testDefault(
+        buildDevNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertMisconfigWarning('"keepQuery" option is defunct'),
+          assertContentDev
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertMisconfigWarning('"keepQuery" option is defunct'),
+          assertContentProd
+        )
+      ),
+      testSilent(
+        buildDevNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages,
+          assertContentDev
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages,
+          assertContentProd
+        )
+      )
+    ),
+    testAbsolute(
+      testDefault(
+        buildDevNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertMisconfigWarning('"absolute" option is defunct'),
+          assertContentDev
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertMisconfigWarning('"absolute" option is defunct'),
           assertContentProd
         )
       ),
@@ -189,7 +237,7 @@ module.exports = test(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
-          assertNonFunctionJoinError
+          assertMisconfigError('"join" option must be a Function')
         )
       )
     ),
@@ -197,7 +245,7 @@ module.exports = test(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
-          assertWrongArityJoinError
+          assertMisconfigError('"join" Function must take exactly 2 arguments (filename and options hash)')
         )
       )
     ),
@@ -235,7 +283,7 @@ module.exports = test(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
-          assertNonExistentRootError
+          assertMisconfigError('"root" option must be an empty string or an absolute path to an existing directory')
         )
       )
     )
