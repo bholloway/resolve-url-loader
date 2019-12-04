@@ -17,6 +17,14 @@ tape(
   ({test, end: end1, deepEqual}) => {
     test('with default gap', ({end: end2}) => {
       deepEqual(
+        sut({width: 40, pattern: [0, 0, 0, 0, 0, 0]})([
+          [undefined, null, NaN, '', 12, 'foo']
+        ]),
+        [0, 0, 0, 0, 2, 3],
+        `should measure unstringifyable values as zero width`
+      );
+
+      deepEqual(
         repeatArray(8)
           .map((_, i) => [(i & 4) >> 2, (i & 2) >> 1, (i & 1)])
           .map((pattern) =>

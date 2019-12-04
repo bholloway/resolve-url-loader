@@ -21,7 +21,7 @@ module.exports = (padding) => {
       .reduce((r, v) => Math.max(r, v.length), 1);
 
     const rowAsPadding = rowWithArrayElements
-      .map(([first]) => first.length)
+      .map(([first]) => (typeof first === 'string') ? first.length : 0)
       .map((length, col) => ''.padEnd(length, paddingFn(col)));
 
     return repeatArray(maxLines)

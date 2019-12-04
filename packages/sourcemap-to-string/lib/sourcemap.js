@@ -4,8 +4,6 @@
  */
 'use strict';
 
-const {EOL} = require('os');
-
 const vlq = require('vlq');
 const compose = require('compose-function');
 require('array.prototype.flatmap').shim();
@@ -19,6 +17,9 @@ const findTuple = (list, [r1, c1]) =>
 
 const uniqueTuple = (list) =>
   list.filter((v, i, a) => (findTuple(a, v) === v));
+
+const sortTuple = (list) =>
+  list.sort(([l1, c1], [l2, c2]) => (l1 - l2) || (c1 - c2));
 
 const visitTuples = (vistior) => (lines) =>
   lines
@@ -103,20 +104,25 @@ exports.objToAbsolute = (objects) =>
       return lines;
     }, []);
 
-exports.tuplesWithSubstring = (sortedTuples, text) => {
-  const split = text.split(new RegExp(`(${EOL})`));
+exports.tuplesWithSubstring = (tuples, text) => {
+  const lineToIndex = line => (line - 1) * 2;
+  const indexToLine = index => (index / 2) + 1;
 
-  const boundTuples = uniqueTuple([
+  const split = text.split(/(\r?\n)/);
+  const lastLineNum = indexToLine(split.length - 1);
+
+  const boundTuples = compose(sortTuple, uniqueTuple)([
     [1, 1],
-    ...sortedTuples,
-    [split.length, last(split).length + 1]
+    ...tuples,
+    [lastLineNum, last(split).length + 1]
   ]);
 
   return aperture(2)(boundTuples)
     .map(([[l1, c1], [l2, c2]]) => {
-      const splitStart = (l1 - 1) * 2;
-      const splitStop  = (l2 - 1) * 2;
+      const splitStart = lineToIndex(l1);
+      const splitStop  = lineToIndex(l2);
       const lastIndex  = splitStop - splitStart;
+      const isValidLine = (splitStart in split) && (splitStop in split);
       const substring  = split
         .slice(splitStart, splitStop + 1)
         .reduce(
@@ -127,8 +133,9 @@ exports.tuplesWithSubstring = (sortedTuples, text) => {
           },
           ''
         );
-      return [l1, c1, substring];
-    });
+      return isValidLine ? [l1, c1, substring] : null;
+    })
+    .filter(Boolean);
 };
 
 exports.objToString = (maxWidth, objects, content, sources, sourcesContent) => {
@@ -136,8 +143,7 @@ exports.objToString = (maxWidth, objects, content, sources, sourcesContent) => {
     exports.tuplesWithSubstring(
       objects
         .filter(v => !predicate || predicate(v, i))
-        .map(({[field]: v}) => v)
-        .sort(([l1, c1], [l2, c2]) => (l1 - l2) || (c1 - c2)),
+        .map(({[field]: v}) => v),
       text
     );
 
@@ -146,34 +152,36 @@ exports.objToString = (maxWidth, objects, content, sources, sourcesContent) => {
   const inputTuples = sourcesContent
     .map(toTuples('from', ({file}, i) => file === i));
 
-  const tableForFile = table({
+  return table({
     width: maxWidth,
     pattern: [0, 0, 1, 0, 0, 1],
     padding: (col) => (col % 2 === 1) ? '░' : ' ',
-    formatTable: (rows, widths) => rows.map((row) => [
-      `${formatInt(row[0], widths[0])}:${formatInt(row[1], widths[1])}`,
-      formatSourceText(row[1], row[2], widths[2]),
-      `${formatInt(row[3], widths[3])}:${formatInt(row[4], widths[4])}`,
-      formatSourceText(row[4], row[5], widths[5])
-    ])
-  });
-
-  return objects
-    .reduce(
-      (r, { from, to, file }) => {
-        r[file].push([
-          ...findTuple(inputTuples[file], from),
-          ...findTuple(outputTuples, to),
-        ]);
-        return r;
-      },
-      repeatArray(sourcesContent.length).map(() => [])
+    formatTable: (rows, widths, overall) => rows.map((row, i) =>
+      (row.length === 1) ? [
+        [
+          (i > 0) && ''.padEnd(overall, ' '),
+          ...formatMultilineText(sources[row[0]], overall),
+          ''.padEnd(overall, '-')
+        ].filter(Boolean)
+      ] : [
+        `${formatInt(row[0], widths[0])}:${formatInt(row[1], widths[1])}`,
+        formatSourceText(row[1], row[2], widths[2]),
+        `${formatInt(row[3], widths[3])}:${formatInt(row[4], widths[4])}`,
+        formatSourceText(row[4], row[5], widths[5])
+      ]
     )
-    .map((obj, file) => [
-        formatMultilineText(sources[file], maxWidth),
-        ''.padEnd(maxWidth, '-'),
-        tableForFile(obj)
-      ].join('\n')
-    )
-    .join('\n\n');
+  })(
+    objects
+      .reduce(
+        (r, { from, to, file }) => {
+          r[file].push([
+            ...findTuple(inputTuples[file], from) || repeatArray(3, null),
+            ...findTuple(outputTuples, to) || repeatArray(3, null),
+          ]);
+          return r;
+        },
+        repeatArray(sourcesContent.length).map(() => [])
+      )
+      .flatMap((obj, file) => [[file], ...obj])
+  );
 };

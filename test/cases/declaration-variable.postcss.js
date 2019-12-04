@@ -1,31 +1,24 @@
 'use strict';
 
 const {join} = require('path');
-const compose = require('compose-function');
 const outdent = require('outdent');
+const compose = require('compose-function');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('../lib/util');
-const {withCacheBase} = require('../lib/higher-order');
-const {testDefault, testDebug, testWithLabel} = require('./common/tests');
-const {buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool} = require('./common/builds');
-const {moduleNotFound} = require('./common/partials');
+const {rebaseToCache} = require('../lib/higher-order');
+const {all, testDefault, testDebug, testWithLabel} = require('./common/test');
 const {
-  assertWebpackOk, assertNoErrors, assertNoMessages, assertContent, assertNoSourceMap, assertAssetUrls,
-  assertAssetFiles, assertStdout
+  buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool
+} = require('./common/exec');
+const {assertCssAndSourceMapContent} = require('./common/assert');
+const {assertCssContent} = require('../lib/assert');
+const {
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
+  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertModuleNotFoundError
 } = require('../lib/assert');
 
-const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
-  .some-class-name {
-    background-image: some url($0) somewhere;
-  }
-  `;
-
-const assertContentProd = compose(assertContent(), trim)`
-  .some-class-name{background-image: some${' '}url($0)${' '}somewhere}
-  `;
-
-const assertDebugPropertyMessages = assertStdout('debug')(1)`
+const assertPropertyMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
   [ ]+${'./src/value/substring'}
   [ ]+${'./src/value'}
@@ -33,14 +26,14 @@ const assertDebugPropertyMessages = assertStdout('debug')(1)`
   [ ]+FOUND$
   `;
 
-const assertDebugValueMessages = assertStdout('debug')(1)`
+const assertValueMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
   [ ]+${'./src/value/substring'}
   [ ]+${'./src/value'}
   [ ]+FOUND$
   `;
 
-const assertDebugSubstringMessages = assertStdout('debug')(1)`
+const assertSubstringMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
   [ ]+${'./src/value/substring'}
   [ ]+FOUND$
@@ -51,9 +44,9 @@ module.exports = test(
   layer('declaration-variable')(
     cwd('.'),
     fs({
-      'package.json': withCacheBase('package.json'),
-      'webpack.config.js': withCacheBase('webpack.config.js'),
-      'node_modules': withCacheBase('node_modules'),
+      'package.json': rebaseToCache('package.json'),
+      'webpack.config.js': rebaseToCache('webpack.config.js'),
+      'node_modules': rebaseToCache('node_modules'),
       'src/index.scss': outdent`
           @import "value/variables.scss";
           .some-class-name {
@@ -72,302 +65,428 @@ module.exports = test(
       ENTRY: join('src', 'index.scss')
     }),
     testWithLabel('asset-missing')(
-      moduleNotFound
+      all(buildDevNormal, buildProdNormal)(
+        assertWebpackNotOk,
+        assertModuleNotFoundError
+      ),
+      all(buildDevNoUrl, buildProdNoUrl)(
+        assertWebpackOk
+      )
     ),
     testWithLabel('asset-property')(
+      cwd('.'),
       fs({
         'src/img.jpg': require.resolve('./assets/blank.jpg')
       }),
-      testDefault(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          // assertSourcemapDev,
-          assertAssetUrls(['./img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          // assertSourcemapProd,
-          assertAssetUrls(['./img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        )
-      ),
       testDebug(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugPropertyMessages,
-          assertContentDev,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertPropertyMessages,
+          assertCssSourceMapComment(true),
+          compose(assertCssContent, outdent)`
+            .some-class-name {
+              background-image: some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere; }
+            `
         ),
         buildDevNoUrl(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugPropertyMessages,
-          assertContentDev,
-          // assertSourcemapDev,
-          assertAssetUrls(['./img.jpg']),
-          assertAssetFiles(false)
+          assertPropertyMessages,
+          assertCssSourceMapComment(true),
+          compose(
+            onlyMeta('meta.version.webpack < 4'),
+            assertCssAndSourceMapContent('main.96f2fd25c7e6a43978e8a5a14d2ebff9.css'),
+            outdent
+          )`
+            /src/index.scss                                                                                     
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./img.jpg") som
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ewhere;░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            /src/value/variables.scss                                                                           
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:53 ░░░░░░░ }⏎                                   
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.96f2fd25c7e6a43978e
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      8a5a14d2ebff9.css.map*/░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack == 4'),
+            assertCssAndSourceMapContent('main.aca6c92b278f2368bc8f.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./img.jpg") som
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ewhere░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:52 ░░░░░░; }⏎                                   
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.aca6c92b278f2368bc8
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      f.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugPropertyMessages,
-          assertContentProd,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertPropertyMessages,
+          onlyMeta('meta.version.webpack < 4')(
+            assertCssSourceMapComment(true)
+          ),
+          onlyMeta('meta.version.webpack == 4')(
+            assertCssSourceMapComment(false)
+          ),
+          compose(assertCssContent, trim)`
+            .some-class-name{background-image:some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere}
+            `
         ),
         buildProdNoUrl(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugPropertyMessages,
-          assertContentProd,
-          // assertSourcemapProd,
-          assertAssetUrls(['./img.jpg']),
-          assertAssetFiles(false)
+          assertPropertyMessages,
+          onlyMeta('meta.version.webpack < 4')(
+            assertCssSourceMapComment(true)
+          ),
+          onlyMeta('meta.version.webpack == 4')(
+            assertCssSourceMapComment(false)
+          ),
+          compose(
+            onlyMeta('meta.version.webpack < 4'),
+            assertCssAndSourceMapContent('main.f72ea16a0a8071232ec11f243d55dac8.css'),
+            outdent
+          )`
+            /src/index.scss                                                                                     
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(".
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /img.jpg") somewhere░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            /src/value/variables.scss                                                                           
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:66 ░░░░░░░░░░░░░░░░░░░░}⏎                       
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.f72ea16a0a8071232ec
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      11f243d55dac8.css.map*/░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack == 4'),
+            assertCssAndSourceMapContent('main.e5eb14ee5e2900a1aecc.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(im
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      g.jpg) somewhere░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:62 ░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `
         ),
         buildProdNoDevtool(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugPropertyMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertPropertyMessages,
+          assertCssFile(true),
+          assertCssSourceMapComment(false),
+          assertSourceMapFile(false)
+        )
+      ),
+      // ensure build passes but don't bother with detailed assertions
+      // ensure no debug messages in normal mode
+      testDefault(
+        all(buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool)(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages
         )
       )
     ),
     testWithLabel('asset-value')(
+      cwd('.'),
       fs({
         'src/value/img.jpg': require.resolve('./assets/blank.jpg')
       }),
-      testDefault(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          // assertSourcemapDev,
-          assertAssetUrls(['./value/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          // assertSourcemapProd,
-          assertAssetUrls(['./value/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        )
-      ),
       testDebug(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugValueMessages,
-          assertContentDev,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertValueMessages,
+          assertCssSourceMapComment(true),
+          compose(assertCssContent, outdent)`
+            .some-class-name {
+              background-image: some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere; }
+            `
         ),
         buildDevNoUrl(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugValueMessages,
-          assertContentDev,
-          // assertSourcemapDev,
-          assertAssetUrls(['./value/img.jpg']),
-          assertAssetFiles(false)
+          assertValueMessages,
+          assertCssSourceMapComment(true),
+          compose(
+            onlyMeta('meta.version.webpack < 4'),
+            assertCssAndSourceMapContent('main.38019d7e4f783c5dff4149b402a29c50.css'),
+            outdent
+          )`
+            /src/index.scss                                                                                     
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./value/img.jpg
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ") somewhere;░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            /src/value/variables.scss                                                                           
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:59 ░░░░░░░░░░░░░ }⏎                             
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.38019d7e4f783c5dff4
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      149b402a29c50.css.map*/░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack == 4'),
+            assertCssAndSourceMapContent('main.e6d063baf74245631d2f.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./value/img.jpg
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ") somewhere░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:58 ░░░░░░░░░░░░; }⏎                             
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.e6d063baf74245631d2
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      f.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugValueMessages,
-          assertContentProd,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertValueMessages,
+          onlyMeta('meta.version.webpack < 4')(
+            assertCssSourceMapComment(true)
+          ),
+          onlyMeta('meta.version.webpack == 4')(
+            assertCssSourceMapComment(false)
+          ),
+          compose(assertCssContent, trim)`
+            .some-class-name{background-image:some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere}
+            `
         ),
         buildProdNoUrl(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugValueMessages,
-          assertContentProd,
-          // assertSourcemapProd,
-          assertAssetUrls(['./value/img.jpg']),
-          assertAssetFiles(false)
+          assertValueMessages,
+          onlyMeta('meta.version.webpack < 4')(
+            assertCssSourceMapComment(true)
+          ),
+          onlyMeta('meta.version.webpack == 4')(
+            assertCssSourceMapComment(false)
+          ),
+          compose(
+            onlyMeta('meta.version.webpack < 4'),
+            assertCssAndSourceMapContent('main.50223d89c97527cd95d3f457ac73b96f.css'),
+            outdent
+          )`
+            /src/index.scss                                                                                     
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(".
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /value/img.jpg") somewhere░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            /src/value/variables.scss                                                                           
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:72 ░░░░░░░░░░░░░░░░░░░░░░░░░░}⏎                 
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.50223d89c97527cd95d
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      3f457ac73b96f.css.map*/░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack == 4'),
+            assertCssAndSourceMapContent('main.9e1e81e6c8ac95cda014.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(va
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      lue/img.jpg) somewhere░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:68 ░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░
+            `
         ),
         buildProdNoDevtool(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugValueMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertValueMessages,
+          assertCssFile(true),
+          assertCssSourceMapComment(false),
+          assertSourceMapFile(false)
+        )
+      ),
+      // ensure build passes but don't bother with detailed assertions
+      // ensure no debug messages in normal mode
+      testDefault(
+        all(buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool)(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages
         )
       )
     ),
     testWithLabel('asset-value-substring')(
+      cwd('.'),
       fs({
         'src/value/substring/img.jpg': require.resolve('./assets/blank.jpg')
       }),
-      testDefault(
-        buildDevNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildDevNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentDev,
-          // assertSourcemapDev,
-          assertAssetUrls(['./value/substring/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNormal(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        ),
-        buildProdNoUrl(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          // assertSourcemapProd,
-          assertAssetUrls(['./value/substring/img.jpg']),
-          assertAssetFiles(false)
-        ),
-        buildProdNoDevtool(
-          assertWebpackOk,
-          assertNoErrors,
-          assertNoMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
-        )
-      ),
       testDebug(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugSubstringMessages,
-          assertContentDev,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertSubstringMessages,
+          assertCssSourceMapComment(true),
+          compose(assertCssContent, outdent)`
+            .some-class-name {
+              background-image: some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere; }
+            `
         ),
         buildDevNoUrl(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugSubstringMessages,
-          assertContentDev,
-          // assertSourcemapDev,
-          assertAssetUrls(['./value/substring/img.jpg']),
-          assertAssetFiles(false)
+          assertSubstringMessages,
+          assertCssSourceMapComment(true),
+          compose(
+            onlyMeta('meta.version.webpack < 4'),
+            assertCssAndSourceMapContent('main.51965ae8c4080a520b2112e17ca5fb9d.css'),
+            outdent
+          )`
+            /src/index.scss                                                                                     
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./value/substri
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ng/img.jpg") somewhere;░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            /src/value/variables.scss                                                                           
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:69 ░░░░░░░░░░░░░░░░░░░░░░░ }⏎                   
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.51965ae8c4080a520b2
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      112e17ca5fb9d.css.map*/░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack == 4'),
+            assertCssAndSourceMapContent('main.e6d81c95e317f9d06421.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./value/substri
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ng/img.jpg") somewhere░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:68 ░░░░░░░░░░░░░░░░░░░░░░; }⏎                   
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.e6d81c95e317f9d0642
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      1.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugSubstringMessages,
-          assertContentProd,
-          // assertSourceMapSources,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertSubstringMessages,
+          onlyMeta('meta.version.webpack < 4')(
+            assertCssSourceMapComment(true)
+          ),
+          onlyMeta('meta.version.webpack == 4')(
+            assertCssSourceMapComment(false)
+          ),
+          compose(assertCssContent, trim)`
+            .some-class-name{background-image:some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere}
+            `
         ),
         buildProdNoUrl(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugSubstringMessages,
-          assertContentProd,
-          // assertSourcemapProd,
-          assertAssetUrls(['./value/substring/img.jpg']),
-          assertAssetFiles(false)
+          assertSubstringMessages,
+          onlyMeta('meta.version.webpack < 4')(
+            assertCssSourceMapComment(true)
+          ),
+          onlyMeta('meta.version.webpack == 4')(
+            assertCssSourceMapComment(false)
+          ),
+          compose(
+            onlyMeta('meta.version.webpack < 4'),
+            assertCssAndSourceMapContent('main.531f47aa72d61f9b920272e1c1f3d777.css'),
+            outdent
+          )`
+            /src/index.scss                                                                                     
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(".
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /value/substring/img.jpg") somewhere░░░░░░░░░
+                                                                                                                
+            /src/value/variables.scss                                                                           
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:82 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}⏎       
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.531f47aa72d61f9b920
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      272e1c1f3d777.css.map*/░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack == 4'),
+            assertCssAndSourceMapContent('main.6aa172c2ed3e739dd3e5.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(va
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      lue/substring/img.jpg) somewhere░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:78 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░
+            `
         ),
         buildProdNoDevtool(
           assertWebpackOk,
           assertNoErrors,
-          assertDebugSubstringMessages,
-          assertContentProd,
-          assertNoSourceMap,
-          assertAssetUrls(['d68e763c825dc0e388929ae1b375ce18.jpg']),
-          assertAssetFiles(['d68e763c825dc0e388929ae1b375ce18.jpg'])
+          assertSubstringMessages,
+          assertCssFile(true),
+          assertCssSourceMapComment(false),
+          assertSourceMapFile(false)
+        )
+      ),
+      // ensure build passes but don't bother with detailed assertions
+      // ensure no debug messages in normal mode
+      testDefault(
+        all(buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool)(
+          assertWebpackOk,
+          assertNoErrors,
+          assertNoMessages
         )
       )
     )

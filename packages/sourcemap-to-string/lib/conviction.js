@@ -115,6 +115,7 @@ module.exports = (config) => {
   }
 
   return {
+    visitConfig,
     schema: instance.getSchema().properties,
     config: instance._instance,
   };

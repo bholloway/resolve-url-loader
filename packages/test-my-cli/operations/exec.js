@@ -7,7 +7,7 @@ const compose = require('compose-function');
 const joi = require('../lib/joi');
 const {assertInLayer} = require('../lib/assert');
 const {operation, assertInOperation} = require('../lib/operation');
-const {withTime, lens, sequence} = require('../lib/promise');
+const {withTime, lens, sequence, constant} = require('../lib/promise');
 const {assertSchema} = require('../lib/assert');
 const {config} = require('../lib/assert/config');
 const {env} = require('../lib/assert/env');
@@ -45,15 +45,23 @@ exports.create = (command) => {
     assertInOperation(`misuse: ${NAME}() somehow escaped the operation`),
     assertInLayer(`${NAME}() must be used within layer()`),
     assertCwdEnv(`${NAME}() requires a preceding cwd() and env()`),
+    compose(lens(null, 'caller'), constant)(
+      // find the shallowest absolute filename in the call stack of the create() not the invocation
+      new Error().stack
+        .match(/\(((?:\w:)?[\\\/][^)]+)\)/g)
+        .pop()
+        .slice(1, -1)
+    ),
     lens('*', 'cwd')(({root, cwd}) => cwd ? compose(normalize, join)(root, cwd) : root),
-    lens('*', null)(({index, cwd, env, meta}, _, log) => log(
-      `layer ${index}`,
-      `cmd:  ${JSON.stringify(command)}`,
-      `cwd:  ${JSON.stringify(cwd)}`,
-      `env:  ${JSON.stringify(env)}`,
-      `meta: ${JSON.stringify(meta)}`
+    lens('*', null)(({index, caller, cwd, env, meta}, _, log) => log(
+      `layer:  ${index}`,
+      `caller: ${JSON.stringify(caller)}`,
+      `cmd:    ${JSON.stringify(command)}`,
+      `cwd:    ${JSON.stringify(cwd)}`,
+      `env:    ${JSON.stringify(env)}`,
+      `meta:   ${JSON.stringify(meta)}`
     )),
-    withTime(({index, root, cwd, env, meta}, {onActivity}) =>
+    withTime(({index, root, caller, cwd, env, meta}, {onActivity}) =>
       new Promise((resolve) => {
         let stdout = '', stderr = '', interval = 0;
         const child = spawn(cmd, args, {cwd, env, shell: true, stdio: 'pipe'});
@@ -68,6 +76,8 @@ exports.create = (command) => {
           child.on('error', onError);
 
           if (isAdd) {
+            child.stdout.setEncoding('utf8');
+            child.stderr.setEncoding('utf8');
             interval = setInterval(onActivity, 50);
           } else {
             clearInterval(interval);
@@ -84,12 +94,12 @@ exports.create = (command) => {
 
         function onExit(code) {
           addOrRemove(false);
-          resolve({index, root, cwd, env, meta, code, stdout, stderr});
+          resolve({index, root, caller, cwd, env, meta, code, stdout, stderr});
         }
 
         function onError(error) {
           addOrRemove(false);
-          resolve({index, root, cwd, env, meta, code: 1, stdout, stderr: error.toString()});
+          resolve({index, root, caller, cwd, env, meta, code: 1, stdout, stderr: error.toString()});
         }
       })
     ),

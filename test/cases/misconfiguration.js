@@ -1,28 +1,36 @@
 'use strict';
 
 const {join} = require('path');
-const compose = require('compose-function');
 const outdent = require('outdent');
+const sequence = require('promise-compose');
+const compose = require('compose-function');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('../lib/util');
-const {withCacheBase} = require('../lib/higher-order');
+const {rebaseToCache} = require('../lib/higher-order');
 const {
-  all, testDefault, testSilent, testAttempts, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin,
-  testNonStringRoot, testNonExistentRoot, testEngineFail
-} = require('./common/tests');
-const {buildDevNormal, buildDevBail, buildProdNormal, buildProdBail} = require('./common/builds');
+  all, testDefault, testSilent, testAttempts, testEngineFail, testIncludeRoot, testFail, testNonFunctionJoin,
+  testWrongArityJoin, testNonStringRoot, testNonExistentRoot
+} = require('./common/test');
+const {buildDevNormal, buildProdNormal} = require('./common/exec');
+const {assertCssContent} = require('../lib/assert');
 const {
-  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertContent, assertStdout
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout
 } = require('../lib/assert');
 
-const assertContentDev = compose(assertContent(/;\s*}/g, ';\n}'), outdent)`
-  .some-class-name {
-    display: none;
-  }
-  `;
+const assertContentDev = sequence(
+  compose(onlyMeta('meta.engine == "rework"'), assertCssContent, outdent)`
+    .some-class-name {
+      display: none;
+    }
+    `,
+  compose(onlyMeta('meta.engine == "postcss"'), assertCssContent, outdent)`
+    .some-class-name {
+      display: none; }
+    `
+);
 
-const assertContentProd = compose(assertContent(), trim)`
+const assertContentProd = compose(assertCssContent, trim)`
   .some-class-name{display:none}
   `;
 
@@ -67,9 +75,9 @@ module.exports = test(
   layer('misconfiguration')(
     cwd('.'),
     fs({
-      'package.json': withCacheBase('package.json'),
-      'webpack.config.js': withCacheBase('webpack.config.js'),
-      'node_modules': withCacheBase('node_modules'),
+      'package.json': rebaseToCache('package.json'),
+      'webpack.config.js': rebaseToCache('webpack.config.js'),
+      'node_modules': rebaseToCache('node_modules'),
       'src/index.scss': outdent`
         .some-class-name {
           display: none;
@@ -81,31 +89,9 @@ module.exports = test(
     }),
     testEngineFail(
       all(testDefault, testSilent)(
-        onlyMeta('meta.version.webpack == 1')(
-          buildDevBail(
-            assertWebpackNotOk
-          ),
-          buildDevNormal(
-            assertWebpackOk,
-            assertCssError
-          ),
-          buildProdBail(
-            assertWebpackNotOk
-          ),
-          buildProdNormal(
-            assertWebpackOk,
-            assertCssError
-          )
-        ),
-        onlyMeta('meta.version.webpack > 1')(
-          buildDevNormal(
-            assertWebpackNotOk,
-            assertCssError
-          ),
-          buildProdNormal(
-            assertWebpackNotOk,
-            assertCssError
-          )
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertCssError
         )
       )
     ),
@@ -201,61 +187,17 @@ module.exports = test(
     ),
     testNonFunctionJoin(
       all(testDefault, testSilent)(
-        onlyMeta('meta.version.webpack == 1')(
-          buildDevBail(
-            assertWebpackNotOk
-          ),
-          buildDevNormal(
-            assertWebpackOk,
-            assertNonFunctionJoinError
-          ),
-          buildProdBail(
-            assertWebpackNotOk
-          ),
-          buildProdNormal(
-            assertWebpackOk,
-            assertNonFunctionJoinError
-          )
-        ),
-        onlyMeta('meta.version.webpack > 1')(
-          buildDevNormal(
-            assertWebpackNotOk,
-            assertNonFunctionJoinError
-          ),
-          buildProdNormal(
-            assertWebpackNotOk,
-            assertNonFunctionJoinError
-          )
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertNonFunctionJoinError
         )
       )
     ),
     testWrongArityJoin(
       all(testDefault, testSilent)(
-        onlyMeta('meta.version.webpack == 1')(
-          buildDevBail(
-            assertWebpackNotOk
-          ),
-          buildDevNormal(
-            assertWebpackOk,
-            assertWrongArityJoinError
-          ),
-          buildProdBail(
-            assertWebpackNotOk
-          ),
-          buildProdNormal(
-            assertWebpackOk,
-            assertWrongArityJoinError
-          )
-        ),
-        onlyMeta('meta.version.webpack > 1')(
-          buildDevNormal(
-            assertWebpackNotOk,
-            assertWrongArityJoinError
-          ),
-          buildProdNormal(
-            assertWebpackNotOk,
-            assertWrongArityJoinError
-          )
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertWrongArityJoinError
         )
       )
     ),
@@ -291,31 +233,9 @@ module.exports = test(
     ),
     testNonExistentRoot(
       all(testDefault, testSilent)(
-        onlyMeta('meta.version.webpack == 1')(
-          buildDevBail(
-            assertWebpackNotOk
-          ),
-          buildDevNormal(
-            assertWebpackOk,
-            assertNonExistentRootError
-          ),
-          buildProdBail(
-            assertWebpackNotOk
-          ),
-          buildProdNormal(
-            assertWebpackOk,
-            assertNonExistentRootError
-          )
-        ),
-        onlyMeta('meta.version.webpack > 1')(
-          buildDevNormal(
-            assertWebpackNotOk,
-            assertNonExistentRootError
-          ),
-          buildProdNormal(
-            assertWebpackNotOk,
-            assertNonExistentRootError
-          )
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertNonExistentRootError
         )
       )
     )
