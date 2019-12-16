@@ -88,7 +88,26 @@ module.exports = test(
         // lack of debug messages in debug mode confirms the urls where not processed
         // if webpack passes it is incidental but lets check anyway
         testDebug(
-          all(buildDevNormal, buildDevNoUrl, buildProdNormal, buildProdNoUrl, buildProdNoDevtool)(
+          all(buildDevNormal, buildProdNormal)(
+            onlyOS('posix')(
+              assertWebpackOk,
+              assertNoErrors,
+              assertNoMessages
+            ),
+            onlyOS('windows')(
+              onlyMeta('meta.version.webpack < 4')(
+                assertWebpackOk,
+                assertNoErrors,
+                assertNoMessages
+              ),
+              // windows paths are not supported
+              onlyMeta('meta.version.webpack == 4')(
+                assertWebpackNotOk,
+                assertModuleNotFoundError
+              )
+            )
+          ),
+          all(buildDevNoUrl, buildProdNoUrl)(
             assertWebpackOk,
             assertNoErrors,
             assertNoMessages

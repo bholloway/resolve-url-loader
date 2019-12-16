@@ -32,6 +32,23 @@ Thankfully `resolve-url-loader` provides the "url rewriting" that Sass is missin
 
 In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required.
 
+## Version 4
+
+**Features**
+
+* Better resolution of the original source location - You can now specify `url()` in variables and mixins.
+
+**Breaking Changes**
+
+* The `keepQuery` behaviour is now the default, the `keepQuery` option has been removed.
+* The `absolute` option has been removed.
+
+**Migrating**
+
+Remove the `keepQuery` option if you are using it.
+
+Remove the `absolute` option, webpack should work fine without it. If you have a specific need to rebase `url()` then you should use a separate loader.
+
 ## Version 3
 
 **Features**
@@ -41,6 +58,7 @@ In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required
 * Lots of automated tests running actual webpack builds. If you have an interesting use-case let me know.
 
 **Breaking Changes**
+
 * Multiple options changed or deprecated.
 * Removed file search "magic" in favour of `join` option.
 * Errors always fail and are no longer swallowed.
@@ -114,13 +132,11 @@ Refer to `test` directory for full webpack configurations (as used in automated 
 |-------------|----------------------------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` |          | The css parser engine.                                                                                                                                                           |
 | `sourceMap` | boolean                    | `false`     |          | Generate a source-map.                                                                                                                                                           |
-| `keepQuery` | boolean                    | `false`     |          | Keep query-string and/or hash suffixes.<br/>e.g. `url('./MyFont.eot?#iefix')`<br/>Be aware downstream loaders may remove query-string or hash.                                   |
 | `removeCR`  | boolean                    | `false`     |          | Convert orphan CR to whitespace (postcss only).<br/>See known issues below.                                                                                                          |
 | `debug`     | boolean                    | `false`     |          | Display debug information.                                                                                                                                                       |
 | `silent`    | boolean                    | `false`     |          | Do **not** display warnings.                                                                                                                                                     |
 | `root`      | string                     | _unset_     |          | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
 | `join`      | function                   | _inbuilt_   | advanced | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the default implementation for more information.                            |
-| `absolute`  | boolean                    | `false`     | useless  | Forces URIs to be output as absolute file paths.<br/>This is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.      |
 
 ## How it works
 
@@ -131,7 +147,8 @@ Each `url()` statement may imply an asset or may not. Generally only relative UR
 For each URI considered, the incomming source-map is consulted to determine the original file where the `url()` was specified. This becomes the `base` argument to the `join` function, whose default implementation is something like the following pseudocode.
 
 ```javascript
-join(uri, base?) =>
+join(uri: Iterator<sring>, base: ?string) =>
+  // first value of iterator where file exists
   compose(path.normalize, path.join)(base || options.join, uri);
 ```
 
@@ -243,3 +260,4 @@ I am happy to take **pull requests**, however:
 * Uncomon use-cases/fixes should be opt-in per a new **option**.
 * Do **not** overwrite existing variables with new values. I would prefer your change variable names elsewhere if necessary.
 * Add **comments** that describe why the code is necessary - i.e. what edge case are we solving. Otherwise we may rewrite later and break your use-case.
+* If I ask for changes to the PR  then you need to do them to get commit credit. Otherwise I can make the change but may drop your PR.

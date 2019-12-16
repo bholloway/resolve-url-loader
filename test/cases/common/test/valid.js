@@ -15,13 +15,12 @@ exports.testBase = (engine) => (...elements) =>
       }),
       env({
         DEVTOOL: true,
-        LOADER_OPTIONS: {keepQuery: true, sourceMap: true, engine}, // TODO remove keepQuery option
+        LOADER_OPTIONS: {sourceMap: true, engine},
         LOADER_JOIN: '',
         CSS_OPTIONS: {sourceMap: true}
       }),
       ...elements,
       test('validate', sequence(
-        assertStderr('options.sourceMap')(1)`keepQuery: true`,  // TODO remove keepQuery option
         assertStderr('options.sourceMap')(1)`sourceMap: true`,
         assertStderr('options.engine')(1)`engine: "${engine}"`
       ))

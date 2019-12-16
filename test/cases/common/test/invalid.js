@@ -6,6 +6,32 @@ const {test, layer, env} = require('test-my-cli');
 const {assertStderr} = require('../../../lib/assert');
 const {escapeStr} = require('../../../lib/util');
 
+exports.testKeepQuery = (...rest) =>
+  test(
+    'keepQuery=true',
+    layer()(
+      env({
+        LOADER_OPTIONS: {keepQuery: true},
+        OUTPUT: 'keepQuery'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.keepQuery')(1)`keepQuery: true`)
+    )
+  );
+
+exports.testAbsolute = (...rest) =>
+  test(
+    'absolute=true',
+    layer()(
+      env({
+        LOADER_OPTIONS: {absolute: true},
+        OUTPUT: 'absolute'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.absolute')(1)`absolute: true`)
+    )
+  );
+
 exports.testAttempts = (...rest) =>
   test(
     'attempts=N',
@@ -15,7 +41,7 @@ exports.testAttempts = (...rest) =>
         OUTPUT: 'attempts'
       }),
       ...rest,
-      test('validate', assertStderr('options.attempts')(1)`attempts: (1|"1")`)
+      test('validate', assertStderr('options.attempts')(1)`attempts: 1`)
     )
   );
 
@@ -122,6 +148,3 @@ exports.testEngineFail = (...rest) =>
       test('validate', assertStderr('options.engine')(1)`engine: "fail"`)
     )
   );
-
-// TODO add failing test for keepQuery option
-// TODO add failing test for absolute option

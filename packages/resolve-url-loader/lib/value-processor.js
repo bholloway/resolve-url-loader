@@ -12,7 +12,7 @@ var path        = require('path'),
  * Create a value processing function for a given file path.
  *
  * @param {string} filename The current file being processed
- * @param {{absolute:string, keepQuery:boolean, join:function, root:string}} options Options hash
+ * @param {{join:function, root:string}} options Options hash
  * @return {function} value processing function
  */
 function valueProcessor(filename, options) {
@@ -88,19 +88,16 @@ function valueProcessor(filename, options) {
         //  construct iterator as late as possible in case sourcemap is invalid at this location
         var split    = unescaped.split(QUERY_REGEX),
             uri      = split[0],
-            query    = options.keepQuery ? split.slice(1).join('') : '',
+            query    = split.slice(1).join(''),
             absolute = testIsRelative(uri) && join(uri, new Iterator(getPathsAtChar(position))) ||
                        testIsAbsolute(uri) && join(uri);
 
-        // use the absolute path in absolute mode or else relative path (or default to initialised)
-        // #6 - backslashes are not legal in URI
+        // default to initialised else path relative to the processed file
         if (!absolute) {
           return element;
-        } else if (options.absolute) {
-          return absolute.replace(/\\/g, '/') + query;
         } else {
           return loaderUtils.urlToRequest(
-            path.relative(directory, absolute).replace(/\\/g, '/') + query
+            path.relative(directory, absolute).replace(/\\/g, '/') + query // #6 - backslashes are not legal in URI
           );
         }
       }
