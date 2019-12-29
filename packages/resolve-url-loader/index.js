@@ -7,7 +7,6 @@
 var path              = require('path'),
     fs                = require('fs'),
     loaderUtils       = require('loader-utils'),
-    camelcase         = require('camelcase'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
@@ -43,22 +42,33 @@ function resolveUrlLoader(content, sourceMap) {
   // webpack 2: prefer loader options
   // webpack 3: deprecate loader.options object
   // webpack 4: loader.options no longer defined
-  var options = Object.assign(
-    {
-      sourceMap: loader.sourceMap,
-      engine   : 'postcss',
-      silent   : false,
-      removeCR : false,
-      root     : false,
-      debug    : false,
-      join     : joinFn.defaultJoin
-    },
-    !!loader.options && loader.options[camelcase(PACKAGE_NAME)],
-    loaderUtils.getOptions(loader)
-  );
+  var rawOptions = loaderUtils.getOptions(loader),
+      options    = Object.assign(
+        {
+          sourceMap: loader.sourceMap,
+          engine   : 'postcss',
+          silent   : false,
+          removeCR : false,
+          root     : false,
+          debug    : false,
+          join     : joinFn.defaultJoin
+        },
+        rawOptions
+      );
 
   // maybe log options for the test harness
   logToTestHarness(options);
+
+  // deprecated options
+  if ('engine' in rawOptions) {
+    handleAsWarning(
+      'loader misconfiguration',
+      [
+        'the "rework" engine has been deprecated and will be removed in the next major version',
+        'remove the "engine" option to use the default "postcss" engine'
+      ]
+    );
+  }
 
   // defunct options
   if ('keepQuery' in options) {
@@ -233,6 +243,7 @@ function resolveUrlLoader(content, sourceMap) {
         [label]
           .concat(
             (typeof exception === 'string') && exception ||
+            Array.isArray(exception) && exception ||
             (exception instanceof Error) && [exception.message, exception.stack.split('\n')[1].trim()] ||
             []
           )

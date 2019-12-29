@@ -36,14 +36,17 @@ In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required
 
 **Features**
 
-* Better resolution of the original source location - You can now specify `url()` in variables and mixins.
+* Better resolution of the original source location - You can more successfully use `url()` in variables and mixins.
 
 **Breaking Changes**
 
+* The `engine` option is deprecated making `engine: "rework"` deprecated.
 * The `keepQuery` behaviour is now the default, the `keepQuery` option has been removed.
 * The `absolute` option has been removed.
 
 **Migrating**
+
+Remove the `engine` option if you are using it - the default "postcss" engine is much more reliable. The "rework" engine will still work for now but it will be removed in the next major version.
 
 Remove the `keepQuery` option if you are using it.
 
@@ -128,15 +131,15 @@ Refer to `test` directory for full webpack configurations (as used in automated 
 
 ## Options
 
-| option      | type                       | default     |          |  description                                                                                                                                                                     |
-|-------------|----------------------------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` |          | The css parser engine.                                                                                                                                                           |
-| `sourceMap` | boolean                    | `false`     |          | Generate a source-map.                                                                                                                                                           |
-| `removeCR`  | boolean                    | `false`     |          | Convert orphan CR to whitespace (postcss only).<br/>See known issues below.                                                                                                          |
-| `debug`     | boolean                    | `false`     |          | Display debug information.                                                                                                                                                       |
-| `silent`    | boolean                    | `false`     |          | Do **not** display warnings.                                                                                                                                                     |
-| `root`      | string                     | _unset_     |          | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
-| `join`      | function                   | _inbuilt_   | advanced | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the default implementation for more information.                            |
+| option      | type                       | default     |            |  description                                                                                                                                                                     |
+|-------------|----------------------------|-------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sourceMap` | boolean                    | `false`     |            | Generate a source-map.                                                                                                                                                           |
+| `removeCR`  | boolean                    | `false`     |            | Convert orphan CR to whitespace (postcss only).<br/>See known issues below.                                                                                                      |
+| `debug`     | boolean                    | `false`     |            | Display debug information.                                                                                                                                                       |
+| `silent`    | boolean                    | `false`     |            | Do **not** display warnings.                                                                                                                                                     |
+| `root`      | string                     | _unset_     |            | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
+| `join`      | function                   | _inbuilt_   | advanced   | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the default implementation for more information.                            |
+| `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` | deprecated | The css parser engine.<br/>Using this option produces a deprecation warning.                                                                                                     |
 
 ## How it works
 

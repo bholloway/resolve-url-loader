@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "adjust-sourcemap-loader": "2.0.0",
-    "camelcase": "5.3.1",
     "compose-function": "3.0.3",
     "convert-source-map": "1.7.0",
     "es6-iterator": "2.0.3",
