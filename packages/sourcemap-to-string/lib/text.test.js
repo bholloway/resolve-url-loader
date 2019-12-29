@@ -47,7 +47,6 @@ tape(
         'should represent false as filled empty string'
       );
 
-console.log(formatMultilineText('The quick brown\r fox\njumped over the\nlazy dog', 16));
       deepEqual(
         formatMultilineText('The quick brown\r fox\njumped over the\nlazy dog', 16),
         [

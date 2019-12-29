@@ -15,7 +15,7 @@ exports.testBase = (engine) => (...elements) =>
       }),
       env({
         DEVTOOL: true,
-        LOADER_OPTIONS: {sourceMap: true, engine},
+        LOADER_OPTIONS: (engine === 'postcss') ? {sourceMap: true} : {sourceMap: true, engine},
         LOADER_JOIN: '',
         CSS_OPTIONS: {sourceMap: true}
       }),
