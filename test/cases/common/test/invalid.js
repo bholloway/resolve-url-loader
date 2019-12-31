@@ -93,7 +93,7 @@ exports.testWrongArityJoin = (...rest) =>
         OUTPUT: 'wrong-arity-join'
       }),
       ...rest,
-      test('validate', assertStderr('options.join')(1)`join: -unstringifyable-`)
+      test('validate', assertStderr('options.join')(1)`join: \(a\) => a`)
     )
   );
 

@@ -147,49 +147,30 @@ A [rework](https://github.com/reworkcss/rework) or [postcss](https://postcss.org
 
 Each `url()` statement may imply an asset or may not. Generally only relative URIs are considered. However if `root` is specified then absolute or root-relative URIs are considered.
 
-For each URI considered, the incomming source-map is consulted to determine the original file where the `url()` was specified. This becomes the `base` argument to the `join` function, whose default implementation is something like the following pseudocode.
+For each URI considered, the incomming source-map is consulted to determine the original file where the `url()` was specified. This becomes the `base` argument to the `join` function.
+The `join` function essentially concatenates the `base` with the URI in question.
 
-```javascript
-join(uri: Iterator<sring>, base: ?string) =>
-  // first value of iterator where file exists
-  compose(path.normalize, path.join)(base || options.join, uri);
-```
 
-Note that for absolute `uri` then the `base` is absent. In the default implementation the `root` option is used instead.
+However there may be more than one possible `base` depending on where we consult the source-map. The `join` function will therefore test there is a file at the concatenated file path. If not it may use a different `base`. Use the `debug` option to see verbose information from the `join` function.
 
-Full file search has been discontinued in version 3, however it is possible to specify a custom `join` function.
-
-There is the added complexity that `base` may be an iterator. However `resolve-url-loader` exports some useful functions that makes a custom `join` easier.
+Note that for absolute URI the `base` is absent. In the default implementation the value of the `root` option is used in place of `base`.
 
 Following `join` the URI has become an absolute path. Back-slashes are then converted to forward-slashes and the path is made relative to the initial resource being considered.
 
-Use the `debug` option to see verbose information from the `join` function.
+Full file-system search was discontinued in version 3, however it is possible to specify a custom `join` function to achieve a similar result.
+We export some useful functions that makes a custom `join` easier.
 
 ## Limitations / Known-issues
 
-### Mixins
-
-Where `url()` statements are created in a mixin the source file may then be the mixin file, and not the file calling the mixin. Obviously this is **not** the desired behaviour.
-
-Ensure this is indeed the problem as there are many ways to misconfigure webpack. Try inlining the mixin and check that everything works correctly. However ultimately you will need to work around this.
-
 ### Compatiblity
 
-Tested `macOS` and `Windows` for `node 6.x`.
+Tested `macOS` and `Windows` for `node 8`.
 
-All `webpack1`-`webpack4` with contemporaneous loaders/plugins.
+All `webpack2`-`webpack4` with contemporaneous loaders/plugins.
 
 Refer to `test` directory for full webpack configurations (as used in automated tests).
 
 Some edge cases with `libsass` on `Windows` (see below).
-
-### Engines
-
-The `engine:postcss` is by far the more reliable option.
-
-The `engine:rework` option is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.
-
-If you need production css source-map it is best to avoid the combination `webpack4` with `engine:rework`. Tests show a systematic flaw in the outgoing source-map mappings.
 
 ### Absolute URIs
 
@@ -263,4 +244,4 @@ I am happy to take **pull requests**, however:
 * Uncomon use-cases/fixes should be opt-in per a new **option**.
 * Do **not** overwrite existing variables with new values. I would prefer your change variable names elsewhere if necessary.
 * Add **comments** that describe why the code is necessary - i.e. what edge case are we solving. Otherwise we may rewrite later and break your use-case.
-* If I ask for changes to the PR  then you need to do them to get commit credit. Otherwise I can make the change but may drop your PR.
+* If I ask for changes to the PR then you need to do them to get commit credit. Otherwise I can make the change but may drop your PR.

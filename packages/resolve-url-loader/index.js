@@ -45,6 +45,7 @@ function resolveUrlLoader(content, sourceMap) {
   var rawOptions = loaderUtils.getOptions(loader),
       options    = Object.assign(
         {
+          fs       : loader.fs,
           sourceMap: loader.sourceMap,
           engine   : 'postcss',
           silent   : false,
@@ -57,7 +58,12 @@ function resolveUrlLoader(content, sourceMap) {
       );
 
   // maybe log options for the test harness
-  logToTestHarness(options);
+  if (process.env.RESOLVE_URL_LOADER_TEST_HARNESS) {
+    logToTestHarness(
+      process[process.env.RESOLVE_URL_LOADER_TEST_HARNESS],
+      options
+    );
+  }
 
   // deprecated options
   if ('engine' in rawOptions) {

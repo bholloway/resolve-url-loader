@@ -79,23 +79,30 @@ function process(sourceFile, sourceContent, params) {
       }
 
       /**
-       * Create a list of base path strings.
+       * Create a hash of base path strings.
        *
        * Position in the declaration is not supported since rework does not refine sourcemaps to this detail.
        *
        * @throws Error on invalid source map
-       * @returns {string[]} Iterable of base path strings possibly empty
+       * @returns {{selector:string, property:string}} Hash of base path strings
        */
       function getPathsAtChar() {
-        var directory = positionToOriginalDirectory(declaration.position.start);
-        if (directory) {
-          return [directory];
+        var posSelector = declaration.parent && declaration.parent.position.start,
+            posProperty = declaration.position.start;
+
+        var result = {
+          property: positionToOriginalDirectory(posProperty),
+          selector: positionToOriginalDirectory(posSelector)
+        };
+
+        var isValid = [result.property, result.selector].every(Boolean);
+        if (isValid) {
+          return result;
         }
-        // source-map present but invalid entry
         else if (params.sourceMapConsumer) {
           throw new Error('source-map information is not available at url() declaration');
         } else {
-          return [];
+          throw new Error('a valid source-map is not present (ensure preceding loaders output a source-map)');
         }
       }
     }
