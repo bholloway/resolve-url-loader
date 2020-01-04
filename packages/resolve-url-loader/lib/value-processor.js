@@ -5,14 +5,13 @@
 'use strict';
 
 var path        = require('path'),
-    loaderUtils = require('loader-utils'),
-    Iterator    = require('es6-iterator');
+    loaderUtils = require('loader-utils');
 
 /**
  * Create a value processing function for a given file path.
  *
  * @param {string} filename The current file being processed
- * @param {{join:function, root:string}} options Options hash
+ * @param {{fs:Object, debug:function|boolean, join:function, root:string}} options Options hash
  * @return {function} value processing function
  */
 function valueProcessor(filename, options) {
@@ -26,7 +25,7 @@ function valueProcessor(filename, options) {
    * Process the given CSS declaration value.
    *
    * @param {string} value A declaration value that may or may not contain a url() statement
-   * @param {function(number|number[]):string[]} getPathsAtChar Given an offset in the declaration value get a
+   * @param {function(number):Object} getPathsAtChar Given an offset in the declaration value get a
    *  list of possible absolute path strings
    */
   return function transformValue(value, getPathsAtChar) {
@@ -89,8 +88,8 @@ function valueProcessor(filename, options) {
         var split    = unescaped.split(QUERY_REGEX),
             uri      = split[0],
             query    = split.slice(1).join(''),
-            absolute = testIsRelative(uri) && join(uri, new Iterator(getPathsAtChar(position))) ||
-                       testIsAbsolute(uri) && join(uri);
+            absolute = testIsRelative(uri) && join(uri, getPathsAtChar(position)) ||
+                       testIsAbsolute(uri) && join(uri, null);
 
         // default to initialised else path relative to the processed file
         if (!absolute) {
