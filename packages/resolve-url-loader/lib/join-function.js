@@ -131,7 +131,7 @@ exports.defaultJoin = createJoinFunction(
  * @param {function} predicate A function that tests values and returns joined paths
  */
 function createJoinFunction(name, factory, predicate) {
-  var safeFactory = compose(ensureIterator, factory);
+  var safeFactory = compose(sanitiseIterable, factory);
 
   /**
    * A factory for a join function with logging.
@@ -180,7 +180,7 @@ function createJoinFunction(name, factory, predicate) {
 
           if (isPathString) {
             // append happens here on success
-            return accumulator.append(base).complete(pending);
+            return accumulator.append(base).found(pending);
           } else if (isAccumulator) {
             // a next() was called internally to the predicate() giving the return value of the accumulator
             return pending;
@@ -221,7 +221,7 @@ exports.createJoinFunction = createJoinFunction;
  * @param {Array|Iterator} candidate The value to consider
  * @returns {Iterator} An iterator
  */
-function ensureIterator(candidate) {
+function sanitiseIterable(candidate) {
   if (Array.isArray(candidate)) {
     return new Iterator(candidate.filter(isString).filter(isUnique));
   } else if (candidate && (typeof candidate === 'object') && candidate[Symbol.iterator]) {
@@ -239,7 +239,7 @@ function ensureIterator(candidate) {
   }
 }
 
-exports.ensureIterator = ensureIterator;
+exports.sanitiseIterable = sanitiseIterable;
 
 /**
  * Format a debug message.
@@ -264,7 +264,7 @@ function createJoinMsg(file, uri, bases, isFound) {
    */
   function pathToString(absolute) {
     if (!absolute) {
-      return null;
+      return '-empty-';
     } else {
       var relative = path.relative(process.cwd(), absolute)
         .split(path.sep);
@@ -309,12 +309,13 @@ exports.createDebugLogger = createDebugLogger;
 
 /**
  * Create a fluent data type for accumulating data in the iterator.
- * 
- * Once complete the value is locked.
- * 
+ *
+ * Values may be `append()`ed to the `list` and assigned to `absolute`. The `placeholder()` assignment will not set
+ * `isFound` and may be called multiple times, The `found()` assignment will set `isFound` and locks the instance.
+ *
  * @param {{list:Array<string>, isFound:boolean, absolute:string}} context
  * @returns {{isAccumulator:true, list:Array<string>, isFound:boolean, absolute:string, length:number,
- *  append:function, placeholder:function, complete:function}}
+ *  append:function, placeholder:function, found:function}}
  */
 function createAccumulator(context) {
   var self = {
@@ -351,7 +352,7 @@ function createAccumulator(context) {
           absolute: value
         });
     },
-    complete(value) {
+    found(value) {
       return self.isFound ?
         self :
         createAccumulator({
