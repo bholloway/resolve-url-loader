@@ -147,6 +147,11 @@ function resolveUrlLoader(content, sourceMap) {
 
     // prepare the adjusted sass source-map for later look-ups
     sourceMapConsumer = new SourceMapConsumer(absSourceMap);
+  } else {
+    handleAsWarning(
+      'webpack misconfiguration',
+      'source-map not received'
+    );
   }
 
   // choose a CSS engine
