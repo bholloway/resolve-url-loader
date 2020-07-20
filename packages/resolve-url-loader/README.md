@@ -112,7 +112,6 @@ Refer to `test` directory for full webpack configurations (as used in automated 
 
 | option      | type                       | default     |          |  description                                                                                                                                                                     |
 |-------------|----------------------------|-------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` |          | The css parser engine.                                                                                                                                                           |
 | `sourceMap` | boolean                    | `false`     |          | Generate a source-map.                                                                                                                                                           |
 | `keepQuery` | boolean                    | `false`     |          | Keep query-string and/or hash suffixes.<br/>e.g. `url('./MyFont.eot?#iefix')`<br/>Be aware downstream loaders may remove query-string or hash.                                   |
 | `removeCR`  | boolean                    | `false`     |          | Convert orphan CR to whitespace (postcss only).<br/>See known issues below.                                                                                                          |
@@ -124,7 +123,7 @@ Refer to `test` directory for full webpack configurations (as used in automated 
 
 ## How it works
 
-A [rework](https://github.com/reworkcss/rework) or [postcss](https://postcss.org/) process is run on incoming CSS.
+A [postcss](https://postcss.org/) process is run on incoming CSS.
 
 Each `url()` statement may imply an asset or may not. Generally only relative URIs are considered. However if `root` is specified then absolute or root-relative URIs are considered.
 
@@ -163,14 +162,6 @@ Refer to `test` directory for full webpack configurations (as used in automated 
 
 Some edge cases with `libsass` on `Windows` (see below).
 
-### Engines
-
-The `engine:postcss` is by far the more reliable option.
-
-The `engine:rework` option is retained for historical compatibility but is likely to be removed in the future, so let me know if you use it.
-
-If you need production css source-map it is best to avoid the combination `webpack4` with `engine:rework`. Tests show a systematic flaw in the outgoing source-map mappings.
-
 ### Absolute URIs
 
 By "absolute URIs" we more correctly mean assets with root-relative URLs or absolute file paths.
@@ -191,7 +182,7 @@ This problem is specific to multiline declarations. Refer to the [libsass bug #2
 
 If you have _any_ such multiline declarations preceding `url()` statements it will fail your build.
  
-Libsass doesn't consider these orphan `CR` to be newlines but `postcss` engine does.  The result being an offset in source-map line-numbers which crashes `resolve-url-loader`.
+Libsass doesn't consider these orphan `CR` to be newlines but `postcss` does.  The result being an offset in source-map line-numbers which crashes `resolve-url-loader`.
 
 ```
 Module build failed: Error: resolve-url-loader: CSS error

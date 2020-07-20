@@ -15,6 +15,7 @@ var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 var valueProcessor   = require('./lib/value-processor');
 var joinFn           = require('./lib/join-function');
 var logToTestHarness = require('./lib/log-to-test-harness');
+var engine           = require('./lib/engine/postcss.js');
 
 var PACKAGE_NAME = require('./package.json').name;
 
@@ -46,7 +47,6 @@ function resolveUrlLoader(content, sourceMap) {
   var options = Object.assign(
     {
       sourceMap: loader.sourceMap,
-      engine   : 'postcss',
       silent   : false,
       absolute : false,
       keepQuery: false,
@@ -149,20 +149,10 @@ function resolveUrlLoader(content, sourceMap) {
     sourceMapConsumer = new SourceMapConsumer(absSourceMap);
   }
 
-  // choose a CSS engine
-  var enginePath    = /^\w+$/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
-  var isValidEngine = fs.existsSync(enginePath);
-  if (!isValidEngine) {
-    return handleAsError(
-      'loader misconfiguration',
-      '"engine" option is not valid'
-    );
-  }
-
   // process async
   var callback = loader.async();
   Promise
-    .resolve(require(enginePath)(loader.resourcePath, content, {
+    .resolve(engine(loader.resourcePath, content, {
       outputSourceMap     : !!options.sourceMap,
       transformDeclaration: valueProcessor(loader.resourcePath, options),
       absSourceMap        : absSourceMap,
