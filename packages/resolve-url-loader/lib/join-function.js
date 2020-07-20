@@ -5,13 +5,10 @@
 'use strict';
 
 var path     = require('path'),
-    compose  = require('compose-function'),
     Iterator = require('es6-iterator'),
     Symbol   = require('es6-symbol');
 
 var PACKAGE_NAME = require('../package.json').name;
-
-var simpleJoin = compose(path.normalize, path.join);
 
 /**
  * Webpack `fs` from `enhanced-resolve` doesn't support `existsSync()` so we shim using `statsSync()`.
@@ -61,7 +58,7 @@ exports.defaultJoinFactory = defaultJoinFactory;
  * @returns {*}
  */
 function defaultJoinPredicate(_filename, uri, base, i, next, options) {
-  var absolute = simpleJoin(base, uri),
+  var absolute = path.normalize(path.join(base, uri)),
       isFile   = testIsFile(options.fs, absolute);
   return isFile ? absolute : next((i === 0) ? absolute : null);
 }
@@ -131,8 +128,6 @@ exports.defaultJoin = createJoinFunction(
  * @param {function} predicate A function that tests values and returns joined paths
  */
 function createJoinFunction(name, factory, predicate) {
-  var safeFactory = compose(sanitiseIterable, factory);
-
   /**
    * A factory for a join function with logging.
    *
@@ -153,7 +148,7 @@ function createJoinFunction(name, factory, predicate) {
      * @return {string} Just the uri where base is empty or the uri appended to the base
      */
     return function joinProper(uri, bases) {
-      var iterator = safeFactory(filename, bases, options),
+      var iterator = sanitiseIterable(factory(filename, bases, options)),
           result   = runIterator(createAccumulator());
 
       log(createJoinMsg, [filename, uri, result.list, result.isFound]);
