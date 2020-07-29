@@ -4,9 +4,7 @@
  */
 'use strict';
 
-var path     = require('path'),
-    Iterator = require('es6-iterator'),
-    Symbol   = require('es6-symbol');
+var path = require('path');
 
 var PACKAGE_NAME = require('../package.json').name;
 
@@ -218,7 +216,7 @@ exports.createJoinFunction = createJoinFunction;
  */
 function sanitiseIterable(candidate) {
   if (Array.isArray(candidate)) {
-    return new Iterator(candidate.filter(isString).filter(isUnique));
+    return candidate.filter(isString).filter(isUnique)[Symbol.iterator]();
   } else if (candidate && (typeof candidate === 'object') && candidate[Symbol.iterator]) {
     return candidate;
   } else {
