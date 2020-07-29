@@ -5,8 +5,7 @@
 'use strict';
 
 var path     = require('path'),
-    Iterator = require('es6-iterator'),
-    Symbol   = require('es6-symbol');
+    Iterator = require('es6-iterator');
 
 var PACKAGE_NAME = require('../package.json').name;
 
