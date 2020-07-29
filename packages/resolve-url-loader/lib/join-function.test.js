@@ -8,7 +8,6 @@ const {basename, resolve} = require('path');
 const tape = require('blue-tape');
 const sinon = require('sinon');
 const outdent = require('outdent');
-const Iterator = require('es6-iterator');
 
 const {
   createJoinMsg, sanitiseIterable, createDebugLogger, createAccumulator, createJoinFunction
@@ -44,8 +43,8 @@ tape(
       });
 
       [
-        [new Iterator(['a', 'b', 'c']), ['a', 'b', 'c']],
-        [new Iterator([1, 2, 3]), [1, 2, 3]],
+        [['a', 'b', 'c'][Symbol.iterator](), ['a', 'b', 'c']],
+        [[1, 2, 3][Symbol.iterator](), [1, 2, 3]],
         [[1, 2, 3].keys(), [0, 1, 2]] // values() is unsupported until node v10.18.0
       ].forEach(([input, expected]) =>
         looseEqual(
