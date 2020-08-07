@@ -143,7 +143,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.cb82f46362f9ca315ba7.css', 'src'),
             outdent
           )`
@@ -224,7 +224,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.78ceabcf7e7dcba0707a.css', 'src'),
             outdent
           )`
@@ -272,7 +272,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(assertCssContent, trim)`
@@ -289,7 +289,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -328,7 +328,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.c1129a624153e83e15c3.css', 'src'),
             outdent
           )`
@@ -411,7 +411,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.39a9c5c9928362121403.css', 'src'),
             outdent
           )`

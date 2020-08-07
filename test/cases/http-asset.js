@@ -118,7 +118,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.d61cf936f2e7266c60b2.css', 'src'),
             outdent
           )`
@@ -189,7 +189,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.f25d294061b9ae04161f.css', 'src'),
             outdent
           )`
@@ -237,7 +237,7 @@ module.exports = test(
               .another-class-name{display:block}
               `
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false),
             compose(assertCssContent, trim)`
               .some-class-name{single-quoted:url(http://google.com);double-quoted:url(http://google.com);unquoted:
@@ -253,7 +253,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -287,7 +287,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.b760c70324d4db882a68.css', 'src'),
             outdent
           )`
@@ -358,7 +358,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss"'),
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.685bfabad316a14fef1c.css', 'src'),
             outdent
           )`

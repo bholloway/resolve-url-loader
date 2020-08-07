@@ -107,7 +107,7 @@ module.exports = test(
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      8f7c7d42686778.css.map*/░░░░░░░░░░░░░░░░░░░░
             `,
           compose(
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.6e4443dd51c28c07ae5c.css', 'src'),
             outdent
           )`
@@ -137,7 +137,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(assertCssContent, trim)`
@@ -152,7 +152,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -179,7 +179,7 @@ module.exports = test(
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      25753ad64da0cb.css.map*/░░░░░░░░░░░░░░░░░░░░
             `,
           compose(
-            onlyMeta('meta.version.webpack == 4'),
+            onlyMeta('meta.version.webpack >= 4'),
             assertCssAndSourceMapContent('main.86ba9bacab12ac06aa0b.css', 'src'),
             outdent
           )`

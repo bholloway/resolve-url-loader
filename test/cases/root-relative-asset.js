@@ -148,7 +148,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.engine == "rework"'),
-              onlyMeta('meta.version.webpack == 4'),
+              onlyMeta('meta.version.webpack >= 4'),
               assertCssAndSourceMapContent('main.54b0365e982ff2061362.css', 'src'),
               outdent
             )`
@@ -219,7 +219,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.engine == "postcss"'),
-              onlyMeta('meta.version.webpack == 4'),
+              onlyMeta('meta.version.webpack >= 4'),
               assertCssAndSourceMapContent('main.0e7db4d90a70d13fd992.css', 'src'),
               outdent
             )`
@@ -262,7 +262,7 @@ module.exports = test(
             onlyMeta('meta.version.webpack < 4')(
               assertCssSourceMapComment(true)
             ),
-            onlyMeta('meta.version.webpack == 4')(
+            onlyMeta('meta.version.webpack >= 4')(
               assertCssSourceMapComment(false)
             ),
             compose(assertCssContent, trim)`
@@ -279,7 +279,7 @@ module.exports = test(
             onlyMeta('meta.version.webpack < 4')(
               assertCssSourceMapComment(true)
             ),
-            onlyMeta('meta.version.webpack == 4')(
+            onlyMeta('meta.version.webpack >= 4')(
               assertCssSourceMapComment(false)
             ),
             compose(
@@ -313,7 +313,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.engine == "rework"'),
-              onlyMeta('meta.version.webpack == 4'),
+              onlyMeta('meta.version.webpack >= 4'),
               assertCssAndSourceMapContent('main.94bf8e862e12a5a2077b.css', 'src'),
               outdent
             )`
@@ -384,7 +384,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.engine == "postcss"'),
-              onlyMeta('meta.version.webpack == 4'),
+              onlyMeta('meta.version.webpack >= 4'),
               assertCssAndSourceMapContent('main.06d3c235ca5ec72703e6.css', 'src'),
               outdent
             )`

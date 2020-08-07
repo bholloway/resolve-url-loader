@@ -96,7 +96,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework"'),
-          onlyMeta('meta.version.webpack == 4'),
+          onlyMeta('meta.version.webpack >= 4'),
           assertCssAndSourceMapContent('main.074afcb0a6aa63ad94a9.css', 'src'),
           outdent
         )`
@@ -148,7 +148,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss"'),
-          onlyMeta('meta.version.webpack == 4'),
+          onlyMeta('meta.version.webpack >= 4'),
           assertCssAndSourceMapContent('main.043905a16f1a10c6c6c7.css', 'src'),
           outdent
         )`
@@ -180,7 +180,7 @@ module.exports = test(
         onlyMeta('meta.version.webpack < 4')(
           assertCssSourceMapComment(true)
         ),
-        onlyMeta('meta.version.webpack == 4')(
+        onlyMeta('meta.version.webpack >= 4')(
           assertCssSourceMapComment(false)
         ),
         compose(assertCssContent, trim)`
@@ -194,7 +194,7 @@ module.exports = test(
         onlyMeta('meta.version.webpack < 4')(
           assertCssSourceMapComment(true)
         ),
-        onlyMeta('meta.version.webpack == 4')(
+        onlyMeta('meta.version.webpack >= 4')(
           assertCssSourceMapComment(false)
         ),
         compose(
@@ -223,7 +223,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework"'),
-          onlyMeta('meta.version.webpack == 4'),
+          onlyMeta('meta.version.webpack >= 4'),
           assertCssAndSourceMapContent('main.9ebfb43b7c1245edf247.css', 'src'),
           outdent
         )`
@@ -270,7 +270,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss"'),
-          onlyMeta('meta.version.webpack == 4'),
+          onlyMeta('meta.version.webpack >= 4'),
           assertCssAndSourceMapContent('main.c91f9447fb9b4556134b.css', 'src'),
           outdent
         )`

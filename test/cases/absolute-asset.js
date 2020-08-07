@@ -102,7 +102,7 @@ module.exports = test(
                 assertNoMessages
               ),
               // windows paths are not supported
-              onlyMeta('meta.version.webpack == 4')(
+              onlyMeta('meta.version.webpack >= 4')(
                 assertWebpackNotOk,
                 assertModuleNotFoundError
               )
@@ -185,7 +185,7 @@ module.exports = test(
             onlyMeta('meta.version.webpack < 4')(
               assertCssSourceMapComment(true)
             ),
-            onlyMeta('meta.version.webpack == 4')(
+            onlyMeta('meta.version.webpack >= 4')(
               assertCssSourceMapComment(false)
             ),
             compose(assertCssContent, trim)`
@@ -207,7 +207,7 @@ module.exports = test(
                 .another-class-name{display:block}
                 `
             ),
-            onlyMeta('meta.version.webpack == 4')(
+            onlyMeta('meta.version.webpack >= 4')(
               assertCssSourceMapComment(false),
               compose(assertCssContent, trim)`
                 .some-class-name{single-quoted:url(../images/img.jpg);double-quoted:url(../images/img.jpg);unquoted:
