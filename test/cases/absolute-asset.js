@@ -69,7 +69,7 @@ module.exports = test(
           )
         ),
         all(buildDevNoUrl, buildProdNoUrl)(
-            assertWebpackOk
+          assertWebpackOk
         )
       ),
       // absolute urls are processed
