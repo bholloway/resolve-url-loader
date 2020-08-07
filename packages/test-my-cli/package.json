@@ -39,7 +39,7 @@
     "rimraf": "3.0.0",
     "string.prototype.padstart": "3.0.0"
   },
-  "peerDependencies": {
+  "peerDevDependencies": {
     "tape": "*"
   }
 }
