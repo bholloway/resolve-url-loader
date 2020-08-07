@@ -117,6 +117,9 @@ filterTests()
           layer: {
             keep: (process.env.KEEP === 'true')
           },
+          fs: {
+            debug: (process.env.DEBUG === 'fs')
+          },
           exec: {
             debug: (process.env.DEBUG === 'exec')
           }
