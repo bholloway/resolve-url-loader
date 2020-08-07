@@ -5,6 +5,8 @@ const {assert} = require('test-my-cli');
 const ms = require('ms');
 const sequence = require('promise-compose');
 
+exports.bail = assert((_, {code}) => (code !== 0) && process.exit(code));
+
 exports.assertExitCodeZero = (message) =>
   assert(({pass, fail}, {code, stderr, time}) =>
     (code === 0) ? pass(`${message} (${ms(Math.round(time), {long: true})})`) : fail(stderr)
