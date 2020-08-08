@@ -6,8 +6,6 @@
 
 const {repeatArray} = require('./array');
 
-require('string.prototype.padend').shim();
-
 module.exports = (padding) => {
   const paddingFn = (typeof padding === 'function') ?
     padding :

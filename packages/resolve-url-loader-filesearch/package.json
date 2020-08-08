@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.9"
   },
   "files": [
     "index.js",

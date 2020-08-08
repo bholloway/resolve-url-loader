@@ -13,10 +13,6 @@ const {assign} = Object;
   });
 });
 
-require('string.prototype.padstart').shim();
-require('object.values').shim();
-require('object.entries').shim();
-
 // the whole lib directory
 const lib = readdirSync(join(__dirname, 'lib'))
   .filter((v) => v.endsWith('.js'))

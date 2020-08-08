@@ -6,14 +6,11 @@
 
 const {existsSync, readFile} = require('fs');
 const {join, resolve, normalize} = require('path');
+const {promisify} = require('util');
 
 const compose = require('compose-function');
 const sequence = require('promise-compose');
 const convert = require('convert-source-map');
-
-require('object.entries').shim();
-require('util.promisify').shim();
-const {promisify} = require('util');
 
 const toString = require('..');
 const readStream = require('../lib/read-stream');

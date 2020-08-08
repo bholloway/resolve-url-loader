@@ -7,8 +7,6 @@
 const convict = require('convict');
 const compose = require('compose-function');
 
-require('object.entries').shim();
-
 const isObject = candidate =>
   !!candidate && (typeof candidate === 'object');
 

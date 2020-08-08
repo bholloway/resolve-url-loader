@@ -2,7 +2,7 @@
   "name": "webpack4-sassloader7-sass4",
   "version": "1.0.0",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.9"
   },
   "dependencies": {
     "adjust-sourcemap-loader": "^2.0.0",
