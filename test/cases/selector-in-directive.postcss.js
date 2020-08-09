@@ -16,7 +16,7 @@ const {assertCssAndSourceMapContent} = require('./common/assert');
 const {assertCssContent} = require('../lib/assert');
 const {
   onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
-  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertModuleNotFoundError
+  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertAssetError
 } = require('../lib/assert');
 
 const assertDebugMessages = sequence(
@@ -69,7 +69,7 @@ module.exports = test(
     testWithLabel('asset-missing')(
       all(buildDevNormal, buildProdNormal)(
         assertWebpackNotOk,
-        assertModuleNotFoundError
+        assertAssetError
       ),
       all(buildDevNoUrl, buildProdNoUrl)(
         assertWebpackOk
@@ -90,7 +90,7 @@ module.exports = test(
           assertNoErrors,
           assertDebugMessages,
           assertCssSourceMapComment(true),
-          compose(assertCssContent, outdent)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, outdent)`
             @font-face {
               .some-class-name {
                 src: ${
@@ -109,6 +109,26 @@ module.exports = test(
                 unquoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 query: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 hash: url(d68e763c825dc0e388929ae1b375ce18.jpg#hash); } }
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+            @font-face {
+              .some-class-name {
+                src: ${
+                  trim`
+                    url(9eb57a84abbf8abc636d0faa71f9a800.eot#iefix) format("embedded-opentype")
+                    , url(9eb57a84abbf8abc636d0faa71f9a800.ttf) format("truetype")
+                    , url(9eb57a84abbf8abc636d0faa71f9a800.woff) format(woff)
+                    , url(9eb57a84abbf8abc636d0faa71f9a800.svg#iefix) format(svg)
+                    `
+                  }; } }
+            
+            @media only screen {
+              .another-class-name {
+                single-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                double-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                unquoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                query: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                hash: url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash); } }
             `
         ),
         buildDevNoUrl(
@@ -167,7 +187,7 @@ module.exports = test(
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        848c5409a4e925c.css.map*/░░░░░░░░░░░░░░░░░░
             `,
           compose(
-            onlyMeta('meta.version.webpack >= 4'),
+            onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.844d34240f4c1ad0b8eb.css', 'src'),
             outdent
           )`
@@ -218,6 +238,59 @@ module.exports = test(
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        /*# sourceMappingURL=main.844d34240f4c1ad0b
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        8eb.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.74f1759c23bbe392c4df.css', 'src'),
+            outdent
+          )`
+            feature/index.scss                                                                                  
+            ----------------------------------------------------------------------------------------------------
+            01:01 @font-face {⏎                               01:001 @font-face {⏎                              
+                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            02:03 ░░src: url('../fonts/font.eot?v=1.0#iefix') 03:005 ░░░░src: url("./fonts/font.eot?v=1.0#iefix"
+                   format('embedded-opentype'),⏎                     ) format("embedded-opentype"), url("./fonts
+                         url("../fonts/font.ttf?v=1.0") forma        /font.ttf?v=1.0") format("truetype"), url(.
+                  t("truetype"),⏎                                    /fonts/font.woff?v=1.0) format(woff), url(.
+                         url(../fonts/font.woff?v=1.0) format        /fonts/font.svg#iefix) format(svg)░░░░░░░░░
+                  (woff),⏎                                           ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                         url(../fonts/font.svg#iefix) format(        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  svg)░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            05:48 ░░░░;⏎                                      03:207 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; } ░░░░░
+                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            01:01 .some-class-name { ⏎                        02:003 ░░.some-class-name {⏎                      
+                    @import "feature/index.scss";⏎                       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            03:02 ░⏎                                          03:211 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}⏎   
+            04:01 @media only screen {⏎                       05:001 @media only screen {⏎                      
+                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            05:03 ░░.another-class-name {⏎                    06:003 ░░.another-class-name {⏎                   
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            06:05 ░░░░single-quoted: url('images/img.jpg')░░░ 07:005 ░░░░single-quoted: url("./images/img.jpg")░
+            06:41 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎  07:043 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            07:05 ░░░░double-quoted: url("images/img.jpg")░░░ 08:005 ░░░░double-quoted: url("./images/img.jpg")░
+            07:41 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎  08:043 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            08:05 ░░░░unquoted: url(images/img.jpg)░░░░░░░░░░ 09:005 ░░░░unquoted: url(./images/img.jpg)░░░░░░░░
+            08:34 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         09:036 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎      
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            09:05 ░░░░query: url(images/img.jpg?query)░░░░░░░ 10:005 ░░░░query: url(./images/img.jpg?query)░░░░░
+            09:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎      10:039 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎   
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            10:05 ░░░░hash: url(images/img.jpg#hash)░░░░░░░░░ 11:005 ░░░░hash: url(./images/img.jpg#hash)░░░░░░░
+            10:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎        11:037 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; } ░░░
+                    }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            11:04 ░░░⏎                                        11:041 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}⏎ 
+                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        /*# sourceMappingURL=main.74f1759c23bbe392c
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        4df.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -230,7 +303,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
-          compose(assertCssContent, trim)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
             @font-face{.some-class-name{src:url(d68e763c825dc0e388929ae1b375ce18.eot#iefix) format("embedded-opentype"),
             url(d68e763c825dc0e388929ae1b375ce18.ttf) format("truetype"),
             url(d68e763c825dc0e388929ae1b375ce18.woff) format(woff),
@@ -238,6 +311,15 @@ module.exports = test(
             @media only screen{.another-class-name{single-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);
             double-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);unquoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);
             query:url(d68e763c825dc0e388929ae1b375ce18.jpg);hash:url(d68e763c825dc0e388929ae1b375ce18.jpg#hash)}}
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+            @font-face{.some-class-name{src:url(9eb57a84abbf8abc636d0faa71f9a800.eot#iefix) format("embedded-opentype"),
+            url(9eb57a84abbf8abc636d0faa71f9a800.ttf) format("truetype"),
+            url(9eb57a84abbf8abc636d0faa71f9a800.woff) format(woff),
+            url(9eb57a84abbf8abc636d0faa71f9a800.svg#iefix) format(svg)}}
+            @media only screen{.another-class-name{single-quoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+            double-quoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);unquoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+            query:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);hash:url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash)}}
             `
         ),
         buildProdNoUrl(
@@ -297,8 +379,60 @@ module.exports = test(
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       966831381afad9f.css.map*/░░░░░░░░░░░░░░░░░░
             `,
           compose(
-            onlyMeta('meta.version.webpack >= 4'),
+            onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.452c075bf6e432b8fc1c.css', 'src'),
+            outdent
+          )`
+            feature/index.scss                                                                                 
+            ---------------------------------------------------------------------------------------------------
+            01:01 @font-face {⏎                               1:001 @font-face{░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            02:03 ░░src: url('../fonts/font.eot?v=1.0#iefix') 1:029 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░src:url(fonts/f
+                   format('embedded-opentype'),⏎                    ont.eot?v=1.0#iefix) format("embedded-opent
+                         url("../fonts/font.ttf?v=1.0") forma       ype"),url(fonts/font.ttf?v=1.0) format("tru
+                  t("truetype"),⏎                                   etype"),url(fonts/font.woff?v=1.0) format(w
+                         url(../fonts/font.woff?v=1.0) format       off),url(fonts/font.svg#iefix) format(svg)░
+                  (woff),⏎                                          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                         url(../fonts/font.svg#iefix) format(       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  svg)░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            05:48 ░░░░;⏎                                      1:215 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}
+                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                               
+            index.scss                                                                                         
+            ---------------------------------------------------------------------------------------------------
+            01:01 .some-class-name { ⏎                        1:012 ░░░░░░░░░░░.some-class-name{░░░░░░░░░░░░░░░
+                    @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            03:02 ░⏎                                          1:216 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            04:01 @media only screen {⏎                       1:217 ░@media only screen{░░░░░░░░░░░░░░░░░░░░░░░
+                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            05:03 ░░.another-class-name {⏎                    1:236 ░░░░░░░░░░░░░░░░░░░░.another-class-name{░░░
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            06:05 ░░░░single-quoted: url('images/img.jpg')░░░ 1:256 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░sin
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       gle-quoted:url(images/img.jpg)░░░░░░░░░░░░░
+            06:41 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎  1:289 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;░░░░░░░░░░░░
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            07:05 ░░░░double-quoted: url("images/img.jpg")░░░ 1:290 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░double-quote
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       d:url(images/img.jpg)░░░░░░░░░░░░░░░░░░░░░░
+            07:41 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎  1:323 ░░░░░░░░░░░░░░░░░░░░░;░░░░░░░░░░░░░░░░░░░░░
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            08:05 ░░░░unquoted: url(images/img.jpg)░░░░░░░░░░ 1:324 ░░░░░░░░░░░░░░░░░░░░░░unquoted:url(images/i
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       mg.jpg)░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            08:34 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         1:352 ░░░░░░░;░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            09:05 ░░░░query: url(images/img.jpg?query)░░░░░░░ 1:353 ░░░░░░░░query:url(images/img.jpg?query)░░░░
+            09:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎      1:384 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;░░░
+                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            10:05 ░░░░hash: url(images/img.jpg#hash)░░░░░░░░░ 1:385 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░has
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       h:url(images/img.jpg#hash)░░░░░░░░░░░░░░░░░
+            10:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎        1:414 ░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░
+                    }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            11:04 ░░░⏎                                        1:415 ░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░
+                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.7b7575a5ae11fe262bb1.css', 'src'),
             outdent
           )`
             feature/index.scss                                                                                 

@@ -14,7 +14,7 @@ const {
 const {assertCssContent} = require('../lib/assert');
 const {
   onlyOS, onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
-  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertModuleNotFoundError
+  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertAssetError
 } = require('../lib/assert');
 
 const assertDebugMessages = assertStdout('debug')(1)`
@@ -57,23 +57,31 @@ module.exports = test(
       // absolute urls are not processed
       testRoot(false)(
         all(buildDevNormal, buildProdNormal)(
-          onlyOS('posix')(
+          compose(onlyOS('posix'), onlyMeta('meta.version.webpack < 5'))(
             assertWebpackOk
           ),
-          onlyOS('windows')(
+          all(
+            compose(onlyOS('posix'), onlyMeta('meta.version.webpack >= 5')),
+            onlyOS('windows')
+          )(
             assertWebpackNotOk,
-            assertModuleNotFoundError
+            assertAssetError
           )
         ),
         all(buildDevNoUrl, buildProdNoUrl)(
-          assertWebpackOk
+            assertWebpackOk
         )
       ),
       // absolute urls are processed
       testRoot('')(
         all(buildDevNormal, buildProdNormal)(
-          assertWebpackNotOk,
-          assertModuleNotFoundError
+          onlyMeta('meta.version.webpack < 5')(
+            assertWebpackNotOk,
+            assertAssetError
+          ),
+          onlyMeta('meta.version.webpack >= 5')(
+            assertWebpackNotOk
+          )
         ),
         all(buildDevNoUrl, buildProdNoUrl)(
           assertWebpackOk
@@ -96,15 +104,15 @@ module.exports = test(
               assertNoMessages
             ),
             onlyOS('windows')(
-              onlyMeta('meta.version.webpack < 4')(
+              onlyMeta('meta.version.webpack != 4')(
                 assertWebpackOk,
                 assertNoErrors,
                 assertNoMessages
               ),
               // windows paths are not supported
-              onlyMeta('meta.version.webpack >= 4')(
+              onlyMeta('meta.version.webpack == 4')(
                 assertWebpackNotOk,
-                assertModuleNotFoundError
+                assertAssetError
               )
             )
           ),
@@ -123,7 +131,7 @@ module.exports = test(
             assertNoErrors,
             assertDebugMessages,
             assertCssSourceMapComment(true),
-            compose(onlyMeta('meta.engine == "rework"'), assertCssContent, outdent)`
+            compose(onlyMeta('meta.engine == "rework" && meta.version.webpack < 5'), assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 double-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
@@ -136,13 +144,37 @@ module.exports = test(
                 display: block;
               }
               `,
-            compose(onlyMeta('meta.engine == "postcss"'), assertCssContent, outdent)`
+            compose(onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'), assertCssContent, outdent)`
+              .some-class-name {
+                single-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                double-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                unquoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                query: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                hash: url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash);
+              }
+              
+              .another-class-name {
+                display: block;
+              }
+              `,
+            compose(onlyMeta('meta.engine == "postcss" && meta.version.webpack < 5'), assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 double-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 unquoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 query: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 hash: url(d68e763c825dc0e388929ae1b375ce18.jpg#hash); }
+              
+              .another-class-name {
+                display: block; }
+              `,
+            compose(onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'), assertCssContent, outdent)`
+              .some-class-name {
+                single-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                double-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                unquoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                query: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
+                hash: url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash); }
               
               .another-class-name {
                 display: block; }
@@ -188,10 +220,16 @@ module.exports = test(
             onlyMeta('meta.version.webpack >= 4')(
               assertCssSourceMapComment(false)
             ),
-            compose(assertCssContent, trim)`
+            compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
               .some-class-name{single-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);double-quoted:
               url(d68e763c825dc0e388929ae1b375ce18.jpg);unquoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);query:
               url(d68e763c825dc0e388929ae1b375ce18.jpg);hash:url(d68e763c825dc0e388929ae1b375ce18.jpg#hash)}
+              .another-class-name{display:block}
+              `,
+            compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+              .some-class-name{single-quoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);double-quoted:
+              url(9eb57a84abbf8abc636d0faa71f9a800.jpg);unquoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);query:
+              url(9eb57a84abbf8abc636d0faa71f9a800.jpg);hash:url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash)}
               .another-class-name{display:block}
               `
           ),

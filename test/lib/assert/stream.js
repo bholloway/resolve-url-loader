@@ -84,7 +84,19 @@ exports.assertMisconfigWarning = (message) => exports.assertStdout('webpack warn
   `;
 
 // Webpack may repeat errors with a header line taken from the parent loader so we allow range 1-2
-exports.assertModuleNotFoundError = exports.assertStdout('"Module not found" error')([1, 2])`
+const assertModuleNotFoundError = exports.assertStdout('webpack "Module not found" error')([1, 2])`
   ^[ ]*ERROR[^\n]*
   [ ]*Module build failed(:|[^\n]*\n)[ ]*ModuleNotFoundError: Module not found:
   `;
+
+const assertCantResolveError = exports.assertStdout('webpack "Can\'t resolve" error')(1)`
+  ^[ ]*ERROR[^\n]*
+  [ ]*Module build failed[^\n]*
+  [ ]*ModuleBuildError: Module build failed[^\n]*
+  [ ]*Error: Can't resolve[^\n]*
+  `;
+
+exports.assertAssetError = sequence(
+  onlyMeta('meta.version.webpack < 5')(assertModuleNotFoundError),
+  onlyMeta('meta.version.webpack >= 5')(assertCantResolveError)
+);

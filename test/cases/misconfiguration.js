@@ -15,8 +15,8 @@ const {
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
 const {
-  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout, assertSilence, assertMisconfigWarning,
-  assertDeprecationWarning,
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout,
+  assertSilence, assertMisconfigWarning, assertDeprecationWarning,
 } = require('../lib/assert');
 
 const assertContentDev = sequence(
