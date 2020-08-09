@@ -1,0 +1,40 @@
+{
+  "name": "sourcemap-to-string",
+  "version": "0.0.1",
+  "description": "String representation of source-map",
+  "private": true,
+  "main": "index.js",
+  "bin": "bin/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bholloway/resolve-url-loader.git"
+  },
+  "keywords": [],
+  "author": "bholloway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bholloway/resolve-url-loader/issues"
+  },
+  "homepage": "https://github.com/bholloway/resolve-url-loader",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {},
+  "dependencies": {
+    "array.prototype.flatmap": "^1.2.2",
+    "compose-function": "3.0.3",
+    "convert-source-map": "^1.7.0",
+    "convict": "^5.2.0",
+    "get-value": "^3.0.1",
+    "object.entries": "^1.1.0",
+    "object.values": "^1.1.0",
+    "promise-compose": "^1.1.2",
+    "string.prototype.padend": "^3.0.0",
+    "util.promisify": "^1.0.0",
+    "vlq": "1.0.1",
+    "word-wrap": "^1.2.3"
+  }
+}

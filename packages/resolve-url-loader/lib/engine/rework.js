@@ -75,26 +75,58 @@ function process(sourceFile, sourceContent, params) {
     function eachDeclaration(declaration) {
       var isValid = declaration.value && (declaration.value.indexOf('url') >= 0);
       if (isValid) {
+        declaration.value = params.transformDeclaration(declaration.value, getPathsAtChar);
+      }
 
-        // reverse the original source-map to find the original source file before transpilation
-        var startPosApparent = declaration.position.start,
-            startPosOriginal = params.sourceMapConsumer &&
-              params.sourceMapConsumer.originalPositionFor(startPosApparent);
+      /**
+       * Create a hash of base path strings.
+       *
+       * Position in the declaration is not supported since rework does not refine sourcemaps to this detail.
+       *
+       * @throws Error on invalid source map
+       * @returns {{selector:string, property:string}} Hash of base path strings
+       */
+      function getPathsAtChar() {
+        var posSelector = declaration.parent && declaration.parent.position.start,
+            posProperty = declaration.position.start;
 
-        // we require a valid directory for the specified file
-        var directory =
-          startPosOriginal &&
-          startPosOriginal.source &&
-          fileProtocol.remove(path.dirname(startPosOriginal.source));
-        if (directory) {
-          declaration.value = params.transformDeclaration(declaration.value, directory);
+        var result = {
+          property: positionToOriginalDirectory(posProperty),
+          selector: positionToOriginalDirectory(posSelector)
+        };
+
+        var isValid = [result.property, result.selector].every(Boolean);
+        if (isValid) {
+          return result;
         }
-        // source-map present but invalid entry
         else if (params.sourceMapConsumer) {
           throw new Error('source-map information is not available at url() declaration');
+        } else {
+          throw new Error('a valid source-map is not present (ensure preceding loaders output a source-map)');
         }
       }
     }
+  }
+
+  /**
+   * Given an apparent position find the directory of the original file.
+   *
+   * @param startPosApparent {{line: number, column: number}}
+   * @returns {false|string} Directory of original file or false on invalid
+   */
+  function positionToOriginalDirectory(startPosApparent) {
+    // reverse the original source-map to find the original source file before transpilation
+    var startPosOriginal =
+      !!params.sourceMapConsumer &&
+      params.sourceMapConsumer.originalPositionFor(startPosApparent);
+
+    // we require a valid directory for the specified file
+    var directory =
+      !!startPosOriginal &&
+      !!startPosOriginal.source &&
+      fileProtocol.remove(path.dirname(startPosOriginal.source));
+
+    return directory;
   }
 }
 

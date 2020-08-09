@@ -1,13 +1,17 @@
 {
+  "name": "resolve-url-loader",
+  "description": "monorepo of all things resolve-url-loader",
+  "private": true,
   "author": "bholloway",
   "license": "MIT",
-  "private": true,
+  "main": "packages/resolve-url-loader",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "lint": "jshint packages --exclude **/node_modules",
-    "test:unit": "tape **/*.test.js | tap-diff",
+    "test:unit": "tape \"!(node_modules)/**/*.test.js\" | tap-diff",
+    "debug:unit": "node $NODE_DEBUG_OPTION $(npm bin)/tape **/*.test.js | tap-diff",
     "test:e2e": "tape test | tap-diff",
     "debug:e2e": "node $NODE_DEBUG_OPTION $(npm bin)/tape test | tap-diff"
   },
@@ -26,10 +30,11 @@
     "outdent": "0.7.0",
     "promise-compose": "1.1.2",
     "recursive-readdir": "2.2.2",
+    "sinon": "^8.0.2",
     "tap-diff": "0.1.1",
     "vlq": "1.0.1"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   }
 }

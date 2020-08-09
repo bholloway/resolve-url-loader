@@ -1,39 +1,28 @@
 'use strict';
 
-const {join, normalize, dirname, basename} = require('path');
+const {join, normalize, dirname, basename, isAbsolute} = require('path');
 const {readFile} = require('fs');
 const {promisify} = require('es6-promisify');
 const listDir = require('recursive-readdir');
 const compose = require('compose-function');
 const Joi = require('joi');
-const outdent = require('outdent');
-const escapeString = require('escape-string-regexp');
 const {assign} = Object;
 
-const withBase = (fn) => (listOrString) => (context) => {
-  const transform = compose(v => v.replace(/\\/g, '/'), normalize, join);
+exports.sanitisePath = v =>
+  v.replace(/\\/g, '/');
+
+exports.rebaseTo = (fn) => (listOrString) => (context) => {
+  const transform = compose(exports.sanitisePath, normalize, join);
   return Array.isArray(listOrString) ?
     listOrString.map((v) => transform(fn(context), v)) :
     transform(fn(context), listOrString);
 };
 
-exports.withRootBase = withBase(({root}) => root);
+exports.rebaseToCwd = exports.rebaseTo(({root, cwd}) => isAbsolute(cwd) ? cwd : join(root, cwd));
 
-exports.withCacheBase = withBase(({meta: {cacheDir}}) => cacheDir);
+exports.rebaseToRoot = exports.rebaseTo(({root}) => root);
 
-/**
- * A factory for a higher-order-function that wraps a function of RegExp with template literal.
- *
- * @param {Array.<string>} strings Template literal strings
- * @param {...*} substitutions Any number of template literal substitutions
- * @return {function(function)} A higher-order-function of the assert function
- */
-exports.withPattern = (next) => (strings, ...substitutions) => {
-  const raw  = [].concat(strings.raw || strings);
-  const text = assign(raw.slice(), {raw});
-  const source = outdent(text, ...substitutions.map(v => escapeString(v)));
-  return next(new RegExp(source, 'gm'));
-};
+exports.rebaseToCache = exports.rebaseTo(({meta: {cacheDir}}) => cacheDir);
 
 /**
  * A factory for a higher-order-function that enhances an assert() function with a list of files
@@ -90,29 +79,6 @@ exports.withFileContent = (next) => {
       )
     )
       .then(list => next(test, exec, list));
-  };
-};
-
-/**
- * A higher-order-function that enhances an assert() function by parsing JSON of the strings given.
- *
- * @type {function(function)} A higher-order-function of the assert function
- */
-exports.withJson = (next) => {
-  Joi.assert(next, Joi.func().arity(3).required(), 'assert function of test,exec,files');
-
-  return (test, exec, list) => {
-    Joi.assert(test, Joi.object().required(), 'Tape test object');
-    Joi.assert(exec, Joi.object().required(), 'Result of an exec() call');
-    Joi.assert(list, Joi.array().items(
-      Joi.object({content: Joi.string().required()}).unknown(true)
-    ).required(), 'Any number of elements with "content" property');
-
-    return Promise.resolve(next(
-      test,
-      exec,
-      list.map(({content}) => JSON.parse(content))
-    ));
   };
 };
 

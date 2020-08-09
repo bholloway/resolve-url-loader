@@ -9,6 +9,7 @@ var os      = require('os'),
     postcss = require('postcss');
 
 var fileProtocol = require('../file-protocol');
+var algerbra     = require('../position-algerbra');
 
 var ORPHAN_CR_REGEX = /\r(?!\n)(.|\n)?/g;
 
@@ -49,7 +50,7 @@ function process(sourceFile, sourceContent, params) {
    * Plugin for postcss that follows SASS transpilation.
    */
   function postcssPlugin() {
-    return function(styles) {
+    return function applyPlugin(styles) {
       styles.walkDecls(eachDeclaration);
     };
 
@@ -58,31 +59,71 @@ function process(sourceFile, sourceContent, params) {
      * @param declaration
      */
     function eachDeclaration(declaration) {
-      var isValid = declaration.value && (declaration.value.indexOf('url') >= 0);
+      var prefix,
+          isValid = declaration.value && (declaration.value.indexOf('url') >= 0);
       if (isValid) {
+        prefix = declaration.prop + declaration.raws.between;
+        declaration.value = params.transformDeclaration(declaration.value, getPathsAtChar);
+      }
 
-        // reverse the original source-map to find the original source file before transpilation
-        var startPosApparent = declaration.source.start,
-            startPosOriginal = params.sourceMapConsumer &&
-              params.sourceMapConsumer.originalPositionFor(startPosApparent);
+      /**
+       * Create a hash of base path strings.
+       *
+       * Position in the declaration is supported by postcss at the position of the url() statement.
+       *
+       * @param {number} index Index in the declaration value at which to evaluate
+       * @throws Error on invalid source map
+       * @returns {{subString:string, value:string, property:string, selector:string}} Hash of base path strings
+       */
+      function getPathsAtChar(index) {
+        var subString    = declaration.value.slice(0, index),
+            posSelector  = algerbra.sanitise(declaration.parent.source.start),
+            posProperty  = algerbra.sanitise(declaration.source.start),
+            posValue     = algerbra.add([posProperty, algerbra.strToOffset(prefix)]),
+            posSubString = algerbra.add([posValue, algerbra.strToOffset(subString)]);
 
-        // we require a valid directory for the specified file
-        var directory =
-          startPosOriginal &&
-          startPosOriginal.source &&
-          fileProtocol.remove(path.dirname(startPosOriginal.source));
-        if (directory) {
-          declaration.value = params.transformDeclaration(declaration.value, directory);
+        var result = {
+          subString: positionToOriginalDirectory(posSubString),
+          value    : positionToOriginalDirectory(posValue),
+          property : positionToOriginalDirectory(posProperty),
+          selector : positionToOriginalDirectory(posSelector)
+        };
+
+        var isValid = [result.subString, result.value, result.property, result.selector].every(Boolean);
+        if (isValid) {
+          return result;
         }
-        // source-map present but invalid entry
         else if (params.sourceMapConsumer) {
           throw new Error(
             'source-map information is not available at url() declaration ' +
             (ORPHAN_CR_REGEX.test(sourceContent) ? '(found orphan CR, try removeCR option)' : '(no orphan CR found)')
           );
+        } else {
+          throw new Error('a valid source-map is not present (ensure preceding loaders output a source-map)');
         }
       }
     }
+  }
+
+  /**
+   * Given an apparent position find the directory of the original file.
+   *
+   * @param startPosApparent {{line: number, column: number}}
+   * @returns {false|string} Directory of original file or false on invalid
+   */
+  function positionToOriginalDirectory(startPosApparent) {
+    // reverse the original source-map to find the original source file before transpilation
+    var startPosOriginal =
+      !!params.sourceMapConsumer &&
+      params.sourceMapConsumer.originalPositionFor(startPosApparent);
+
+    // we require a valid directory for the specified file
+    var directory =
+      !!startPosOriginal &&
+      !!startPosOriginal.source &&
+      fileProtocol.remove(path.dirname(startPosOriginal.source));
+
+    return directory;
   }
 }
 

@@ -18,7 +18,7 @@ module.exports = {
     devtoolModuleFilenameTemplate: templateFn,
     devtoolFallbackModuleFilenameTemplate: templateFn
   },
-  devtool: JSON.parse(process.env.DEVTOOL),
+  devtool: JSON.parse(process.env.DEVTOOL) && 'source-map',
   resolve: {
     modules: [path.join(__dirname, 'modules'), 'node_modules'] // specifically for isolation in module-relative test
   },

@@ -6,20 +6,30 @@
 
 var stream = require('stream');
 
-var maybeStream = process[process.env.RESOLVE_URL_LOADER_TEST_HARNESS];
+var hasLogged = false;
 
-function logToTestHarness(options) {
-  if (!!maybeStream && (typeof maybeStream === 'object') && (maybeStream instanceof stream.Writable)) {
-    Object.keys(options).map(eachOptionKey);
-    maybeStream = null; // ensure we log only once
+function logToTestHarness(maybeStream, options) {
+  var doLogging =
+    !hasLogged &&
+    !!maybeStream &&
+    (typeof maybeStream === 'object') &&
+    (maybeStream instanceof stream.Writable);
+
+  if (doLogging) {
+    hasLogged = true; // ensure we log only once
+    Object.keys(options).forEach(eachOptionKey);
   }
 
   function eachOptionKey(key) {
-    var value = options[key];
-    var text  = (typeof value === 'undefined') ?
-      String(value) :
-      (JSON.stringify(value.valueOf()) || '-unstringifyable-');
-    maybeStream.write(key + ': ' + text + '\n');
+    maybeStream.write(key + ': ' + stringify(options[key]) + '\n');
+  }
+
+  function stringify(value) {
+    try {
+      return JSON.stringify(value) || String(value);
+    } catch (e) {
+      return '-unstringifyable-';
+    }
   }
 }
 

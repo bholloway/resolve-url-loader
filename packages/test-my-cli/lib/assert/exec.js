@@ -6,6 +6,7 @@ const {meta} = require('./meta');
 
 exports.exec = joi.object({
   index: joi.number().integer().min(0).required(),
+  caller: joi.path().absolute().required(),
   root: joi.path().absolute().required(),
   cwd: joi.path().absolute().required(),
   env: env.required(),
