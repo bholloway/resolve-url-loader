@@ -176,7 +176,7 @@ function resolveUrlLoader(content, sourceMap) {
   } else {
     handleAsWarning(
       'webpack misconfiguration',
-      'source-map not received'
+      'webpack or the upstream loader did not supply a source-map'
     );
   }
 
