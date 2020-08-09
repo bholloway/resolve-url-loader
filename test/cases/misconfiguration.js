@@ -15,7 +15,8 @@ const {
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
 const {
-  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout, assertSilence, assertMisconfigWarning
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout, assertSilence, assertMisconfigWarning,
+  assertDeprecationWarning,
 } = require('../lib/assert');
 
 const assertContentDev = sequence(
@@ -82,13 +83,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"attempts" option is defunct'),
+          assertDeprecationWarning('"attempts" option has been removed'),
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"attempts" option is defunct'),
+          assertDeprecationWarning('"attempts" option has been removed'),
           assertContentProd
         )
       ),
@@ -112,13 +113,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"keepQuery" option is defunct'),
+          assertDeprecationWarning('"keepQuery" option has been removed'),
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"keepQuery" option is defunct'),
+          assertDeprecationWarning('"keepQuery" option has been removed'),
           assertContentProd
         )
       ),
@@ -142,13 +143,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"absolute" option is defunct'),
+          assertDeprecationWarning('"absolute" option has been removed'),
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"absolute" option is defunct'),
+          assertDeprecationWarning('"absolute" option has been removed'),
           assertContentProd
         )
       ),
@@ -172,13 +173,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"includeRoot" option is defunct'),
+          assertDeprecationWarning('"includeRoot" option has been removed'),
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"includeRoot" option is defunct'),
+          assertDeprecationWarning('"includeRoot" option has been removed'),
           assertContentProd
         )
       ),
@@ -202,13 +203,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"fail" option is defunct'),
+          assertDeprecationWarning('"fail" option has been removed'),
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertMisconfigWarning('"fail" option is defunct'),
+          assertDeprecationWarning('"fail" option has been removed'),
           assertContentProd
         )
       ),
