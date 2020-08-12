@@ -71,12 +71,19 @@ module.exports = test(
           assertNoErrors,
           assertDebugMessages,
           assertCssSourceMapComment(true),
-          compose(assertCssContent, outdent)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, outdent)`
             .some-class-name {
               font-size: calc(  ( 1px )); }
             
             .another-class-name {
               background-image: url(d68e763c825dc0e388929ae1b375ce18.jpg); }
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+            .some-class-name {
+              font-size: calc(  ( 1px )); }
+            
+            .another-class-name {
+              background-image: url(9eb57a84abbf8abc636d0faa71f9a800.jpg); }
             `
         ),
         buildDevNoUrl(
@@ -128,6 +135,29 @@ module.exports = test(
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.6e4443dd51c28c07ae
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      5c.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.5450e89a397d025047b0.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                         
+            ---------------------------------------------------------------------------------------------------
+            1:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            2:03 ░░font-size: calc(⏎                          2:03 ░░font-size: calc(  ( 1px ))░░░░░░░░░░░░░░░░
+                     (⇦1px⇦)⏎                                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   )░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            4:04 ░░░;⏎                                        2:29 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎            
+                 }⏎                                                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            7:01 .another-class-name {⏎                       4:01 .another-class-name {⏎                      
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            8:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 5:03 ░░background-image: url("./img.jpg")░░░░░░░░
+            8:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         5:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎    
+                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.5450e89a397d025047
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      b0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -137,12 +167,16 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
-          compose(assertCssContent, trim)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
             .some-class-name{font-size:1px}.another-class-name{background-image:
             url(d68e763c825dc0e388929ae1b375ce18.jpg)}
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+            .some-class-name{font-size:1px}.another-class-name{background-image:
+            url(9eb57a84abbf8abc636d0faa71f9a800.jpg)}
             `
         ),
         buildProdNoUrl(
@@ -152,7 +186,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -181,6 +215,28 @@ module.exports = test(
           compose(
             onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.86ba9bacab12ac06aa0b.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                         
+            ---------------------------------------------------------------------------------------------------
+            1:01 .some-class-name {⏎                          1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            2:03 ░░font-size: calc(⏎                          1:18 ░░░░░░░░░░░░░░░░░font-size:1px░░░░░░░░░░░░░░
+                     (⇦1px⇦)⏎                                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   )░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            4:04 ░░░;⏎                                        1:31 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░
+                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            5:02 ░⏎                                           1:32 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░.another-clas
+                 ⏎                                                 s-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 .another-class-name {⏎                            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            8:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 1:52 ░░░░░░░background-image:url(img.jpg)░░░░░░░░
+            8:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         1:81 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░
+                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.1d474c04298b46435eb3.css', 'src'),
             outdent
           )`
             index.scss                                                                                         

@@ -38,7 +38,7 @@ exports.buildProdNormal = (...rest) =>
       env({
         OUTPUT: 'production-normal'
       }),
-      exec(`npm run webpack-p`),
+      exec('npm run webpack-p'),
       saveOutput('webpack'),
       ...rest
     )
@@ -52,7 +52,7 @@ exports.buildProdNoUrl = (...rest) =>
         CSS_OPTIONS: {url: false},
         OUTPUT: 'production-without-url'
       }),
-      exec(`npm run webpack-p`),
+      exec('npm run webpack-p'),
       saveOutput('webpack'),
       ...rest
     )
@@ -66,7 +66,7 @@ exports.buildProdNoDevtool = (...rest) =>
         DEVTOOL: false,
         OUTPUT: 'production-without-devtool'
       }),
-      exec(`npm run webpack-p`),
+      exec('npm run webpack-p'),
       saveOutput('webpack'),
       ...rest
     )

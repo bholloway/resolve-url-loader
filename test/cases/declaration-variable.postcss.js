@@ -15,7 +15,7 @@ const {assertCssAndSourceMapContent} = require('./common/assert');
 const {assertCssContent} = require('../lib/assert');
 const {
   onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
-  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertModuleNotFoundError
+  assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertAssetError
 } = require('../lib/assert');
 
 const assertPropertyMessages = assertStdout('debug')(1)`
@@ -67,7 +67,7 @@ module.exports = test(
     testWithLabel('asset-missing')(
       all(buildDevNormal, buildProdNormal)(
         assertWebpackNotOk,
-        assertModuleNotFoundError
+        assertAssetError
       ),
       all(buildDevNoUrl, buildProdNoUrl)(
         assertWebpackOk
@@ -84,9 +84,13 @@ module.exports = test(
           assertNoErrors,
           assertPropertyMessages,
           assertCssSourceMapComment(true),
-          compose(assertCssContent, outdent)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, outdent)`
             .some-class-name {
               background-image: some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere; }
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+            .some-class-name {
+              background-image: some url(9eb57a84abbf8abc636d0faa71f9a800.jpg) somewhere; }
             `
         ),
         buildDevNoUrl(
@@ -132,6 +136,26 @@ module.exports = test(
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.aca6c92b278f2368bc8
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      f.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.2207d5e5c947ee9dcd68.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./img.jpg") som
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ewhere░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:52 ░░░░░░; }⏎                                   
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.2207d5e5c947ee9dcd6
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      8.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -141,11 +165,14 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
-          compose(assertCssContent, trim)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
             .some-class-name{background-image:some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere}
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+            .some-class-name{background-image:some url(9eb57a84abbf8abc636d0faa71f9a800.jpg) somewhere}
             `
         ),
         buildProdNoUrl(
@@ -155,7 +182,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -179,6 +206,22 @@ module.exports = test(
           compose(
             onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.e5eb14ee5e2900a1aecc.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(im
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      g.jpg) somewhere░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:62 ░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.825f500d20600500f91d.css', 'src'),
             outdent
           )`
             index.scss                                                                                          
@@ -223,9 +266,13 @@ module.exports = test(
           assertNoErrors,
           assertValueMessages,
           assertCssSourceMapComment(true),
-          compose(assertCssContent, outdent)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, outdent)`
             .some-class-name {
               background-image: some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere; }
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+            .some-class-name {
+              background-image: some url(9eb57a84abbf8abc636d0faa71f9a800.jpg) somewhere; }
             `
         ),
         buildDevNoUrl(
@@ -271,6 +318,26 @@ module.exports = test(
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.e6d063baf74245631d2
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      f.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.8a64cc80eac8751ed2fb.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./value/img.jpg
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ") somewhere░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:58 ░░░░░░░░░░░░; }⏎                             
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.8a64cc80eac8751ed2f
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      b.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -280,11 +347,14 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
-          compose(assertCssContent, trim)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
             .some-class-name{background-image:some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere}
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+            .some-class-name{background-image:some url(9eb57a84abbf8abc636d0faa71f9a800.jpg) somewhere}
             `
         ),
         buildProdNoUrl(
@@ -294,7 +364,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -318,6 +388,22 @@ module.exports = test(
           compose(
             onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.9e1e81e6c8ac95cda014.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(va
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      lue/img.jpg) somewhere░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:68 ░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.8c1925dd7c940470908e.css', 'src'),
             outdent
           )`
             index.scss                                                                                          
@@ -362,9 +448,13 @@ module.exports = test(
           assertNoErrors,
           assertSubstringMessages,
           assertCssSourceMapComment(true),
-          compose(assertCssContent, outdent)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, outdent)`
             .some-class-name {
               background-image: some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere; }
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+            .some-class-name {
+              background-image: some url(9eb57a84abbf8abc636d0faa71f9a800.jpg) somewhere; }
             `
         ),
         buildDevNoUrl(
@@ -410,6 +500,26 @@ module.exports = test(
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.e6d81c95e317f9d0642
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      1.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.028f2f076bf8813c8b30.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name {⏎                          
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  2:03 ░░background-image: some url("./value/substri
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ng/img.jpg") somewhere░░░░░░░░░░░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 2:68 ░░░░░░░░░░░░░░░░░░░░░░; }⏎                   
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.028f2f076bf8813c8b3
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -419,11 +529,14 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
-          compose(assertCssContent, trim)`
+          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
             .some-class-name{background-image:some url(d68e763c825dc0e388929ae1b375ce18.jpg) somewhere}
+            `,
+          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+            .some-class-name{background-image:some url(9eb57a84abbf8abc636d0faa71f9a800.jpg) somewhere}
             `
         ),
         buildProdNoUrl(
@@ -433,7 +546,7 @@ module.exports = test(
           onlyMeta('meta.version.webpack < 4')(
             assertCssSourceMapComment(true)
           ),
-          onlyMeta('meta.version.webpack == 4')(
+          onlyMeta('meta.version.webpack >= 4')(
             assertCssSourceMapComment(false)
           ),
           compose(
@@ -457,6 +570,22 @@ module.exports = test(
           compose(
             onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.6aa172c2ed3e739dd3e5.css', 'src'),
+            outdent
+          )`
+            index.scss                                                                                          
+            ----------------------------------------------------------------------------------------------------
+            2:1 .some-class-name {⏎                           1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+            3:3 ░░background-image: $value;⏎                  1:18 ░░░░░░░░░░░░░░░░░background-image:some url(va
+                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      lue/substring/img.jpg) somewhere░░░░░░░░░░░░░
+                                                                                                                
+            value/variables.scss                                                                                
+            ----------------------------------------------------------------------------------------------------
+            -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:78 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░
+            `,
+          compose(
+            onlyMeta('meta.version.webpack >= 5'),
+            assertCssAndSourceMapContent('main.87664f526f5bea651ca8.css', 'src'),
             outdent
           )`
             index.scss                                                                                          

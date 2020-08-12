@@ -8,8 +8,6 @@ const {basename} = require('path');
 
 const tape = require('blue-tape');
 
-require('string.prototype.padend').shim();
-
 const sut = require('./table');
 
 const truncate = (v, w) => v.slice(0, w).padEnd(w, ' ');

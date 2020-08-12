@@ -5,7 +5,6 @@
 'use strict';
 
 require('Array.prototype.flatmap').shim();
-require('string.prototype.padend').shim();
 
 const columns = require('./columns');
 const normaliseRowHeight = require('./normalise-multiline-array');

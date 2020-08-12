@@ -16,30 +16,27 @@
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.9"
   },
   "directories": {
     "lib": "lib"
   },
   "scripts": {},
   "dependencies": {
-    "compose-function": "3.0.3",
-    "cross-spawn": "6.0.5",
-    "es6-promisify": "6.0.2",
-    "get-value": "3.0.1",
-    "joi": "14.3.1",
-    "micromatch": "3.1.10",
-    "mkdirp": "0.5.1",
-    "ms": "2.1.2",
-    "object-path-immutable": "4.0.2",
-    "object.entries": "1.1.0",
-    "object.values": "1.1.0",
-    "promise-compose": "1.1.2",
-    "recursive-readdir": "2.2.2",
-    "rimraf": "3.0.0",
-    "string.prototype.padstart": "3.0.0"
+    "compose-function": "^3.0.3",
+    "cross-spawn": "^6.0.5",
+    "es6-promisify": "^6.0.2",
+    "get-value": "^3.0.1",
+    "joi": "^14.3.1",
+    "micromatch": "^3.1.10",
+    "mkdirp": "^0.5.1",
+    "ms": "^2.1.2",
+    "object-path-immutable": "^4.0.2",
+    "promise-compose": "^1.1.2",
+    "recursive-readdir": "^2.2.2",
+    "rimraf": "^3.0.0"
   },
-  "peerDependencies": {
+  "peerDevDependencies": {
     "tape": "*"
   }
 }

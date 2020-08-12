@@ -7,8 +7,6 @@
 const wordWrap = require('word-wrap');
 
 require('Array.prototype.flatmap').shim();
-require('string.prototype.padstart').shim();
-require('string.prototype.padend').shim();
 
 const {repeatArray, last} = require('./array');
 

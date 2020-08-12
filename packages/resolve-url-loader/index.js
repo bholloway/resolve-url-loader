@@ -6,6 +6,7 @@
 
 var path              = require('path'),
     fs                = require('fs'),
+    util              = require('util'),
     loaderUtils       = require('loader-utils'),
     SourceMapConsumer = require('source-map').SourceMapConsumer;
 
@@ -15,7 +16,34 @@ var valueProcessor   = require('./lib/value-processor');
 var joinFn           = require('./lib/join-function');
 var logToTestHarness = require('./lib/log-to-test-harness');
 
-var PACKAGE_NAME = require('./package.json').name;
+const noop = () => undefined;
+
+const DEPRECATED_OPTIONS = {
+  engine: [
+    'DEP_RESOLVE_URL_LOADER_OPTION_ENGINE',
+    'the "engine" option is deprecated, "postcss" engine is the default, using "rework" engine is not advised'
+  ],
+  keepQuery: [
+    'DEP_RESOLVE_URL_LOADER_OPTION_KEEP_QUERY',
+    '"keepQuery" option has been removed, the query and/or hash are now always retained'
+  ],
+  absolute: [
+    'DEP_RESOLVE_URL_LOADER_OPTION_ABSOLUTE',
+    '"absolute" option has been removed, consider the "join" option if absolute paths must be processed'
+  ],
+  attempts: [
+    'DEP_RESOLVE_URL_LOADER_OPTION_ATTEMPTS',
+    '"attempts" option has been removed, consider the "join" option if search is needed'
+  ],
+  includeRoot: [
+    'DEP_RESOLVE_URL_LOADER_OPTION_INCLUDE_ROOT',
+    '"includeRoot" option has been removed, consider the "join" option if search is needed'
+  ],
+  fail: [
+    'DEP_RESOLVE_URL_LOADER_OPTION_FAIL',
+    '"fail" option has been removed'
+  ]
+};
 
 /**
  * A webpack loader that resolves absolute url() paths relative to their original source file.
@@ -66,46 +94,9 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // deprecated options
-  if ('engine' in rawOptions) {
-    handleAsWarning(
-      'loader misconfiguration',
-      [
-        'the "rework" engine has been deprecated and will be removed in the next major version',
-        'remove the "engine" option to use the default "postcss" engine'
-      ]
-    );
-  }
-
-  // defunct options
-  if ('keepQuery' in options) {
-    handleAsWarning(
-      'loader misconfiguration',
-      '"keepQuery" option is defunct (consider "join" option if search is needed)'
-    );
-  }
-  if ('absolute' in options) {
-    handleAsWarning(
-      'loader misconfiguration',
-      '"absolute" option is defunct (consider "join" option if search is needed)'
-    );
-  }
-  if ('attempts' in options) {
-    handleAsWarning(
-      'loader misconfiguration',
-      '"attempts" option is defunct (consider "join" option if search is needed)'
-    );
-  }
-  if ('includeRoot' in options) {
-    handleAsWarning(
-      'loader misconfiguration',
-      '"includeRoot" option is defunct (consider "join" option if search is needed)'
-    );
-  }
-  if ('fail' in options) {
-    handleAsWarning(
-      'loader misconfiguration',
-      '"fail" option is defunct'
-    );
+  const deprecatedItems = Object.entries(DEPRECATED_OPTIONS).filter(([key]) => key in rawOptions);
+  if (deprecatedItems.length) {
+    deprecatedItems.forEach(([, value]) => handleAsDeprecated(...value));
   }
 
   // validate join option
@@ -207,19 +198,32 @@ function resolveUrlLoader(content, sourceMap) {
     callback(encodeError('CSS error', error));
   }
 
-  function onSuccess(reworked) {
-    if (reworked) {
+  function onSuccess(result) {
+    if (result) {
       // complete with source-map
       //  source-map sources are relative to the file being processed
       if (options.sourceMap) {
-        var finalMap = adjustSourceMap(loader, {format: 'sourceRelative'}, reworked.map);
-        callback(null, reworked.content, finalMap);
+        var finalMap = adjustSourceMap(loader, {format: 'sourceRelative'}, result.map);
+        callback(null, result.content, finalMap);
       }
       // complete without source-map
       else {
-        callback(null, reworked.content);
+        callback(null, result.content);
       }
     }
+  }
+
+  /**
+   * Trigger a node deprecation message for the given exception and return the original content.
+   * @param {string} code Deprecation code
+   * @param {string} message Deprecation message
+   * @returns {string} The original CSS content
+   */
+  function handleAsDeprecated(code, message) {
+    if (!options.silent) {
+      util.deprecate(noop, message, code)();
+    }
+    return content;
   }
 
   /**
@@ -249,7 +253,7 @@ function resolveUrlLoader(content, sourceMap) {
   function encodeError(label, exception) {
     return new Error(
       [
-        PACKAGE_NAME,
+        'resolve-url-loader',
         ': ',
         [label]
           .concat(

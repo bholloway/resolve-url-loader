@@ -6,8 +6,6 @@
 
 const outdent = require('outdent');
 
-require('object.values').shim();
-
 const {formatMultilineText} = require('../lib/text');
 const table = require('../lib/table');
 

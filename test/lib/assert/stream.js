@@ -48,26 +48,55 @@ exports.assertStdout = assertStream('stdout');
 
 exports.assertStderr = assertStream('stderr');
 
-exports.assertSilence = exports.assertStdout('console')(0)`resolve-url-loader:`;
+exports.assertSilence = sequence(
+  exports.assertStdout('console')(0)`resolve-url-loader:`,
+  exports.assertStderr('node deprecation warning')(0)`\[DEP_RESOLVE_URL_LOADER[A-Z_]+\]`
+);
 
-exports.assertMisconfigWarning = (message) => exports.assertStdout('warning')(1)`
+// TODO v5 - assertNoMessages becomes the same as assertSilence when we remove rework engine
+exports.assertNoMessages = sequence(
+  exports.assertStdout('console')(0)`resolve-url-loader:`,
+  onlyMeta('meta.engine == "rework"')(
+    exports.assertStderr('node deprecation warning')(1)`\[DEP_RESOLVE_URL_LOADER[A-Z_]+\]`
+  ),
+  onlyMeta('meta.engine == "postcss"')(
+    exports.assertStderr('node deprecation warning')(0)`\[DEP_RESOLVE_URL_LOADER[A-Z_]+\]`
+  )
+);
+
+const assertDeprecationWarning = (message= '') => exports.assertStderr('node deprecation warning')(1)`
+  ^[^\n]*\[DEP_RESOLVE_URL_LOADER[A-Z_]+\][ ]DeprecationWarning:[ ]${message}
+  `;
+// TODO v5 - this becomes the same as the internal method when we remove rework engine
+exports.assertDeprecationWarning = (message) => sequence(
+  onlyMeta('meta.engine == "rework"')(
+    assertDeprecationWarning(
+      'the "engine" option is deprecated, "postcss" engine is the default, using "rework" engine is not advised'
+    )
+  ),
+  assertDeprecationWarning(message)
+);
+
+exports.assertMisconfigWarning = (message) => exports.assertStdout('webpack warning')(1)`
   ^[ ]*WARNING[^\n]*
   ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
   [ ]+${message}
   `;
 
 // Webpack may repeat errors with a header line taken from the parent loader so we allow range 1-2
-exports.assertModuleNotFoundError = exports.assertStdout('"Module not found" error')([1, 2])`
+const assertModuleNotFoundError = exports.assertStdout('webpack "Module not found" error')([1, 2])`
   ^[ ]*ERROR[^\n]*
   [ ]*Module build failed(:|[^\n]*\n)[ ]*ModuleNotFoundError: Module not found:
   `;
 
-exports.assertNoMessages = sequence(
-  onlyMeta('meta.engine == "rework"')(
-    exports.assertStdout('console')(1)`resolve-url-loader:`,
-    exports.assertMisconfigWarning('the "rework" engine has been deprecated and will be removed in the next major version')
-  ),
-  onlyMeta('meta.engine == "postcss"')(
-    exports.assertStdout('console')(0)`resolve-url-loader:`
-  )
+const assertCantResolveError = exports.assertStdout('webpack "Can\'t resolve" error')(1)`
+  ^[ ]*ERROR[^\n]*
+  [ ]*Module build failed[^\n]*
+  [ ]*ModuleBuildError: Module build failed[^\n]*
+  [ ]*Error: Can't resolve[^\n]*
+  `;
+
+exports.assertAssetError = sequence(
+  onlyMeta('meta.version.webpack < 5')(assertModuleNotFoundError),
+  onlyMeta('meta.version.webpack >= 5')(assertCantResolveError)
 );
