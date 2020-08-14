@@ -181,10 +181,21 @@ function resolveUrlLoader(content, sourceMap) {
     );
   }
 
+  // allow engine to throw at initialisation
+  var engine;
+  try {
+    engine = require(enginePath);
+  } catch (error) {
+    return handleAsError(
+      'error initialising',
+      error
+    );
+  }
+
   // process async
   var callback = loader.async();
   Promise
-    .resolve(require(enginePath)(loader.resourcePath, content, {
+    .resolve(engine(loader.resourcePath, content, {
       outputSourceMap     : !!options.sourceMap,
       transformDeclaration: valueProcessor(loader.resourcePath, options),
       absSourceMap        : absSourceMap,
@@ -195,7 +206,7 @@ function resolveUrlLoader(content, sourceMap) {
     .then(onSuccess);
 
   function onFailure(error) {
-    callback(encodeError('CSS error', error));
+    callback(encodeError('error processing CSS', error));
   }
 
   function onSuccess(result) {

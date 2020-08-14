@@ -5,11 +5,12 @@
 'use strict';
 
 var path    = require('path'),
-    convert = require('convert-source-map'),
-    rework  = require('rework'),
-    visit   = require('rework-visit');
+    convert = require('convert-source-map');
 
 var fileProtocol = require('../file-protocol');
+
+var rework = requireOptionalPeerDependency('rework'),
+    visit  = requireOptionalPeerDependency('rework-visit');
 
 /**
  * Process the given CSS content into reworked CSS content.
@@ -131,3 +132,24 @@ function process(sourceFile, sourceContent, params) {
 }
 
 module.exports = process;
+
+/**
+ * Require the given filename but fail with an error that `requireOptionalPeerDependencies` must be installed.
+ *
+ * @param moduleName The module to require
+ * @returns {*} The module
+ * @throws Error when module is not found
+ */
+function requireOptionalPeerDependency(moduleName) {
+  try {
+    return require(moduleName);
+  }
+  catch (error) {
+    if (error.message === 'Cannot find module \'' + moduleName + '\'') {
+      throw new Error('To use the "rework" engine you must install the optionalPeerDependencies');
+    }
+    else {
+      throw error;
+    }
+  }
+}
