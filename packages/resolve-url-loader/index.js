@@ -172,7 +172,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // choose a CSS engine
-  var enginePath    = /^\w+$/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
+  var enginePath    = /^[\w-]+$/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
   var isValidEngine = fs.existsSync(enginePath);
   if (!isValidEngine) {
     return handleAsError(

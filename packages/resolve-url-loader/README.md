@@ -198,7 +198,7 @@ If you have _any_ such multiline declarations preceding `url()` statements it wi
 Libsass doesn't consider these orphan `CR` to be newlines but `postcss` engine does.  The result being an offset in source-map line-numbers which crashes `resolve-url-loader`.
 
 ```
-Module build failed: Error: resolve-url-loader: CSS error
+Module build failed: Error: resolve-url-loader: error processing CSS
   source-map information is not available at url() declaration
 ```
 
