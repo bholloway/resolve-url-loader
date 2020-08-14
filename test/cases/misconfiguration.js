@@ -9,8 +9,9 @@ const {test, layer, fs, env, cwd} = require('test-my-cli');
 const {trim} = require('../lib/util');
 const {rebaseToCache} = require('../lib/higher-order');
 const {
-  all, testDefault, testSilent, testKeepQuery, testAbsolute, testAttempts, testEngineFail, testIncludeRoot, testFail,
-  testNonFunctionJoin, testWrongArityJoin, testNonStringRoot, testNonExistentRoot
+  all, testDefault, testSilent, testKeepQuery, testAbsolute, testAttempts, testEngineFailInitialisation,
+  testEngineFailProcessing, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin, testNonStringRoot,
+  testNonExistentRoot
 } = require('./common/test');
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
@@ -47,10 +48,19 @@ const assertMisconfigError = (message) => assertStdout('error')([1, 4])`
 // Allow 1-4 errors
 //  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
 //  - webpack may repeat errors with a header line taken from the parent loader
-const assertCssError = assertStdout('error')([1, 4])`
+const assertInitialisationError = assertStdout('error')([1, 4])`
   ^[ ]*ERROR[^\n]*
-  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*CSS error
-  [ ]+This "engine" is designed to fail, for testing purposes only
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*error initialising
+  [ ]+This "engine" is designed to fail at require time, for testing purposes only
+  `;
+
+// Allow 1-4 errors
+//  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
+//  - webpack may repeat errors with a header line taken from the parent loader
+const assertProcessingError = assertStdout('error')([1, 4])`
+  ^[ ]*ERROR[^\n]*
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*error processing CSS
+  [ ]+This "engine" is designed to fail at processing time, for testing purposes only
   `;
 
 module.exports = test(
@@ -70,11 +80,19 @@ module.exports = test(
     env({
       ENTRY: join('src', 'index.scss')
     }),
-    testEngineFail(
+    testEngineFailInitialisation(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
-          assertCssError
+          assertInitialisationError
+        )
+      )
+    ),
+    testEngineFailProcessing(
+      all(testDefault, testSilent)(
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertProcessingError
         )
       )
     ),

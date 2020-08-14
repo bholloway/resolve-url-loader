@@ -136,15 +136,28 @@ exports.testSilent = (...rest) =>
     )
   );
 
-exports.testEngineFail = (...rest) =>
+exports.testEngineFailInitialisation = (...rest) =>
   test(
-    'engine=fail',
+    'engine=fail-initialisation',
     layer()(
       env({
-        LOADER_OPTIONS: {engine: 'fail'},
-        OUTPUT: 'engine-fail'
+        LOADER_OPTIONS: {engine: 'fail-initialisation'},
+        OUTPUT: 'engine-fail-initialisation'
       }),
       ...rest,
-      test('validate', assertStderr('options.engine')(1)`engine: "fail"`)
+      test('validate', assertStderr('options.engine')(1)`engine: "fail-initialisation"`)
+    )
+  );
+
+exports.testEngineFailProcessing = (...rest) =>
+  test(
+    'engine=fail-processing',
+    layer()(
+      env({
+        LOADER_OPTIONS: {engine: 'fail-processing'},
+        OUTPUT: 'engine-fail-processing'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.engine')(1)`engine: "fail-processing"`)
     )
   );

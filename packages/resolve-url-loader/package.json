@@ -40,8 +40,18 @@
     "convert-source-map": "^1.7.0",
     "loader-utils": "^1.4.0",
     "postcss": "^7.0.32",
-    "rework": "1.0.1",
-    "rework-visit": "1.0.0",
     "source-map": "0.6.1"
+  },
+  "peerDependencies": {
+    "rework": "1.0.1",
+    "rework-visit": "1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "rework": {
+      "optional": true
+    },
+    "rework-visit": {
+      "optional": true
+    }
   }
 }

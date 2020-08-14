@@ -31,6 +31,8 @@
     "outdent": "^0.7.0",
     "promise-compose": "^1.1.2",
     "recursive-readdir": "^2.2.2",
+    "rework": "1.0.1",
+    "rework-visit": "1.0.0",
     "sinon": "^8.0.2",
     "tap-diff": "^0.1.1",
     "vlq": "^1.0.1"

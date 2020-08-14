@@ -10,7 +10,7 @@
 function process() {
   return new Promise(function (_, reject) {
     setTimeout(function () {
-      reject(new Error('This "engine" is designed to fail, for testing purposes only'));
+      reject(new Error('This "engine" is designed to fail at processing time, for testing purposes only'));
     }, 100);
   });
 }

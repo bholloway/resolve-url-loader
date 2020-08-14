@@ -29,7 +29,7 @@ const assertDebugMessages = assertStdout('debug')(1)`
 //  - webpack may repeat errors with a header line taken from the parent loader
 const assertCssError = assertStdout('error')([1, 4])`
   ^[ ]*ERROR[^\n]*
-  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*CSS error
+  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*error processing CSS
   [ ]+source-map information is not available at url\(\) declaration \(found orphan CR, try removeCR option\)
   `;
 
