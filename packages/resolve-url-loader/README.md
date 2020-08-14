@@ -37,6 +37,7 @@ In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required
 **Features**
 
 * Better resolution of the original source location - You can more successfully use `url()` in variables and mixins.
+* Dependencies now accept a wider range and the dependency on `rework` and `rework-visit` has been removed.
 
 **Breaking Changes**
 
@@ -46,11 +47,13 @@ In our example it rewrites `url(bar.png)` to `url(features/bar.png)` as required
 
 **Migrating**
 
-Remove the `engine` option if you are using it - the default "postcss" engine is much more reliable. The "rework" engine will still work for now but it will be removed in the next major version.
+Remove the `engine` option if you are using it - the default "postcss" engine is much more reliable. The "rework" engine will still work for now but will be removed in the next major version.
 
 Remove the `keepQuery` option if you are using it.
 
 Remove the `absolute` option, webpack should work fine without it. If you have a specific need to rebase `url()` then you should use a separate loader.
+
+If you wish to still use `engine: "rework"` then note that `rework` and `rework-visit` packages are now `peerDependencies` that must be explicitly installed by you.
 
 ## Version 3
 
