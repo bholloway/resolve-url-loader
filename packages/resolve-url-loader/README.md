@@ -24,7 +24,7 @@ For projects with a **feature based structure** this will be a problem, since yo
 |&nbsp;&nbsp;&nbsp;&nbsp;_foo.scss   | `url(bar.png)`         |
 |&nbsp;&nbsp;&nbsp;&nbsp;bar.png     |                        |
 
-Intuatively we want the assets in partial `_foo.scss` relative to the partial, meaning `url(bar.png)`.
+Intuitively we want the assets in partial `_foo.scss` relative to the partial, meaning `url(bar.png)`.
 
 However webpack's `css-loader` will encounter `url(bar.png)` and expect to find `src/bar.png`. This is **not** the correct location and the build will fail.
 
