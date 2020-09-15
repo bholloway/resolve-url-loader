@@ -38,7 +38,7 @@
     "adjust-sourcemap-loader": "^4.0.0",
     "convert-source-map": "^1.7.0",
     "loader-utils": "^2.0.0",
-    "postcss": "^8.0.2",
+    "postcss": "^8.1.8",
     "source-map": "0.6.1"
   },
   "peerDependencies": {

@@ -28,37 +28,12 @@ function process(sourceFile, sourceContent, params) {
     sourceContent.replace(ORPHAN_CR_REGEX, ' $1') :
     sourceContent;
 
-  // prepend file protocol to all sources to avoid problems with source map
-  return postcss([
-    postcss.plugin('postcss-resolve-url', postcssPlugin)
-  ])
-    .process(correctedContent, {
-      from: fileProtocol.prepend(sourceFile),
-      map : params.outputSourceMap && {
-        prev          : !!params.absSourceMap && fileProtocol.prepend(params.absSourceMap),
-        inline        : false,
-        annotation    : false,
-        sourcesContent: true  // #98 sourcesContent missing from output map
-      }
-    })
-    .then(result => ({
-      content: result.css,
-      map    : params.outputSourceMap ? fileProtocol.remove(result.map.toJSON()) : null
-    }));
-
   /**
    * Plugin for postcss that follows SASS transpilation.
    */
-  function postcssPlugin() {
-    return function applyPlugin(styles) {
-      styles.walkDecls(eachDeclaration);
-    };
-
-    /**
-     * Process a declaration from the syntax tree.
-     * @param declaration
-     */
-    function eachDeclaration(declaration) {
+  const postcssPlugin = {
+    postcssPlugin: 'postcss-resolve-url',
+    Declaration: (declaration) => {
       var prefix,
           isValid = declaration.value && (declaration.value.indexOf('url') >= 0);
       if (isValid) {
@@ -104,6 +79,24 @@ function process(sourceFile, sourceContent, params) {
       }
     }
   }
+
+  // prepend file protocol to all sources to avoid problems with source map
+  return postcss([
+    postcssPlugin
+  ])
+    .process(correctedContent, {
+      from: fileProtocol.prepend(sourceFile),
+      map : params.outputSourceMap && {
+        prev          : !!params.absSourceMap && fileProtocol.prepend(params.absSourceMap),
+        inline        : false,
+        annotation    : false,
+        sourcesContent: true  // #98 sourcesContent missing from output map
+      }
+    })
+    .then(result => ({
+      content: result.css,
+      map    : params.outputSourceMap ? fileProtocol.remove(result.map.toJSON()) : null
+    }));
 
   /**
    * Given an apparent position find the directory of the original file.
