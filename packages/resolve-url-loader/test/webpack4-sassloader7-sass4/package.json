@@ -5,7 +5,7 @@
     "node": ">=8.9"
   },
   "dependencies": {
-    "adjust-sourcemap-loader": "^2.0.0",
+    "adjust-sourcemap-loader": "^3.0.0",
     "css-loader": "^3.2.0",
     "file-loader": "^4.2.0",
     "mini-css-extract-plugin": "^0.8.0",
