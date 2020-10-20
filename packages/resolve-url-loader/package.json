@@ -1,6 +1,6 @@
 {
   "name": "resolve-url-loader",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
   "main": "index.js",
   "repository": {
