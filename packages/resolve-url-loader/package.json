@@ -1,6 +1,6 @@
 {
   "name": "resolve-url-loader",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
   "main": "index.js",
   "repository": {
@@ -36,7 +36,7 @@
     "lint": "jshint --exclude **/node_modules index.js lib"
   },
   "dependencies": {
-    "adjust-sourcemap-loader": "2.0.0",
+    "adjust-sourcemap-loader": "3.0.0",
     "camelcase": "5.3.1",
     "compose-function": "3.0.3",
     "convert-source-map": "1.7.0",
