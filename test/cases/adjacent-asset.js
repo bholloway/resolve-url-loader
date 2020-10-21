@@ -128,7 +128,7 @@ module.exports = test(
           assertCssSourceMapComment(true),
           compose(
             onlyMeta('meta.engine == "rework" && meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.32a9fc6ea0b1860d3a207e9e38de3cef.css'),
+            assertCssAndSourceMapContent('main.32a9fc6ea0b1860d3a207e9e38de3cef.css', {sanitiseSources: true}),
             outdent
           )`
             /src/feature/index.scss                                                                             
@@ -166,7 +166,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework" && meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.cb82f46362f9ca315ba7.css', 'src'),
+            assertCssAndSourceMapContent('main.cb82f46362f9ca315ba7.css', {sourceRoot: 'src'}),
             outdent
           )`
             feature/index.scss                                                                                  
@@ -205,10 +205,10 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.3b4aa1e8a7fee4a7b65c.css', 'src'),
+            assertCssAndSourceMapContent('main.cbda67410944acc1f957.css'),
             outdent
           )`
-            feature/index.scss                                                                                  
+            /src/feature/index.scss                                                                             
             ----------------------------------------------------------------------------------------------------
             1:1 .some-class-name {⏎                           01:1 .some-class-name {⏎                          
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -228,7 +228,7 @@ module.exports = test(
                 hash);⏎                                            h);⏎                                         
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                 
-            index.scss                                                                                          
+            /src/index.scss                                                                                     
             ----------------------------------------------------------------------------------------------------
             -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 07:1 }⏎                                           
             2:1 .another-class-name {⏎                        09:1 .another-class-name {⏎                       
@@ -239,12 +239,12 @@ module.exports = test(
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.3b4aa1e8a7fee4a7b65
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      c.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.cbda67410944acc1f95
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      7.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `,
           compose(
             onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.d8afb976e857951afc0b2c5d05dfa7d6.css'),
+            assertCssAndSourceMapContent('main.d8afb976e857951afc0b2c5d05dfa7d6.css', {sanitiseSources: true}),
             outdent
           )`
             /src/feature/index.scss                                                                            
@@ -284,7 +284,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss" && meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.78ceabcf7e7dcba0707a.css', 'src'),
+            assertCssAndSourceMapContent('main.78ceabcf7e7dcba0707a.css', {sourceRoot: 'src'}),
             outdent
           )`
             feature/index.scss                                                                                 
@@ -325,10 +325,10 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.72d93274309aff13a9d7.css', 'src'),
+            assertCssAndSourceMapContent('main.da861c3ae0aaf2e698b0.css'),
             outdent
           )`
-            feature/index.scss                                                                                 
+            /src/feature/index.scss                                                                            
             ---------------------------------------------------------------------------------------------------
             1:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -353,7 +353,7 @@ module.exports = test(
             6:51 ░░░░░░;⏎                                     6:48 ░░░; }⏎                                     
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                
-            index.scss                                                                                         
+            /src/index.scss                                                                                    
             ---------------------------------------------------------------------------------------------------
             2:01 .another-class-name {⏎                       8:01 .another-class-name {⏎                      
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -361,8 +361,8 @@ module.exports = test(
             3:17 ░░░░░░░░░░░░░░░░;⏎                           9:17 ░░░░░░░░░░░░░░░░; }⏎                        
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.72d93274309aff13a9
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      d7.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.da861c3ae0aaf2e698
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      b0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -400,7 +400,7 @@ module.exports = test(
           ),
           compose(
             onlyMeta('meta.engine == "rework" && meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.aa63750c6a0b422952024661a1ac51bc.css'),
+            assertCssAndSourceMapContent('main.aa63750c6a0b422952024661a1ac51bc.css', {sanitiseSources: true}),
             outdent
           )`
             /src/feature/index.scss                                                                            
@@ -433,7 +433,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework" && meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.c1129a624153e83e15c3.css', 'src'),
+            assertCssAndSourceMapContent('main.c1129a624153e83e15c3.css', {sourceRoot: 'src'}),
             outdent
           )`
             feature/index.scss                                                                                 
@@ -479,10 +479,10 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.d8adf3b34b764c3d16c6.css', 'src'),
+            assertCssAndSourceMapContent('main.22ae5884522c82ead25d.css'),
             outdent
           )`
-            feature/index.scss                                                                                 
+            /src/feature/index.scss                                                                            
             ---------------------------------------------------------------------------------------------------
             1:1 .some-class-name {⏎                          1:001 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -514,7 +514,7 @@ module.exports = test(
                 #hash);⏎                                           /packageB/images/img.jpg#hash)░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                
-            index.scss                                                                                         
+            /src/index.scss                                                                                    
             ---------------------------------------------------------------------------------------------------
             -:- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:251 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░
             2:1 .another-class-name {⏎                       1:252 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░.another-clas
@@ -525,7 +525,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.aa63750c6a0b422952024661a1ac51bc.css'),
+            assertCssAndSourceMapContent('main.aa63750c6a0b422952024661a1ac51bc.css', {sanitiseSources: true}),
             outdent
           )`
             /src/feature/index.scss                                                                             
@@ -560,7 +560,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss" && meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.39a9c5c9928362121403.css', 'src'),
+            assertCssAndSourceMapContent('main.39a9c5c9928362121403.css', {sourceRoot: 'src'}),
             outdent
           )`
             feature/index.scss                                                                                  
@@ -598,10 +598,10 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.aaab7052e05e2141bfa0.css', 'src'),
+            assertCssAndSourceMapContent('main.22ae5884522c82ead25d.css'),
             outdent
           )`
-            feature/index.scss                                                                                  
+            /src/feature/index.scss                                                                             
             ----------------------------------------------------------------------------------------------------
             1:01 .some-class-name {⏎                          1:001 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -626,7 +626,7 @@ module.exports = test(
             6:51 ░░░░░░;⏎                                     1:251 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                 
-            index.scss                                                                                          
+            /src/index.scss                                                                                     
             ----------------------------------------------------------------------------------------------------
             2:01 .another-class-name {⏎                       1:252 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░.another-clas
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       s-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

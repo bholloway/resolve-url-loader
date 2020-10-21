@@ -2,7 +2,7 @@
 
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRelative'});
+const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRootRelative'});
 
 const extractSass = new ExtractTextPlugin({
   filename: '[name].[contenthash].css',

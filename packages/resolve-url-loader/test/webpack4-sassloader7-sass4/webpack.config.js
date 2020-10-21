@@ -4,7 +4,6 @@ const path = require('path');
 const LastCallWebpackPlugin = require('last-call-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const templateFn = require('adjust-sourcemap-loader').moduleFilenameTemplate({format: 'projectRelative'});
 const processFn = require('adjust-sourcemap-loader/lib/process');
 
 module.exports = {
@@ -12,8 +11,8 @@ module.exports = {
   output: {
     path: path.join(__dirname, process.env.OUTPUT),
     filename: '[name].js',
-    devtoolModuleFilenameTemplate: templateFn,
-    devtoolFallbackModuleFilenameTemplate: templateFn
+    devtoolModuleFilenameTemplate: '[resource-path]',
+    devtoolFallbackModuleFilenameTemplate: '[resource-path]',
   },
   devtool: JSON.parse(process.env.DEVTOOL) && 'nosources-source-map',
   resolve: {
@@ -59,9 +58,10 @@ module.exports = {
     // currently devtoolModuleFilenameTemplate is not respected by OptimizeCSSAssetsPlugin so we must do it ourselves
     new LastCallWebpackPlugin({
       assetProcessors: [{
+        phase: LastCallWebpackPlugin.PHASES.EMIT,
         regExp: /\.css\.map/,
         processor: (assetName, asset) => Promise.resolve(JSON.parse(asset.source()))
-          .then(obj => processFn({}, {format: 'projectRelative'}, obj))
+          .then(obj => processFn({}, {format: 'projectRootRelative'}, obj))
           .then(obj => JSON.stringify(obj))
       }]
     })

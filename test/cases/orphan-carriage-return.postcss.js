@@ -93,7 +93,7 @@ module.exports = test(
           assertCssSourceMapComment(true),
           compose(
             onlyMeta('meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.093ee3cbdee124bd5a8f7c7d42686778.css'),
+            assertCssAndSourceMapContent('main.093ee3cbdee124bd5a8f7c7d42686778.css', {sanitiseSources: true}),
             outdent
           )`
             /src/index.scss                                                                                    
@@ -115,7 +115,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.6e4443dd51c28c07ae5c.css', 'src'),
+            assertCssAndSourceMapContent('main.6e4443dd51c28c07ae5c.css', {sourceRoot: 'src'}),
             outdent
           )`
             index.scss                                                                                         
@@ -138,10 +138,10 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.5450e89a397d025047b0.css', 'src'),
+            assertCssAndSourceMapContent('main.a66a64f774507001e5e0.css'),
             outdent
           )`
-            index.scss                                                                                         
+            /src/index.scss                                                                                    
             ---------------------------------------------------------------------------------------------------
             1:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -156,8 +156,8 @@ module.exports = test(
             8:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         5:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎    
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.5450e89a397d025047
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      b0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.a66a64f774507001e5
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      e0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -191,7 +191,7 @@ module.exports = test(
           ),
           compose(
             onlyMeta('meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.c5f2af008d44d3422725753ad64da0cb.css'),
+            assertCssAndSourceMapContent('main.c5f2af008d44d3422725753ad64da0cb.css', {sanitiseSources: true}),
             outdent
           )`
             /src/index.scss                                                                                    
@@ -214,7 +214,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.86ba9bacab12ac06aa0b.css', 'src'),
+            assertCssAndSourceMapContent('main.86ba9bacab12ac06aa0b.css', {sourceRoot: 'src'}),
             outdent
           )`
             index.scss                                                                                         
@@ -236,10 +236,10 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.1d474c04298b46435eb3.css', 'src'),
+            assertCssAndSourceMapContent('main.e58938fc5e4381ace0b9.css'),
             outdent
           )`
-            index.scss                                                                                         
+            /src/index.scss                                                                                    
             ---------------------------------------------------------------------------------------------------
             1:01 .some-class-name {⏎                          1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
