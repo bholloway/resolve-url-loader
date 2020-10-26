@@ -68,5 +68,12 @@ module.exports = require('../lib/conviction')({
     doc: 'Optional display width for output (default 80)',
     format: require('./natural-number'),
     default: 80
+  },
+  sanitiseSources: {
+    arg: 'sanitiseSources',
+    env: 'SANITISE_SOURCES',
+    doc: 'Optionally sanitise the displayed source',
+    format: 'Boolean',
+    default: false
   }
 });

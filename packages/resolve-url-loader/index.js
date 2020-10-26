@@ -66,6 +66,9 @@ function resolveUrlLoader(content, sourceMap) {
     );
   }
 
+  // infer webpack version from new loader features
+  var isWebpackGte5 = 'getOptions' in loader && typeof loader.getOptions === 'function';
+
   // webpack 1: prefer loader query, else options object
   // webpack 2: prefer loader options
   // webpack 3: deprecate loader.options object
@@ -94,7 +97,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // deprecated options
-  const deprecatedItems = Object.entries(DEPRECATED_OPTIONS).filter(([key]) => key in rawOptions);
+  var deprecatedItems = Object.entries(DEPRECATED_OPTIONS).filter(([key]) => key in rawOptions);
   if (deprecatedItems.length) {
     deprecatedItems.forEach(([, value]) => handleAsDeprecated(...value));
   }
@@ -212,9 +215,12 @@ function resolveUrlLoader(content, sourceMap) {
   function onSuccess(result) {
     if (result) {
       // complete with source-map
-      //  source-map sources are relative to the file being processed
+      //  webpack4 and earlier: source-map sources are relative to the file being processed
+      //  webpack5: source-map sources are relative to the project root but without a leading slash
       if (options.sourceMap) {
-        var finalMap = adjustSourceMap(loader, {format: 'sourceRelative'}, result.map);
+        var finalMap = adjustSourceMap(loader, {
+          format: isWebpackGte5 ? 'projectRelative' : 'sourceRelative'
+        }, result.map);
         callback(null, result.content, finalMap);
       }
       // complete without source-map

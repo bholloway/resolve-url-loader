@@ -49,8 +49,8 @@ module.exports = sequence(
       return instance.toObject();
     }
   }),
-  lensTo('sources')(({ sources }) => sources.map(v => v.replace(/\*$/g, ''))),
-  lensTo('sourcesContent')(({read, sourceRootOverride, sources, sourceRoot}) => {
+  lensTo('sourcesSanitised')(({ sources }) => sources.map(v => v.replace(/\*+$/g, ''))),
+  lensTo('sourcesContent')(({read, sourceRootOverride, sourcesSanitised, sourceRoot}) => {
     const sourceRootAbsolute = parseDirectory(sourceRoot);
     const actualRoot = [
       sourceRootOverride && sourceRootOverride.isDirectory && sourceRootOverride.path,
@@ -61,16 +61,17 @@ module.exports = sequence(
     ]
       .filter(Boolean)
       .map(v => resolve(v))
-      .find(base => sources.map(rebaseTo(base)).every(v => existsSync(v)));
+      .find(base => sourcesSanitised.map(rebaseTo(base)).every(v => existsSync(v)));
 
     if (!actualRoot) {
       throw new Error('viable sourceRoot not found');
     }
 
     return Promise.all(
-      sources.map(rebaseTo(actualRoot)).map((v) => promisify(readFile)(v, 'utf8'))
+      sourcesSanitised.map(rebaseTo(actualRoot)).map((v) => promisify(readFile)(v, 'utf8'))
     );
   }),
+  lensTo('sources')(({ sanitiseSources, sources, sourcesSanitised }) => sanitiseSources ? sourcesSanitised : sources),
   lensTo('result')(toString),
   lensTo()(({ result, write }) => write.stream.write(result)),
   ({ read, write, map: { file: mapFile1, ext: mapFile2 } }) => {

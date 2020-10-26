@@ -69,7 +69,7 @@ module.exports = test(
         assertCssSourceMapComment(true),
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack < 4'),
-          assertCssAndSourceMapContent('main.22c8a53270be8db37dbf39be1932bad7.css'),
+          assertCssAndSourceMapContent('main.22c8a53270be8db37dbf39be1932bad7.css', {sanitiseSources: true}),
           outdent
         )`
           /src/index.scss                                                                                    
@@ -95,7 +95,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.074afcb0a6aa63ad94a9.css', 'src'),
+          assertCssAndSourceMapContent('main.074afcb0a6aa63ad94a9.css', {sourceRoot: 'src'}),
           outdent
         )`
           index.scss                                                                                         
@@ -121,10 +121,10 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.19efcabc960c20771e0d.css', 'src'),
+          assertCssAndSourceMapContent('main.3ac503a6854beade957b.css'),
           outdent
         )`
-          index.scss                                                                                         
+          /src/index.scss                                                                                    
           ---------------------------------------------------------------------------------------------------
           1:1 .some-class-name {⏎                           1:1 .some-class-name .another-class-name {⏎      
                 @import "feature/index.scss";⏎                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -132,10 +132,10 @@ module.exports = test(
               ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ⏎                                            
               ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ⏎                                            
               ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ⏎                                            
-              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     /*# sourceMappingURL=main.19efcabc960c20771e0
-              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     d.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     /*# sourceMappingURL=main.3ac503a6854beade957
+              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     b.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          feature/index.scss                                                                                 
+          /src/feature/index.scss                                                                            
           ---------------------------------------------------------------------------------------------------
           2:3 ░░background-image: url("data:image/svg+xml;c 2:3 ░░background-image: url("data:image/svg+xml;c
               harset=utf8,%3Csvg viewBox='0 0 30 30' xmlns=     harset=utf8,%3Csvg viewBox='0 0 30 30' xmlns=
@@ -147,7 +147,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
-          assertCssAndSourceMapContent('main.3781871968de1c85a9e8a6ead4b634e9.css'),
+          assertCssAndSourceMapContent('main.3781871968de1c85a9e8a6ead4b634e9.css', {sanitiseSources: true}),
           outdent
         )`
           /src/index.scss                                                                                    
@@ -171,7 +171,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.043905a16f1a10c6c6c7.css', 'src'),
+          assertCssAndSourceMapContent('main.043905a16f1a10c6c6c7.css', {sourceRoot: 'src'}),
           outdent
         )`
           index.scss                                                                                         
@@ -196,16 +196,16 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.167349450259e502d3d6.css', 'src'),
+          assertCssAndSourceMapContent('main.deb08f846b74d30fd0fe.css'),
           outdent
         )`
-          index.scss                                                                                         
+          /src/index.scss                                                                                    
           ---------------------------------------------------------------------------------------------------
           1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name {⏎    
                   @import "feature/index.scss";⏎                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          feature/index.scss                                                                                 
+          /src/feature/index.scss                                                                            
           ---------------------------------------------------------------------------------------------------
           2:003 ░░background-image: url("data:image/svg+xml 2:003 ░░background-image: url("data:image/svg+xml
                 ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm
@@ -216,8 +216,8 @@ module.exports = test(
           2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎      
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.167349450259e502d
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       3d6.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.deb08f846b74d30fd
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       0fe.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
           `
       ),
       buildProdNormal(
@@ -246,7 +246,7 @@ module.exports = test(
         ),
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack < 4'),
-          assertCssAndSourceMapContent('main.2c95c3ff72e4a390539d580c0a9d4ae2.css'),
+          assertCssAndSourceMapContent('main.2c95c3ff72e4a390539d580c0a9d4ae2.css', {sanitiseSources: true}),
           outdent
         )`
           /src/index.scss                                                                                     
@@ -269,7 +269,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.9ebfb43b7c1245edf247.css', 'src'),
+          assertCssAndSourceMapContent('main.9ebfb43b7c1245edf247.css', {sourceRoot: 'src'}),
           outdent
         )`
           index.scss                                                                                         
@@ -290,16 +290,16 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.327dbe4d81f76f4db279.css', 'src'),
+          assertCssAndSourceMapContent('main.b720d3274f34b01a782e.css'),
           outdent
         )`
-          index.scss                                                                                         
+          /src/index.scss                                                                                    
           ---------------------------------------------------------------------------------------------------
           1:1 .some-class-name {⏎                          1:001 .some-class-name .another-class-name{░░░░░░░
                 @import "feature/index.scss";⏎                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
           3:1 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:283 ░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          feature/index.scss                                                                                 
+          /src/feature/index.scss                                                                            
           ---------------------------------------------------------------------------------------------------
           2:3 ░░background-image: url("data:image/svg+xml; 1:038 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░backgro
               charset=utf8,%3Csvg viewBox='0 0 30 30' xmln       und-image:url("data:image/svg+xml;charset=ut
@@ -311,7 +311,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
-          assertCssAndSourceMapContent('main.2c95c3ff72e4a390539d580c0a9d4ae2.css'),
+          assertCssAndSourceMapContent('main.2c95c3ff72e4a390539d580c0a9d4ae2.css', {sanitiseSources: true}),
           outdent
         )`
           /src/index.scss                                                                                    
@@ -335,7 +335,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.c91f9447fb9b4556134b.css', 'src'),
+          assertCssAndSourceMapContent('main.c91f9447fb9b4556134b.css', {sourceRoot: 'src'}),
           outdent
         )`
           index.scss                                                                                         
@@ -358,16 +358,16 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.c3d2f7d41a1114ae8701.css', 'src'),
+          assertCssAndSourceMapContent('main.b720d3274f34b01a782e.css'),
           outdent
         )`
-          index.scss                                                                                         
+          /src/index.scss                                                                                    
           ---------------------------------------------------------------------------------------------------
           1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name{░░░░░░
                   @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          feature/index.scss                                                                                 
+          /src/feature/index.scss                                                                            
           ---------------------------------------------------------------------------------------------------
           2:003 ░░background-image: url("data:image/svg+xml 1:038 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░backgr
                 ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ound-image:url("data:image/svg+xml;charset=
