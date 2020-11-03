@@ -77,11 +77,20 @@ exports.assertDeprecationWarning = (message) => sequence(
   assertDeprecationWarning(message)
 );
 
-exports.assertMisconfigWarning = (message) => exports.assertStdout('webpack warning')(1)`
+const assertMisconfigWarningWithMessage = (message) => exports.assertStdout('webpack warning')(1)`
   ^[ ]*WARNING[^\n]*
   ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
   [ ]+${message}
   `;
+
+const assertChildCompilationWarning = exports.assertStdout('webpack warning')(1)`
+  1 WARNING in child compilations
+  `;
+
+exports.assertMisconfigWarning = (message) => sequence(
+  onlyMeta('meta.version.webpack < 5')(assertMisconfigWarningWithMessage(message)),
+  onlyMeta('meta.version.webpack >= 5')(assertChildCompilationWarning)
+);
 
 // Webpack may repeat errors with a header line taken from the parent loader so we allow range 1-2
 const assertModuleNotFoundError = exports.assertStdout('webpack "Module not found" error')([1, 2])`
