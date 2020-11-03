@@ -4,14 +4,14 @@
  */
 'use strict';
 
-const {basename, resolve} = require('path');
+const {resolve} = require('path');
 const tape = require('blue-tape');
 const sinon = require('sinon');
 const outdent = require('outdent');
 
-const {
-  createJoinMsg, sanitiseIterable, createDebugLogger, createAccumulator, createJoinFunction
-} = require('.');
+const { createJoinFunction } = require('.');
+const { createDebugLogger, formatJoinMessage } = require('./debug');
+const sanitiseIterable = require('./sanitise-iterable');
 
 const json = (strings, ...substitutions) =>
   String.raw(
@@ -69,7 +69,7 @@ tape(
       end2();
     });
 
-    test(`${name} / createJoinMsg()`, ({end: end2}) => {
+    test(`${name} / formatJoinMessage()`, ({end: end2}) => {
       [
         // absolute within cwd
         [
@@ -131,7 +131,7 @@ tape(
         ],
       ].forEach(([input, expected]) =>
         equal(
-          createJoinMsg(...input),
+          formatJoinMessage(...input),
           expected,
           json`input ${input} should sanitise to ${expected}`
         )
@@ -216,107 +216,202 @@ tape(
       end2();
     });
 
-    test(`${name} / createAccumulator()`, ({end: end2}) => {
-      const sanitise = object => Object.entries(object)
-        .reduce((r, [k, v]) => typeof v === 'function' ? r : Object.assign(r, {[k]: v}), {});
-
-      const initial = createAccumulator();
-      looseEqual(
-        sanitise(initial),
-        {isAccumulator: true, list: [], length: 0, absolute: null, isFound:false},
-        'initial state should be as expected'
-      );
-
-      [
-        ['append', 'a', {isAccumulator: true, list: ['a'], length: 1, absolute: null, isFound:false}],
-        ['append', 'b', {isAccumulator: true, list: ['a', 'b'], length: 2, absolute: null, isFound:false}],
-        ['placeholder', 'foo', {isAccumulator: true, list: ['a', 'b'], length: 2, absolute: 'foo', isFound:false}],
-        ['placeholder', 'bar', {isAccumulator: true, list: ['a', 'b'], length: 2, absolute: 'bar', isFound:false}],
-        ['append', 'c', {isAccumulator: true, list: ['a', 'b', 'c'], length: 3, absolute: 'bar', isFound:false}],
-        ['found', 'baz', {isAccumulator: true, list: ['a', 'b', 'c'], length: 3, absolute: 'baz', isFound:true}],
-        ['append', 'd', null],
-        ['placeholder', 'foo', null],
-        ['found', 'blit', null],
-      ].reduce((sut, [op, value, expected]) => {
-        const last = sanitise(sut);
-        const result = sut[op](value);
-
-        looseEqual(sanitise(sut), last, `${op}() should be immutable`);
-        if (expected) {
-          looseEqual(sanitise(result), expected, `${op}() should behave as expected`);
-        } else {
-          looseEqual(sanitise(result), last, `${op}() should not operate on finalised instance`);
-        }
-
-        return result;
-      }, initial);
-
-      end2();
-    });
-
     test(`${name} / createJoinFunction()`, ({name: name2, test: test2, end: end2}) => {
       const sandbox = sinon.createSandbox();
 
       const setup = () => {
-        const joinFn = sandbox.stub();
-        const predicateFn = sandbox.stub();
+        const iterableFactory = sandbox.stub();
+        const operation = sandbox.stub();
         const logFn = sandbox.spy();
+        const options = {debug: logFn};
 
-        const sut = createJoinFunction('foo', joinFn, predicateFn)('my-source-file.js', {debug: logFn});
+        const sut = createJoinFunction('foo', iterableFactory, operation);
 
-        return {sut, joinFn, predicateFn, logFn};
+        return {sut, iterableFactory, operation, options, logFn};
       };
 
-      test2(`${name2} / factoryFn`, ({end: end3}) => {
-        const {sut, joinFn, predicateFn} = setup();
-        joinFn.returns(['a', 'b', 'c']);
-        predicateFn.returns(resolve('bar'));
+      test2(`${name2} / iterable`, ({end: end3}) => {
+        const {sut, iterableFactory, operation, options} = setup();
+        iterableFactory.returns(['a', 'b', 'c'].map(v => resolve(v)));
+        operation.returns(resolve('bar'));
 
-        sut('my-asset.png', ['baz', 'blit']);
+        sut('my-source-file.js', options)('my-asset.png', ['baz', 'blit']);
         looseEqual(
-          joinFn.args[0].slice(0, 2),
-          ['my-source-file.js', ['baz', 'blit']],
+          iterableFactory.args[0],
+          ['my-source-file.js', ['baz', 'blit'], options],
           'should be called with expected arguments'
         );
 
         end3();
       });
 
-      test2(`${name2} / predicateFn`, ({end: end3}) => {
-        const {sut, joinFn, predicateFn} = setup();
-        joinFn.returns(['a', 'b', 'c']);
-        predicateFn.callsFake((_filename, _uri, _base, i, next) => i === 0 ? next() : resolve('bar'));
+      test2(`${name2} / operation`, ({name: name3, test: test3, end: end3}) => {
+        const setup2 = (fake) => {
+          const {sut, iterableFactory, operation, options, logFn} = setup();
+          let callCount = 0;
+          iterableFactory.returns(['a', 'b', 'c'].map(v => resolve(v)));
+          operation.callsFake((_, next) => fake(callCount++, next));
+          return {sut, iterableFactory, operation, options, logFn};
+        };
 
-        sut('my-asset.png', ['baz', 'blit']);
-        looseEqual(
-          predicateFn.args.map((v) => v.slice(0, 4)),
-          [['my-source-file.js', 'my-asset.png', 'a', 0], ['my-source-file.js', 'my-asset.png', 'b', 1]],
-          'should be called with expected arguments'
-        );
+        test3(`${name3} / next(fallback) then success`, ({end: end4}) => {
+          const {sut, operation, options, logFn} = setup2(
+            (i, next) => i === 0 ? next(resolve('foo')) : resolve('bar')
+          );
 
-        [
-          [resolve('bar'), true],
-          ['bar', false],
-          ['#bar', false],
-          ['~bar', false],
-          ['~/bar', false]
-        ].forEach(([input, isValid]) => {
-          const test = () => sut('my-asset.png', ['baz', 'blit']);
-          predicateFn.returns(input);
-          if (isValid) {
-            doesNotThrow(test, json`should not throw on output ${input}`);
-          } else {
-            throws(
-              () => sut('my-asset.png', ['baz', 'blit']),
-              json`should throw on output ${input}`
+          equal(
+            sut('my-source-file.js', options)('my-asset.png', ['baz', 'blit']),
+            resolve('bar'),
+            'should return the expected result'
+          );
+
+          looseEqual(
+            operation.args.map(v => [v[0], ...v.slice(2)]),
+            [
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('a')}, options],
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('b')}, options]
+            ],
+            'should be called with expected arguments'
+          );
+
+          looseEqual(
+            logFn.args,
+            [[outdent`
+              resolve-url-loader: ./my-source-file.js: my-asset.png
+                ./a
+                ./b
+                FOUND
+              `]],
+            'should produce the expected debug message'
+          );
+
+          end4();
+        });
+
+        test3(`${name3} / next() then success`, ({end: end4}) => {
+          const {sut, operation, options, logFn} = setup2(
+            (i, next) => i === 0 ? next() : resolve('bar')
+          );
+
+          equal(
+            sut('my-source-file.js', options)('my-asset.png', ['baz', 'blit']),
+            resolve('bar'),
+            'should return the expected result'
+          );
+
+          looseEqual(
+            operation.args.map(v => [v[0], ...v.slice(2)]),
+            [
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('a')}, options],
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('b')}, options]
+            ],
+            'should be called with expected arguments'
+          );
+
+          looseEqual(
+            logFn.args,
+            [[outdent`
+              resolve-url-loader: ./my-source-file.js: my-asset.png
+                ./a
+                ./b
+                FOUND
+              `]],
+            'should produce the expected debug message'
+          );
+
+          end4();
+        });
+
+        test3(`${name3} / next(fallback) then next()`, ({end: end4}) => {
+          const {sut, operation, options, logFn} = setup2(
+            (i, next) => i === 0 ? next(resolve('foo')) : next()
+          );
+
+          equal(
+            sut('my-source-file.js', options)('my-asset.png', ['baz', 'blit']),
+            resolve('foo'),
+            'should return the expected result'
+          );
+
+          looseEqual(
+            operation.args.map(v => [v[0], ...v.slice(2)]),
+            [
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('a')}, options],
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('b')}, options],
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('c')}, options]
+            ],
+            'should be called with expected arguments'
+          );
+
+          looseEqual(
+            logFn.args,
+            [[outdent`
+              resolve-url-loader: ./my-source-file.js: my-asset.png
+                ./a
+                ./b
+                ./c
+                NOT FOUND
+              `]],
+            'should produce the expected debug message'
+          );
+
+          end4();
+        });
+
+        test3(`${name3} / immediate success`, ({end: end4}) => {
+          const {sut, iterableFactory, operation, options, logFn} = setup();
+          iterableFactory.returns(['a', 'b', 'c'].map(v => resolve(v)));
+          operation.callsFake(() => resolve('foo'));
+
+          equal(
+            sut('my-source-file.js', options)('my-asset.png', ['baz', 'blit']),
+            resolve('foo'),
+            'should return the expected result'
+          );
+
+          looseEqual(
+            operation.args.map(v => [v[0], ...v.slice(2)]),
+            [
+              [{filename: 'my-source-file.js', uri: 'my-asset.png', base: resolve('a')}, options]
+            ],
+            'should be called with expected arguments'
+          );
+
+          looseEqual(
+            logFn.args,
+            [[outdent`
+              resolve-url-loader: ./my-source-file.js: my-asset.png
+                ./a
+                FOUND
+              `]],
+            'should produce the expected debug message'
+          );
+
+          end4();
+        });
+
+        test3(`${name2} / output validation`, ({end: end4}) => {
+          [
+            [resolve('bar'), true],
+            ['bar', false],
+            ['#bar', false],
+            ['~bar', false],
+            ['~/bar', false]
+          ].forEach(([output, isValid]) => {
+            const {sut, iterableFactory, operation, options} = setup();
+            iterableFactory.returns(['a', 'b', 'c'].map(v => resolve(v)));
+            operation.returns(output);
+            (isValid ? doesNotThrow : throws)(
+              () => sut('my-source-file.js', options)('my-asset.png', ['baz', 'blit']),
+              isValid ? json`should not throw on output ${output}` : json`should throw on output ${output}`
             );
-          }
+          });
+
+          end4();
         });
 
         end3();
       });
-
-
 
       end2();
     });
