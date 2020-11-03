@@ -6,7 +6,7 @@
 
 var path = require('path');
 
-var PACKAGE_NAME = require('../package.json').name;
+var PACKAGE_NAME = require('../../package.json').name;
 
 /**
  * Webpack `fs` from `enhanced-resolve` doesn't support `existsSync()` so we shim using `statsSync()`.

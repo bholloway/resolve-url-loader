@@ -11,7 +11,7 @@ const outdent = require('outdent');
 
 const {
   createJoinMsg, sanitiseIterable, createDebugLogger, createAccumulator, createJoinFunction
-} = require('./join-function');
+} = require('.');
 
 const json = (strings, ...substitutions) =>
   String.raw(
@@ -20,7 +20,7 @@ const json = (strings, ...substitutions) =>
   );
 
 tape(
-  basename(require.resolve('./join-function')),
+  'join-function',
   ({name, test, end: end1, equal, looseEqual, throws, doesNotThrow}) => {
     test(`${name} / sanitiseIterable()`, ({end: end2}) => {
       [
