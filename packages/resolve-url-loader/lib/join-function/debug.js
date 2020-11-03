@@ -57,8 +57,8 @@ exports.formatJoinMessage = formatJoinMessage;
  * @return {function(function, array):void} A logging function possibly degenerate
  */
 function createDebugLogger(debug) {
-  var log = !!debug && ((typeof debug === 'function') ? debug : console.log);
-  var cache = {};
+  var log   = !!debug && ((typeof debug === 'function') ? debug : console.log),
+      cache = {};
   return log ? actuallyLog : noop;
 
   function noop() {}

@@ -155,8 +155,8 @@ function createJoinFunction(name, createIterator, operation) {
         if (nextItem.done) {
           return accumulator;
         } else {
-          var base = assertAbsolute(nextItem.value, 'expected Iterator<string> of absolute base path', '');
-          var pending = operation({filename, uri, base}, next, options);
+          var base    = assertAbsolute(nextItem.value, 'expected Iterator<string> of absolute base path', ''),
+              pending = operation({filename, uri, base}, next, options);
           if (!!pending && typeof pending === 'object') {
             return pending;
           } else {
