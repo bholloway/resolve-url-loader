@@ -72,7 +72,7 @@ exports.testRoot = (useRoot) => (...elements) =>
     layer()(
       env({
         LOADER_OPTIONS: (useRoot === true) ? (({root}) => ({root})) : ({root: useRoot}),
-        OUTPUT: `root-${typeof useRoot}-${useRoot === '' ? 'empty' : useRoot}`
+        OUTPUT: `root-${typeof useRoot}-${useRoot === '' ? 'empty' : JSON.stringify(useRoot).slice(1, -1)}`
       }),
       ...elements,
       test('validate',

@@ -11,7 +11,7 @@
   "scripts": {
     "lint": "jshint packages --exclude **/node_modules",
     "test:unit": "tape \"!(node_modules)/**/*.test.js\" | tap-diff",
-    "debug:unit": "node $NODE_DEBUG_OPTION $(npm bin)/tape **/*.test.js | tap-diff",
+    "debug:unit": "node $NODE_DEBUG_OPTION $(npm bin)/tape \"!(node_modules)/**/*.test.js\" | tap-diff",
     "test:e2e": "tape test | tap-diff",
     "debug:e2e": "node $NODE_DEBUG_OPTION $(npm bin)/tape test | tap-diff"
   },
