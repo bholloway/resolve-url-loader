@@ -31,7 +31,8 @@
   },
   "files": [
     "index.js",
-    "lib/**/+([a-z-]).js"
+    "lib/**/+([a-z-]).js",
+    "docs/**/*.*"
   ],
   "dependencies": {
     "adjust-sourcemap-loader": "^4.0.0",
