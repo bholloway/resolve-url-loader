@@ -29,17 +29,21 @@ What webpack errors are you getting?
 * ✅ Webpack can't find the relative asset `foo.png` 😞
 * ❌ Webpack says it doesn't have a loader for `fully/resolved/path/foo.png` 😕
 
-If you can tick at least 1 item in **all of these questions** then use this loader. It will allow webpack to find your assets.
+If you can tick at least 1 item in **all of these questions** then use this loader. It will allow webpack to find assets with **fully relative paths**.
 
-If in any question you can't tick any items then then webpack should be able to already find your assets and you don't need this loader. 🤷
+If for any question you can't tick _any_ items then webpack should be able to already find your assets. You don't need this loader. 🤷
 
 Once webpack resolves your assets (even if it complains about loading them) then this loading is working correctly. 👍
 
-### The details are important!
+## What's the problem with SASS?
 
-Read more about project structure and [how the loader works](docs/how-it-works.md).
+When you use **fully relative paths** in `url()` statements then Webpack expects to find those assets next to the root SCSS file, regardless of where you specify the `url()`.
 
-There are some [advanced features](docs/advanced-features.md) that can help you resolve assets.
+[![the basic problem](docs/basic-problem.svg)](docs/basic-problem.svg)
+
+This works fine for trivial SASS. But in any practical composition there will be nested SCSS files. For fully relative paths to work we need `resolve-url-loader` to **rewrite the url**.
+
+With functions and mixins it gets more complicated. Read more detail in [how the loader works](docs/how-it-works.md).
 
 ## Getting started
 
