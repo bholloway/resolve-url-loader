@@ -16,13 +16,19 @@ When using SASS it's common for rules to come from different [partials](https://
 
 [![the detailed problem](detailed-problem.svg)](detailed-problem.svg)
 
-Webpack expects asset paths to be relative to the root SASS file. Since all our assets are in subdirectories we will need to re-write the `url()` to point into the correct subdirectory.
+All the subdirectories here contributed something to the rule, so we could reasonably place the asset in any of them. And any of these locations might be the "correct" to our way of thinking.
 
-All the subdirectories here contributed something to the rule, so we could reasonably place the asset in any of them and consider that "correct" to our way of thinking. There could actually be a separate `cool.png` in each of the subdirectories! In that case, which one should we use?
+There could actually be a separate `cool.png` in each of the subdirectories! 🤯 In that case, which one gets used?
 
-Actually its worse than that. Webpack doesn't know any of these nested SCSS files went into the SASS composition, it only knows about the root SASS file. It doesn't know there _are_ nested directories. How do we rewite to something we don't know about?
+The answer: none. 😞 Webpack expects asset paths to be relative to the root SASS file `src/styles.scss`. So for the CSS `url(cool.png)` it will look for `src/cool.png` which is not present. 💥
 
-To rewrite the url we need to first assemble a list of these contributing directectories and then to look for the asset in those directories. So how do we get that list from SASS post factum, from within Webpack? 😫
+All our assets are in subdirecties `src/foo/cool.png` or `src/foo/bar/cool.png` or `src/foo/bar/baz/cool.png`. We need to re-write the `url()` to point to the one we intend. But right now that's pretty ambiguous.
+
+Worse still, Webpack doesn't know any of these nested SCSS files were part of the SASS composition. Meaing it doesn't know there _are_ nested directories in the first place. How do we rewite to something we don't know about?
+
+**The problem:** How to identify contributing directectories and look for the asset in those directories in some well-defined priority order?
+
+**The crux:** How to identify what contributed to the SASS compilation, internally and post factum, but from within Webpack? 😫
 
 ## The solution
 
