@@ -39,11 +39,23 @@ Once webpack resolves your assets (even if it complains about loading them) then
 
 When you use **fully relative paths** in `url()` statements then Webpack expects to find those assets next to the root SCSS file, regardless of where you specify the `url()`.
 
+To illustrate here are 3 simple examples of SASS and Webpack _without_ `resolve-url-loader`.
+
 [![the basic problem](docs/basic-problem.svg)](docs/basic-problem.svg)
 
-This works fine for trivial SASS. But in any practical composition there will be nested SCSS files. For fully relative paths to work we need `resolve-url-loader` to **rewrite the url**.
+The first 2 cases are trivial and work fine. The asset is specified in the root SCSS file and Webpack finds it.
 
-With functions and mixins it gets more complicated. Read more detail in [how the loader works](docs/how-it-works.md).
+But any practical SASS composition will have nested SCSS files, as in the 3rd case. Here Webpack cannot find the asset.
+
+```
+Module not found: Can't resolve './cool.png' in '/absolute/path/.../my-project/src/styles.scss'
+```
+
+The path we present to Webpack really needs to be `./subdir/cool.png` but we don't want to write that in our SCSS. 😒
+
+Luckily we can use `resolve-url-loader` to do the **url re-writing** and make it work. 😊🎉
+
+With functions and mixins and multiple nesting it gets more complicated. Read more detail in [how the loader works](docs/how-it-works.md). 🤓
 
 ## Getting started
 

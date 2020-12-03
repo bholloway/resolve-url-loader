@@ -12,7 +12,7 @@ Possibly whatever problem you are facing is _not_ an issue with this loader, so 
 **Creating your own webpack config**
 
 1. Do the checklist at the top of the page - do you _need_ to use this loader?
-2. Read and understand the detail on [how the loader works](docs/how-it-works.md).
+2. Read and understand the detail on [how the loader works](how-it-works.md).
 3. Check the known-issues below.
 4. Use the `debug` option to see where the loader is looking for your assets.
 5. Temporarily remove this loader and use non-relative asset paths to check if the problem is something else.
@@ -28,7 +28,7 @@ I'm happy this loader helps so many people. Open-source is provided as-is and I'
 
 Right now this loader only rewrites `url()` statements.
 
-If you need other statements processed, such as `image-set()`, then please upvote #119.
+If you need other statements processed, such as `image-set()`, then please upvote [issue #119](issues/119).
 
 ### Absolute URIs
 
@@ -36,7 +36,7 @@ By "absolute URIs" we more correctly mean assets with root-relative URLs or abso
 
 However any paths that _are_ processed will have windows back-slash converted to posix forward-slash. This can be useful since some webpack loaders can choke on windows paths. By using `root: ''` then `resolve-url-loader` effectively does nothing to absolute paths except change the windows backslash.
 
-👍**Protip** Try using `root: ''` in **windows** if your downstream loaders are choking on windows paths.
+**💡 Protip** In **windows** if your downstream loaders are choking on windows paths using `root: ''` can help.
 
 Also it be useful to process absolute URIs if you have a custom `join` function and want to process all the paths. Although this is perhaps better done with some separate `postcss` plugin.
 
@@ -62,10 +62,10 @@ Some users find the node-sass `linefeed` option solves the problem.
 
 **Work arounds**
 
-* Enable `removeCR` option [here](#options).
+* Enable `removeCR` option [here](../README.md#options).
 * Remove linebreaks in declarations in your `.scss` sources.
 
 **Diagnosis**
-1. Run a stand-alone sass build `npx node-sass index.scss output.css`
-2. Use a hex editor to check line endings `Format-Hex output.css` 
+1. Run a stand-alone sass build `npx node-sass index.scss output.css`.
+2. Use a hex editor to check line endings `Format-Hex output.css`.
 3. Expect `0DOA` (or desired) line endings. Single `0D` confirms this problem.
