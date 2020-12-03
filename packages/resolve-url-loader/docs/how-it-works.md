@@ -2,7 +2,7 @@
 
 ## The problem
 
-This loader is most commonly used with SASS but regardless of the transpiler we end up with CSS. Lets look at a basic example where the structure is basically CSS but is composed using SASS features.
+The `resolve-url-loader` is typically used where SASS source files are transpiled to CSS. CSS being a format that webpack can readily ingest. So let's look at a basic example where the structure is basically CSS but is composed using SASS features.
 
 Working backwards, this is the final CSS we are after. Just a single rule with a single declaration.
 
@@ -12,19 +12,17 @@ Working backwards, this is the final CSS we are after. Just a single rule with a
 }
 ```
 
-When using SASS it's common for rules to come from different partials, and for declarations to be composed using mixins and functions. So let's carve up this CSS into different files to demonstrate that complexity.
+When using SASS it's common for rules to come from different [partials](https://sass-lang.com/documentation/at-rules/import#partials), and for declarations to be composed using mixins and functions. Consider this more complicated project with imported files.
 
 [![the detailed problem](detailed-problem.svg)](detailed-problem.svg)
 
-Now that we have more files we encounter a problem. As we [discussed earlier](../README.md) webpack expects asset paths to be relative to the root SASS file.
+Webpack expects asset paths to be relative to the root SASS file. Since all our assets are in subdirectories we will need to re-write the `url()` to point into the correct subdirectory.
 
-To solve this problem we need to re-write the `url()` asset path. But what should we rewrite it to?
-
-All the subdirectories here contributed something to the declaration, we could reasonably place the asset in any of them. There could be a `cool.png` in _all the directories_! Which one should we use?
+All the subdirectories here contributed something to the rule, so we could reasonably place the asset in any of them and consider that "correct" to our way of thinking. There could actually be a separate `cool.png` in each of the subdirectories! In that case, which one should we use?
 
 Actually its worse than that. Webpack doesn't know any of these nested SCSS files went into the SASS composition, it only knows about the root SASS file. It doesn't know there _are_ nested directories. How do we rewite to something we don't know about?
 
-To rewrite the url we will first we will need a list of these contributing directectories and next look for the asset in those directories. So how do we get that list from SASS post factum, while working from within webpack? 😫
+To rewrite the url we need to first assemble a list of these contributing directectories and then to look for the asset in those directories. So how do we get that list from SASS post factum, from within Webpack? 😫
 
 ## The solution
 
@@ -38,15 +36,13 @@ The SASS source-map is also something we can access from within Webpack.
 
 ### concept
 
-Working with the example above let's simply compile SASS on the command line.
-
-You can do this several different ways but personally I prefer [npx](https://blog.npmjs.org/post/162869356040/introducing-npx-an-npm-package-runner) since I always have `npm` available.
+Continuing with the example let's compile SASS on the command line. You can do this several different ways but I prefer [npx](https://blog.npmjs.org/post/162869356040/introducing-npx-an-npm-package-runner).
 
 ```sh
 > npx node-sass src/styles.scss --output . --output-style expanded --source-map true
 ```
 
-Using the experimental `sourcemap-to-string` package we can visualise the SASS source on the left vs the output CSS on the right.
+Using the experimental `sourcemap-to-string` package (also in this repository) we can visualise the SASS source on the left vs the output CSS on the right.
 
 ```
 src/styles.scss                                                                
@@ -112,14 +108,18 @@ If necessary the order can be customised or a custom file search (starting at ea
 
 ### webpack
 
-A caveat is that we need a Webpack configuration where we _definitely_ get a sourcemap from upstream SASS loader. All the time, not just when `devtool` is used.
+To operate on the `sass-loader` output, both **CSS** and **source-map**, we introduce `resolve-url-loader` containing the algorithm above.
 
-We therefore need to explicitly configure the `sass-loader` for `sourceMap`. The transpiler will then output both **CSS** and **source-map** that we can use downstream, in all developement and production builds. We can then place our algorithm as next loader in line, after the transpiler.
+The `resolve-url-loader` rewrites asset paths found in `url()` notation using the `postcss` parser.
+
+Its essential to explicitly configure the `sass-loader` for `sourceMap: true`. That way we definitely get a sourcemap from upstream SASS loader all the time, not just in developement mode or where `devtool` is used.
 
 ```javascript
 {
   test: /\.scss$/,
-  use: [
+  use: [{
+      loader: 'css-loader'  // <-- assets are ingested here
+    },
     {
       loader: 'resolve-url-loader'  // <-- receives CSS and source-map
     }, {
@@ -133,6 +133,12 @@ We therefore need to explicitly configure the `sass-loader` for `sourceMap`. The
 }
 ```
 
-As a Webpack loader we have full access to the loader API and the virtual file-system. This means maximum compatibility with `webpack-dev-server`.
+Once the CSS reaches the `css-loader` webpack becomes aware of each of the asset files and will try to separately load and process them. You will need more Webpack configuration to make that work. Refer to the [troubleshooting docs](troubleshooting.md) before raising an issue.
 
-It's plausable the algorithm _could_ be realised as a `postcss` plugin in isolation, using the [root.input.map](https://postcss.org/api/#postcss-input) property, and be combined with other plugins in a single `postcss-loader` step. Processing multiple plugins together in this way without reparsing would arguably be more efficient at the expense of compatibility. However for now the implementation is limited to the webpack loader.
+### beyond...?
+
+The implementation here is limited to the webpack loader but it's plausible the algorithm could be realised as a `postcss` plugin in isolation using the [root.input.map](https://postcss.org/api/#postcss-input) property to access the incomming source-map.
+
+As a separate plugin it could be combined with other plugins in a single `postcss-loader` step. Processing multiple plugins together in this way without reparsing would arguably be more efficient.
+
+However as a Webpack loader we have full access to the loader API and the virtual file-system. This means maximum compatibility with `webpack-dev-server` and the rest of the Webpack ecosystem.
