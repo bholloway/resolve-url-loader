@@ -118,26 +118,35 @@ To operate on the `sass-loader` output, both **CSS** and **source-map**, we intr
 
 The `resolve-url-loader` rewrites asset paths found in `url()` notation using the `postcss` parser.
 
-Its essential to explicitly configure the `sass-loader` for `sourceMap: true`. That way we definitely get a sourcemap from upstream SASS loader all the time, not just in developement mode or where `devtool` is used.
+This webpack configuration outlines some important points.
 
 ```javascript
-{
-  test: /\.scss$/,
-  use: [{
-      loader: 'css-loader'  // <-- assets are ingested here
-    },
-    {
-      loader: 'resolve-url-loader'  // <-- receives CSS and source-map
-    }, {
-      loader: 'sass-loader',
-      options: {
-        sourceMap: true,  // <-- IMPORTANT!
-        sourceMapContents: false
+rules: [
+  {
+    test: /\.scss$/,
+    use: [
+      {
+        loader: 'css-loader'  // <-- assets are identified here
+      }, {
+        loader: 'resolve-url-loader'  // <-- receives CSS and source-map from SASS compile
+      }, {
+        loader: 'sass-loader',
+        options: {
+          sourceMap: true,  // <-- IMPORTANT!
+          sourceMapContents: false
+        }
       }
-    }
-  ]
-}
+    ],
+  },
+  ...
+  {
+    test: /\.png$/,  // <-- assets needs their own loader configuration
+    use: [ ... ]
+  }
+]
 ```
+
+Its essential to explicitly configure the `sass-loader` for `sourceMap: true`. That way we definitely get a sourcemap from upstream SASS loader all the time, not just in developement mode or where `devtool` is used.
 
 Once the CSS reaches the `css-loader` webpack becomes aware of each of the asset files and will try to separately load and process them. You will need more Webpack configuration to make that work. Refer to the [troubleshooting docs](troubleshooting.md) before raising an issue.
 
