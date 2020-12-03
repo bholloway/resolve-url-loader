@@ -4,33 +4,15 @@
 
 This loader is most commonly used with SASS but regardless of the transpiler we end up with CSS. Lets look at a basic example where the structure is basically CSS but is composed using SASS features.
 
-Working backwards, this is the final CSS we are after.
+Working backwards, this is the final CSS we are after. Just a single rule with a single declaration.
 
 ```css
 .cool {
   background-image: url(cool.png);
 }
 ```
-The terminolgy will be important later so lets take a quick refresher.
 
-> **📓 terminology**
->
-> Our pure CSS example has the following structure.
->
-> ```css
-> .selector {
->   property: value;
->   property: functional-notation(argument);
-> }
-> ```
->
-> Overall this is a **rule-set** where `.cool` is the **selector** and the `{...}` braces enclose one or more  declarations.
->
-> We have a single **declaration** where `background-image` is the **property** and `url(cool.png)` is the **value**.
->
-> In the value we have `url(...)` **functional-notation** where `url` is the **name** and `cool.png` is the **argument**.
-
-When using SASS it's common for rule-sets to come from different partials, and for declarations to be composed using mixins and functions. So let's carve up this CSS into different files to demonstrate that complexity.
+When using SASS it's common for rules to come from different partials, and for declarations to be composed using mixins and functions. So let's carve up this CSS into different files to demonstrate that complexity.
 
 [![the detailed problem](detailed-problem.svg)](detailed-problem.svg)
 
