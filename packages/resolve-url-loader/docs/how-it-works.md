@@ -14,7 +14,7 @@ Working backwards, this is the final CSS we are after. Just a single rule with a
 
 When using SASS it's common for rules to come from different [partials](https://sass-lang.com/documentation/at-rules/import#partials), and for declarations to be composed using mixins and functions. Consider this more complicated project with imported files.
 
-[![the detailed problem](detailed-problem.svg)](detailed-problem.svg)
+<img src="detailed-problem.svg" alt="the detailed problem" width="363px" height="651px">
 
 All the subdirectories here contributed something to the rule, so we could reasonably place the asset in any of them. And any of these locations might be the "correct" to our way of thinking.
 
