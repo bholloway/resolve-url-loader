@@ -4,7 +4,7 @@ All the advanced features of this loader involve customising the `join` option.
 
 ## The "join" function
 
->⚠️ First read how the [algorithm](./how-it-works.md#algorithm) works.
+⚠️ **IMPORTANT** - First read how the [algorithm](./how-it-works.md#algorithm) works.
 
 The join function determines how relative file URIs are combined with one of the possible base paths the loader has identified.
 
@@ -22,7 +22,7 @@ The `createJoinFunction` creates a join function with the following default beha
    
 2. The iterator is accessed sequentially and a single base path is considered.
 
-   For each base path we perform the  **operation**.
+   For each base path we perform the **operation**.
     * The base path is concatinated with the URI to create an absolute file path.
     * The file-system checked for the existance of that file.
     * The first file becomes the **fallback** result regardless of whether it exists.
@@ -42,10 +42,10 @@ const {
   defaultJoin
 } = require('resolve-url-loader');
 
-// create a join function equivalent to `defaultJoin`
+// create a join function equivalent to "defaultJoin"
 const myJoinFn = createJoinFunction({
-  name          : "myJoinFn",
-  scheme        : "alstroemeria",
+  name          : 'myJoinFn',
+  scheme        : 'alstroemeria',
   createIterator: defaultJoinCreateIterator,
   operation     : defaultJoinOperation
 });
@@ -55,7 +55,9 @@ The `name` is used purely for debugging purposes.
 
 The `scheme` should be a literal string of the current scheme and should match the value shown in the loader `package.json` at the time you first author your custom join function.
 
-The `createIterator` and `operation` may be modified or the default ones used as shown. Which one you modify depends on what you are trying to achieve. An number of use cases are given below, for full reference check the source code in [`lib/join-function/index.js`](../lib/join-function/index.js).
+The `createIterator` choses the order of potential base paths to consider. The `operation` is the predicate which determines whether a base path is successful.  Each may be modified or the default ones used as shown above.
+
+An number of customisation use cases are given below, for full reference check the source code in [`lib/join-function/index.js`](../lib/join-function/index.js).
 
 ### How to: sample source-map differently
 
@@ -74,8 +76,8 @@ const myCreateIterator = (filename, uri, bases, isAbsolute, options) =>
   isAbsolute ? [options.root] : [bases.subString, bases.value, bases.property, bases.selector];
   
 const myJoinFn = createJoinFunction({
-  name          : "myJoinFn",
-  scheme        : "alstroemeria",
+  name          : 'myJoinFn',
+  scheme        : 'alstroemeria',
   createIterator: myCreateIterator,
   operation     : defaultJoinOperation
 });
@@ -94,6 +96,7 @@ const {
   testIsFile
 } = require('resolve-url-loader');
 
+// accept a ".zip" file if the ".png" doesn't exist.
 const myOperation = (filename, uri, base, next, options) => {
   const absolute    = path.normalize(path.join(base, uri));
   const absoluteZip = absolute + '.zip';
@@ -105,8 +108,8 @@ const myOperation = (filename, uri, base, next, options) => {
 };
 
 const myJoinFn = createJoinFunction({
-  name          : "myJoinFn",
-  scheme        : "alstroemeria",
+  name          : 'myJoinFn',
+  scheme        : 'alstroemeria',
   createIterator: defaultJoinCreateIterator,
   operation     : myOperation
 });
@@ -116,13 +119,13 @@ Note that the success criteria is arbitrary. As long as you can evaluate a predi
 
 ### How to: perform a file-search for an asset
 
-> This example is indicative only and is **not** advised
+⚠️ **IMPORTANT** - This example is indicative only and is **not** advised.
 
 When this loader was originally relased it was very common for packages be broken to the point that a full file search was needed to locate assets referred to in CSS. While this was not performant some users really liked it.
 
 So long as your criteria for succes is that the file exists then probably you'll want to leave the `operation` as is. If you just need to generate a list of directories to continue to search then the `createIterator` is a good solution, since you can expand the file search as required.
 
-**example:** search up from the initial base path until you hit the package boundary
+**example:** search up from the initial base path until you hit a package boundary
 
 ```javascript
 const {
@@ -130,7 +133,8 @@ const {
   defaultJoinOperation,
 } = require('resolve-url-loader');
 
-const myCreateIterator = (filename, uri, bases, options) =>
+// search up from the initial base path until you hit a package boundary
+const myCreateIterator = (filename, uri, bases, isAbsolute, options) =>
   isAbsolute ?
     [options.root] :
     {
@@ -148,8 +152,8 @@ const myCreateIterator = (filename, uri, bases, options) =>
     };
 
 const myJoinFn = createJoinFunction({
-  name          : "myJoinFn",
-  scheme        : "alstroemeria",
+  name          : 'myJoinFn',
+  scheme        : 'alstroemeria',
   createIterator: myCreateIterator,
   operation     : defaultJoinOperation
 });
