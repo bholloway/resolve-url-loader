@@ -6,42 +6,66 @@
 
 var path = require('path');
 
-var fs               = require('./fs'),
-    sanitiseIterable = require('./sanitise-iterable'),
+var sanitiseIterable = require('./sanitise-iterable'),
     debug            = require('./debug');
+
+/**
+ * Generated name from "flower" series
+ * @see https://gf.dev/sprintname
+ */
+var CURRENT_SCHEME = require('../../package.json').scheme;
+
+/**
+ * Webpack `fs` from `enhanced-resolve` doesn't support `existsSync()` so we shim using `statsSync()`.
+ *
+ * @param {{statSync:function(string):{isFile:function():boolean}}} webpackFs The webpack `fs` from `loader.fs`.
+ * @param {string} absolutePath Absolute path to the file in question
+ * @returns {boolean} True where file exists, else False
+ */
+function testIsFile(webpackFs, absolutePath) {
+  try {
+    return webpackFs.statSync(absolutePath).isFile();
+  } catch (e) {
+    return false;
+  }
+}
+
+exports.testIsFile = testIsFile;
 
 /**
  * The default iterable factory will order `subString` then `value` then `property` then `selector`.
  *
- * @param {{fs:Object, root:string}} options The loader options including webpack file system
- * @param {string} _filename (unused) The currently processed file
- * @param {{subString:string, value:string, property:string, selector:string}|null} bases A hash of possible base paths
+ * @param {string} filename The absolute path of the file being processed
+ * @param {string} uri The uri given in the file webpack is processing
+ * @param {boolean} isAbsolute True for absolute URIs, false for relative URIs
+ * @param {{subString:string, value:string, property:string, selector:string}} bases A hash of possible base paths
+ * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
  * @returns {Array<string>} An iterable of possible base paths in preference order
  */
-function defaultJoinIterator(_filename, bases, options) {
-  return bases ? [bases.subString, bases.value, bases.property, bases.selector] : [options.root];
+function defaultJoinCreateIterator(filename, uri, isAbsolute, bases, options) {
+  return  isAbsolute ? [options.root] : [bases.subString, bases.value, bases.property, bases.selector];
 }
 
-exports.defaultJoinIterator = defaultJoinIterator;
+exports.defaultJoinCreateIterator = defaultJoinCreateIterator;
 
 /**
  * The default operation simply joins the given base to the uri and returns it where it exists.
  *
  * The result of `next()` represents the eventual result and needs to be returned otherwise.
  *
- * If none of the expected files exist then the first candidate is returned as a "default" value, even if it doesn't
- * exist.
+ * If none of the expected files exist then any given `fallback` argument to `next()` is used even if it does not exist.
  *
- * @param {{filename:string, uri:string, base:string}} value The filename and uri with the i-th base from the iterator.
- * @param {function(?string):<string|Array<string>>} next Rerun with the next value from the iterator, with possible
- *  fallback result
- * @param {{fs:Object, root:string}} options The loader options including webpack file system
- * @returns {string|Array<string>}
+ * @param {string} filename The absolute path of the file being processed
+ * @param {string} uri The uri given in the file webpack is processing
+ * @param {string} base A value from the iterator currently being processed
+ * @param {function(?string):<string|Array<string>>} next Optionally set fallback then recurse next iteration
+ * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
+ * @returns {string|Array<string>} Result from the last iteration that occurred
  */
-function defaultJoinOperation(value, next, options) {
-  var absolute = path.normalize(path.join(value.base, value.uri)),
-      isFile   = fs.testIsFile(options.fs, absolute);
-  return isFile ? absolute : next(absolute);
+function defaultJoinOperation(filename, uri, base, next, options) {
+  var absolute  = path.normalize(path.join(base, uri)),
+      isSuccess = testIsFile(options.fs, absolute);
+  return isSuccess ? absolute : next(absolute);
 }
 
 exports.defaultJoinOperation = defaultJoinOperation;
@@ -53,56 +77,20 @@ exports.defaultJoinOperation = defaultJoinOperation;
  *
  * @type {function}
  */
-exports.defaultJoin = createJoinFunction(
-  'defaultJoin',
-  defaultJoinIterator,
-  defaultJoinOperation
-);
+exports.defaultJoin = createJoinFunction({
+  name          : 'defaultJoin',
+  scheme        : CURRENT_SCHEME,
+  createIterator: defaultJoinCreateIterator,
+  operation     : defaultJoinOperation
+});
 
 /**
- * A utility to create a join function by `iteratble` and `operation` functions.
+ * A utility to create a join function.
  *
- * The internal workings are a little complicated to allow the iterator to be executed lazily. As such your `iterable`
- * can perform costly operations such as a file system search.
- *
- * The `createIterator` is called for relative URIs to order/iterate the possible base paths. It is of the form:
- *
- * ```
- * function(filename, bases, options):Array<string>|Iterator<string>
- * ```
- *
- * where
- * - `filename` The currently processed file
- * - `bases` A hash of possible base paths or `null` for absolute URIs
- * - `options` The loader options (including webpack `fs`)
- *
- * returns
- * - an ordered Array or Iterator of possible base path strings, usually an enumeration of `bases`
- *
- * The `operation` is applied to each value of the iterator given by the `iteratble`. It should test each as a possible
- * base path against the URI and determine whether there is is a match. It may join the final path however it pleases.
- *
- * Where there is no match it should call the given `next()` method. The `next()` may be given an absolute path as an
- * optional fallback. Where there is no match the first fallback is used.
- *
- * ```
- * function({filename, uri, base}, next, options):string|null
- * ```
- *
- * where
- * - `filename` The currently processed file
- * - `uri` The value in the url() statement being processed
- * - `base` A possible base path
- * - `next` Rerun with the next value from the iterator, optionally passing fallback result
- * - `options` The loader options (including webpack `fs`)
- *
- * returns
- * - an absolute path on success
- * - a call to `next(absolute)` on failure where `absolute` is and optional fallback
- *
- * The `filename` argument is typically unused but useful if you would like to differentiate behaviour.
+ * Refer to implementation of `defaultJoinCreateIterator` and `defaultJoinOperation`.
  *
  * @param {string} name Name for the resulting join function
+ * @param {string} scheme A keyword that confirms your implementation matches the current scheme.
  * @param {function(string, {subString:string, value:string, property:string, selector:string}, Object):
  *  (Array<string>|Iterator<string>)} createIterator A function that takes the hash of base paths from the `engine` and
  *  returns ordered iteratable of paths to consider
@@ -111,14 +99,19 @@ exports.defaultJoin = createJoinFunction(
  * @returns {function(string, {fs:Object, debug:function|boolean, root:string}):
  *  (function(string, {subString:string, value:string, property:string, selector:string}):string)} join function factory
  */
-function createJoinFunction(name, createIterator, operation) {
+function createJoinFunction({ name, scheme, createIterator, operation }) {
+  if (typeof scheme !== 'string' || scheme.toLowerCase() !== CURRENT_SCHEME) {
+    throw new Error(`Custom join function has changed, please update to the latest scheme. Refer to the docs.`);
+  }
+
   /**
    * A factory for a join function with logging.
    *
-   * @param {string} filename The current file being processed
-   * @param {{fs:Object, debug:function|boolean, root:string}} options An options hash
+   * Options are curried and a join function proper is returned.
+   *
+   * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
    */
-  function join(filename, options) {
+  function join(options) {
     var log = debug.createDebugLogger(options.debug);
 
     /**
@@ -126,13 +119,14 @@ function createJoinFunction(name, createIterator, operation) {
      *
      * For absolute uri only `uri` will be provided and no `bases`.
      *
+     * @param {string} filename The current file being processed
      * @param {string} uri A uri path, relative or absolute
-     * @param {{subString:string, value:string, property:string, selector:string}} bases? Optional hash of possible base
-     *  paths
+     * @param {boolean} isAbsolute True for absolute URIs, false for relative URIs
+     * @param {{subString:string, value:string, property:string, selector:string}} bases Hash of possible base paths
      * @return {string} Just the uri where base is empty or the uri appended to the base
      */
-    return function joinProper(uri, bases) {
-      var iterator   = sanitiseIterable(createIterator(filename, bases, options)),
+    return function joinProper(filename, uri, isAbsolute, bases) {
+      var iterator   = sanitiseIterable(createIterator(filename, uri, isAbsolute, bases, options)),
           result     = reduceIterator({inputs:[], outputs:[], isFound:false}, iterator),
           lastOutput = result.outputs[result.outputs.length-1],
           fallback   = result.outputs.find(Boolean) || uri;
@@ -156,7 +150,7 @@ function createJoinFunction(name, createIterator, operation) {
           return accumulator;
         } else {
           var base    = assertAbsolute(nextItem.value, 'expected Iterator<string> of absolute base path', ''),
-              pending = operation({filename, uri, base}, next, options);
+              pending = operation(filename, uri, base, next, options);
           if (!!pending && typeof pending === 'object') {
             return pending;
           } else {

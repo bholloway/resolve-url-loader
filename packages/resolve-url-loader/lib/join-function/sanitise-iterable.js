@@ -19,7 +19,7 @@ function sanitiseIterable(candidate) {
   } else if (candidate && (typeof candidate === 'object') && candidate[Symbol.iterator]) {
     return candidate;
   } else {
-    throw new TypeError('expected Array<string>|Iterable<string>');
+    throw new TypeError('Error in "join" function. Expected Array<string>|Iterable<string>');
   }
 
   function isString(v) {

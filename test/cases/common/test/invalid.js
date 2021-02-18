@@ -86,14 +86,14 @@ exports.testNonFunctionJoin = (...rest) =>
 
 exports.testWrongArityJoin = (...rest) =>
   test(
-    'join=!arity2',
+    'join=!arity1',
     layer()(
       env({
-        LOADER_JOIN: 'return (a) => a;',
+        LOADER_JOIN: 'return (a, b) => undefined;',
         OUTPUT: 'wrong-arity-join'
       }),
       ...rest,
-      test('validate', assertStderr('options.join')(1)`join: \(a\) => a`)
+      test('validate', assertStderr('options.join')(1)`join: \(a, b\) => undefined`)
     )
   );
 
