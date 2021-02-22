@@ -22,7 +22,7 @@ var CURRENT_SCHEME = require('../../package.json').scheme;
  * @param {string} absolutePath Absolute path to the file in question
  * @returns {boolean} True where file exists, else False
  */
-function testIsFile(webpackFs, absolutePath) {
+function webpackExistsSync(webpackFs, absolutePath) {
   try {
     return webpackFs.statSync(absolutePath).isFile();
   } catch (e) {
@@ -30,7 +30,7 @@ function testIsFile(webpackFs, absolutePath) {
   }
 }
 
-exports.testIsFile = testIsFile;
+exports.webpackExistsSync = webpackExistsSync;
 
 /**
  * The default iterable factory will order `subString` then `value` then `property` then `selector`.
@@ -42,11 +42,11 @@ exports.testIsFile = testIsFile;
  * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
  * @returns {Array<string>} An iterable of possible base paths in preference order
  */
-function defaultJoinCreateIterator(filename, uri, isAbsolute, bases, options) {
+function defaultJoinGenerator(filename, uri, isAbsolute, bases, options) {
   return  isAbsolute ? [options.root] : [bases.subString, bases.value, bases.property, bases.selector];
 }
 
-exports.defaultJoinCreateIterator = defaultJoinCreateIterator;
+exports.defaultJoinGenerator = defaultJoinGenerator;
 
 /**
  * The default operation simply joins the given base to the uri and returns it where it exists.
@@ -64,7 +64,7 @@ exports.defaultJoinCreateIterator = defaultJoinCreateIterator;
  */
 function defaultJoinOperation(filename, uri, base, next, options) {
   var absolute  = path.normalize(path.join(base, uri)),
-      isSuccess = testIsFile(options.fs, absolute);
+      isSuccess = webpackExistsSync(options.fs, absolute) && options.fs.statSync(absolute).isFile();
   return isSuccess ? absolute : next(absolute);
 }
 
@@ -78,28 +78,28 @@ exports.defaultJoinOperation = defaultJoinOperation;
  * @type {function}
  */
 exports.defaultJoin = createJoinFunction({
-  name          : 'defaultJoin',
-  scheme        : CURRENT_SCHEME,
-  createIterator: defaultJoinCreateIterator,
-  operation     : defaultJoinOperation
+  name     : 'defaultJoin',
+  scheme   : CURRENT_SCHEME,
+  generator: defaultJoinGenerator,
+  operation: defaultJoinOperation
 });
 
 /**
  * A utility to create a join function.
  *
- * Refer to implementation of `defaultJoinCreateIterator` and `defaultJoinOperation`.
+ * Refer to implementation of `defaultJoinGenerator` and `defaultJoinOperation`.
  *
  * @param {string} name Name for the resulting join function
  * @param {string} scheme A keyword that confirms your implementation matches the current scheme.
  * @param {function(string, {subString:string, value:string, property:string, selector:string}, Object):
- *  (Array<string>|Iterator<string>)} createIterator A function that takes the hash of base paths from the `engine` and
- *  returns ordered iteratable of paths to consider
+ *  (Array<string>|Iterator<string>)} generator A function that takes the hash of base paths from the `engine` and
+ *  returns ordered iterable of paths to consider
  * @param {function({filename:string, uri:string, base:string}, function(?string):<string|Array<string>>,
  *  {fs:Object, root:string}):(string|Array<string>)} operation A function that tests values and returns joined paths
  * @returns {function(string, {fs:Object, debug:function|boolean, root:string}):
  *  (function(string, {subString:string, value:string, property:string, selector:string}):string)} join function factory
  */
-function createJoinFunction({ name, scheme, createIterator, operation }) {
+function createJoinFunction({ name, scheme, generator, operation }) {
   if (typeof scheme !== 'string' || scheme.toLowerCase() !== CURRENT_SCHEME) {
     throw new Error(`Custom join function has changed, please update to the latest scheme. Refer to the docs.`);
   }
@@ -126,7 +126,7 @@ function createJoinFunction({ name, scheme, createIterator, operation }) {
      * @return {string} Just the uri where base is empty or the uri appended to the base
      */
     return function joinProper(filename, uri, isAbsolute, bases) {
-      var iterator   = sanitiseIterable(createIterator(filename, uri, isAbsolute, bases, options)),
+      var iterator   = sanitiseIterable(generator(filename, uri, isAbsolute, bases, options)),
           result     = reduceIterator({inputs:[], outputs:[], isFound:false}, iterator),
           lastOutput = result.outputs[result.outputs.length-1],
           fallback   = result.outputs.find(Boolean) || uri;
@@ -202,7 +202,7 @@ function createJoinFunction({ name, scheme, createIterator, operation }) {
     return '[Function ' + name + ']';
   }
 
-  return Object.assign(join, name && {
+  return Object.assign(join, !!name && {
     toString: toString,
     toJSON  : toString
   });

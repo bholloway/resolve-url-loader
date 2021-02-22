@@ -47,7 +47,8 @@ tape(
       [
         [['a', 'b', 'c'][Symbol.iterator](), ['a', 'b', 'c']],
         [[1, 2, 3][Symbol.iterator](), [1, 2, 3]],
-        [[1, 2, 3].keys(), [0, 1, 2]] // values() is unsupported until node v10.18.0
+        [[1, 2, 3].keys(), [0, 1, 2]], // values() is unsupported until node v10.18.0
+        [(function* () { yield 'x'; yield 'y'; yield 'z'; })(), ['x', 'y', 'z']],
       ].forEach(([input, expected]) =>
         looseEqual(
           [...sanitiseIterable(input)],
@@ -222,7 +223,7 @@ tape(
       const sandbox = sinon.createSandbox();
 
       const setup = (scheme) => {
-        const createIterator = sandbox.stub();
+        const generator = sandbox.stub();
         const operation = sandbox.stub();
         const logFn = sandbox.spy();
         const bases = {};
@@ -231,11 +232,11 @@ tape(
         const sut = createJoinFunction({
           name: 'foo',
           scheme,
-          createIterator,
+          generator,
           operation
         });
 
-        return {sut, createIterator, operation, bases, options, logFn};
+        return {sut, generator, operation, bases, options, logFn};
       };
 
       test2(`${name2} / scheme`, ({end: end3}) => {
@@ -264,13 +265,13 @@ tape(
       });
 
       test2(`${name2} / iterable`, ({end: end3}) => {
-        const {sut, createIterator, operation, bases, options} = setup(CURRENT_SCHEME);
-        createIterator.returns(['a', 'b', 'c'].map(v => resolve(v)));
+        const {sut, generator, operation, bases, options} = setup(CURRENT_SCHEME);
+        generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
         operation.returns(resolve('bar'));
 
         sut(options)('my-source-file.js', 'my-asset.png', false, bases);
         looseEqual(
-          createIterator.args[0],
+          generator.args[0],
           ['my-source-file.js', 'my-asset.png', false, bases, options],
           'should be called with expected arguments'
         );
@@ -285,11 +286,11 @@ tape(
           [...v.slice(0, NEXT_ARG_INDEX), ...v.slice(NEXT_ARG_INDEX+1)];
 
         const setup2 = (fake) => {
-          const {sut, createIterator, operation, options, logFn} = setup(CURRENT_SCHEME);
+          const {sut, generator, operation, options, logFn} = setup(CURRENT_SCHEME);
           let callCount = 0;
-          createIterator.returns(['a', 'b', 'c'].map(v => resolve(v)));
+          generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
           operation.callsFake((...args) => fake(callCount++, args[NEXT_ARG_INDEX]));
-          return {sut, createIterator, operation, options, logFn};
+          return {sut, generator, operation, options, logFn};
         };
 
         test3(`${name3} / next(fallback) then success`, ({end: end4}) => {
@@ -397,8 +398,8 @@ tape(
         });
 
         test3(`${name3} / immediate success`, ({end: end4}) => {
-          const {sut, createIterator, operation, bases, options, logFn} = setup(CURRENT_SCHEME);
-          createIterator.returns(['a', 'b', 'c'].map(v => resolve(v)));
+          const {sut, generator, operation, bases, options, logFn} = setup(CURRENT_SCHEME);
+          generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
           operation.callsFake(() => resolve('foo'));
 
           equal(
@@ -436,8 +437,8 @@ tape(
             ['~bar', false],
             ['~/bar', false]
           ].forEach(([output, isValid]) => {
-            const {sut, createIterator, operation, bases, options} = setup(CURRENT_SCHEME);
-            createIterator.returns(['a', 'b', 'c'].map(v => resolve(v)));
+            const {sut, generator, operation, bases, options} = setup(CURRENT_SCHEME);
+            generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
             operation.returns(output);
             (isValid ? doesNotThrow : throws)(
               () => sut(options)('my-source-file.js', 'my-asset.png', false, bases),
