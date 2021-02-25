@@ -34,7 +34,7 @@ Worse still, Webpack doesn't know any of these nested SCSS files were part of th
 
 Sourcemaps! 😃
 
-Wait.. don't run away.. sure sourcemaps can be scarey but they solve our problem reasonably well. 👍
+Wait, don't run away! Sourcemaps might sound scary, but they solve our problem reasonably well. 👍
 
 The SASS compiler source-map can tell us which original SCSS file contributed each character in the resulting CSS.
 
