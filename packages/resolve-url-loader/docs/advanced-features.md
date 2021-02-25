@@ -2,6 +2,10 @@
 
 ⚠️ **IMPORTANT** - First read how the [algorithm](./how-it-works.md#algorithm) works.
 
+* [building blocks](#building-blocks)
+* [reference](#reference)
+* [how to](#how-to)
+
 All the advanced features of this loader involve customising the `join` option.
 
 The "join" function determines how CSS URIs are combined with one of the possible base paths the loader has identified.
@@ -40,6 +44,57 @@ When **not** specifying the `join` option, the in-built `defaultJoin` has the fo
    This is the `defaultJoinOperation`.
 
 When using `createJoinFunction` it's common to customise one of the `generator` or `operation` parameters and leave the other as default.
+
+## Reference
+
+For full reference check the source code in [`lib/join-function/index.js`](../lib/join-function/index.js).
+
+The default "join" function is exported as `defaultJoin` and is equivalent to the following.
+
+```javascript
+const {
+  createJoinFunction,
+  defaultJoinGenerator,
+  defaultJoinOperation,
+  defaultJoin
+} = require('resolve-url-loader');
+
+// create a join function equivalent to "defaultJoin"
+const myJoinFn = createJoinFunction({
+  name     : 'myJoinFn',
+  scheme   : 'alstroemeria',
+  generator: defaultJoinGenerator,
+  operation: defaultJoinOperation
+});
+```
+
+The `name: string` is used purely for debugging purposes.
+
+The `scheme: string` should be a literal string of the current scheme and should match the value shown in the loader `package.json` at the time you first author your custom join function.
+
+The `generator: function` chooses the order of potential base paths to consider.
+
+```javascript
+generator (filename: string, uri: string, bases: {}, isAbsolute:boolean, options: {}) => Array<string> | Iterable<string> 
+```
+
+* The `filename: string` is the loader `resourcePath`.
+* The `uri: string` is the argument to the `url()` as it appears in the source file.
+* The `bases: {}` are a hash where the keys are the sourcemap evaluation locations in the [algorithm](./how-it-works.md#algorithm) and the values are absolute paths that the sourcemap reports. These directories might not actually exist.
+* The `isAbsolute: boolean` flag indicates whether the URI is considered an absolute file or root relative path by webpack's definition. Absolute URIs are only processed if the `root` option is specified.
+* The `options: {}` are the loader options as configured in webpack. This includes documented options as well as any you add in your configuration.
+
+The `operation: function` is the predicate which determines whether a base path is successful. Each may be modified or the default ones used as shown above.
+
+```javascript
+operation (filename: string, uri: string, base: string, next: (string?) => string, options: {}) => string
+```
+
+* The `filename: string` is the loader `resourcePath`.
+* The `uri: string` is the argument to the `url()` as it appears in the source file.
+* The `base: string` is a single base path where the URI may exist. This directory might not actually exist.
+* The `next: (string?) => string` function is only called on failure. Passing any value to `next(...)` marks that as a fallback value but only the earliest fallback is ever used. Always `return` the result of calling `next()`.
+* The `options: {}` are the loader options as configured in webpack. This includes documented options as well as any you add in your configuration.
 
 ## How to
 
@@ -119,7 +174,7 @@ Notes
 
 ⚠️ **IMPORTANT** - This example is indicative only and is **not** advised.
 
-When this loader was originally relaesed it was very common for packages be broken to the point that a full file search was needed to locate assets referred to in CSS. While this was not performant some users really liked it.
+When this loader was originally released it was very common for packages be broken to the point that a full file search was needed to locate assets referred to in CSS. While this was not performant some users really liked it.
 
 By customising the `generator` it is possibly to lazily provide a file search. So long as your criteria for success is that the file exists then the default `operation` can by used.
 
@@ -166,54 +221,3 @@ Notes
 * The webpack file-system is provided by the `enhanced-resolver-plugin` and does not contain `fs.existsSync`. Instead, use the `webpackExistsSync` utility function as shown.
 
 * You may set additional `options` when you configure the loader in webpack that you can then access in the generator. In this case the `attempts` could be made a configurable option.
-
-## Reference
-
-For full reference check the source code in [`lib/join-function/index.js`](../lib/join-function/index.js).
-
-The default "join" function is exported as `defaultJoin` and is equivalent to the following.
-
-```javascript
-const {
-  createJoinFunction,
-  defaultJoinGenerator,
-  defaultJoinOperation,
-  defaultJoin
-} = require('resolve-url-loader');
-
-// create a join function equivalent to "defaultJoin"
-const myJoinFn = createJoinFunction({
-  name     : 'myJoinFn',
-  scheme   : 'alstroemeria',
-  generator: defaultJoinGenerator,
-  operation: defaultJoinOperation
-});
-```
-
-The `name` is used purely for debugging purposes.
-
-The `scheme` should be a literal string of the current scheme and should match the value shown in the loader `package.json` at the time you first author your custom join function.
-
-The `generator` chooses the order of potential base paths to consider.
-
-```javascript
-generator (filename: string, uri: string, bases: {}, isAbsolute:boolean, options: {}) => Array<string> | Iterable<string> 
-```
-
-* The `filename` is the loader `resourcePath`.
-* The `uri` is the argument to the `url()` as it appears in the source file.
-* The `bases` are a hash where the keys are the sourcemap evaluation locations in the [algorithm](./how-it-works.md#algorithm) and the values are absolute paths that the sourcemap reports. These directories might not actually exist.
-* The `isAbsolute` flag indicates whether the URI is considered an absolute file or root relative path by webpack's definition. Absolute URIs are only processed if the `root` option is specified.
-* The `options` are the loader options as configured in webpack. This includes documented options as well as any you add in your configuration.
-
-The `operation` is the predicate which determines whether a base path is successful. Each may be modified or the default ones used as shown above.
-
-```javascript
-operation (filename: string, uri: string, base: string, next: function, options: {}) => string | typeof call<next>
-```
-
-* The `filename` is the loader `resourcePath`.
-* The `uri` is the argument to the `url()` as it appears in the source file.
-* The `base` is a single base path where the URI may exist. This directory might not actually exist.
-* The `next` function is only called on failure. Passing any value to `next(...)` marks that as a fallback value but only the earliest fallback is ever used. Always `return` the result of calling `next()`.
-* The `options` are the loader options as configured in webpack. This includes documented options as well as any you add in your configuration.
