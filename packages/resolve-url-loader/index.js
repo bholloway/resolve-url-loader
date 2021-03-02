@@ -16,8 +16,6 @@ var valueProcessor   = require('./lib/value-processor');
 var joinFn           = require('./lib/join-function');
 var logToTestHarness = require('./lib/log-to-test-harness');
 
-const noop = () => undefined;
-
 const DEPRECATED_OPTIONS = {
   engine: [
     'DEP_RESOLVE_URL_LOADER_OPTION_ENGINE',
@@ -108,10 +106,10 @@ function resolveUrlLoader(content, sourceMap) {
       'loader misconfiguration',
       '"join" option must be a Function'
     );
-  } else if (options.join.length !== 2) {
+  } else if (options.join.length !== 1) {
     return handleAsError(
       'loader misconfiguration',
-      '"join" Function must take exactly 2 arguments (filename and options hash)'
+      '"join" Function must take exactly 1 arguments (options hash)'
     );
   }
 
@@ -238,7 +236,7 @@ function resolveUrlLoader(content, sourceMap) {
    */
   function handleAsDeprecated(code, message) {
     if (!options.silent) {
-      util.deprecate(noop, message, code)();
+      util.deprecate(() => undefined, message, code)();
     }
     return content;
   }

@@ -18,8 +18,8 @@ function valueProcessor(filename, options) {
   var URL_STATEMENT_REGEX = /(url\s*\(\s*)(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))(\s*\))/g,
       QUERY_REGEX         = /([?#])/g;
 
-  var directory = path.dirname(filename),
-      join      = options.join(filename, options);
+  var directory  = path.dirname(filename),
+      joinProper = options.join(options);
 
   /**
    * Process the given CSS declaration value.
@@ -43,7 +43,7 @@ function valueProcessor(filename, options) {
     /**
      * Ensure all capture group tokens are a valid string.
      *
-     * @param {string|undefined} token A capture group or uncaptured token
+     * @param {string|void} token A capture group or uncaptured token
      * @returns {string}
      */
     function initialise(token) {
@@ -88,10 +88,10 @@ function valueProcessor(filename, options) {
         var split    = unescaped.split(QUERY_REGEX),
             uri      = split[0],
             query    = split.slice(1).join(''),
-            absolute = testIsRelative(uri) && join(uri, getPathsAtChar(position)) ||
-                       testIsAbsolute(uri) && join(uri, null);
+            absolute = testIsRelative(uri) && joinProper(filename, uri, false, getPathsAtChar(position)) ||
+                       testIsAbsolute(uri) && joinProper(filename, uri, true,  getPathsAtChar(position));
 
-        // default to initialised else path relative to the processed file
+        // not all URIs are files
         if (!absolute) {
           return element;
         } else {

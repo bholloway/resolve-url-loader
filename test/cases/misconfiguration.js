@@ -258,7 +258,7 @@ module.exports = test(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
-          assertMisconfigError('"join" Function must take exactly 2 arguments (filename and options hash)')
+          assertMisconfigError('"join" Function must take exactly 1 arguments (options hash)')
         )
       )
     ),
