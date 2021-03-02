@@ -1,6 +1,6 @@
 {
   "name": "resolve-url-loader",
-  "version": "4.0.0-alpha.2",
+  "version": "4.0.0-alpha.3",
   "description": "Webpack loader that resolves relative paths in url() statements based on the original source file",
   "main": "index.js",
   "repository": {
@@ -32,7 +32,7 @@
   "files": [
     "index.js",
     "lib/**/+([a-z-]).js",
-    "docs/**/*.*"
+    "docs/basic-problem.svg"
   ],
   "dependencies": {
     "adjust-sourcemap-loader": "^4.0.0",
