@@ -146,7 +146,7 @@ function requireOptionalPeerDependency(moduleName) {
   }
   catch (error) {
     if (error.message === 'Cannot find module \'' + moduleName + '\'') {
-      throw new Error('To use the "rework" engine you must install the optionalPeerDependencies');
+      throw new Error('to use the "rework" engine you must install the optionalPeerDependencies');
     }
     else {
       throw error;

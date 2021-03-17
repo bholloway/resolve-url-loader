@@ -23,5 +23,5 @@
   "maxlen": 120,
   "scripturl": true,
   "node": true,
-  "esversion": 6
+  "esversion": 9
 }

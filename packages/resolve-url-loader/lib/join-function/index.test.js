@@ -9,209 +9,251 @@ const tape = require('blue-tape');
 const sinon = require('sinon');
 const outdent = require('outdent');
 
-const { createJoinFunction } = require('.');
-const { createDebugLogger, formatJoinMessage } = require('./debug');
-const sanitiseIterable = require('./sanitise-iterable');
-
-const CURRENT_SCHEME = require('../../package.json').scheme;
-
-const json = (strings, ...substitutions) =>
-  String.raw(
-    strings,
-    ...substitutions.map(v => JSON.stringify(v, (_, vv) => Number.isNaN(vv) ? 'NaN' : vv))
-  );
+const { createJoinFunction, createJoinImplementation, asGenerator } = require('.');
 
 tape(
   'join-function',
   ({name, test, end: end1, equal, looseEqual, throws, doesNotThrow}) => {
-    test(`${name} / sanitiseIterable()`, ({end: end2}) => {
-      [
-        [['a', 1, 'b', 2, 'c'], ['a', 'b', 'c']],
-        [['x', 'y', 'z', 'x', 'y'], ['x', 'y', 'z']]
-      ].forEach(([input, expected]) => {
-        const result = sanitiseIterable(input);
+    test(`${name} / createJoinImplementation()`, ({name: name2, test: test2, end: end2}) => {
+      const sandbox = sinon.createSandbox();
 
-        equal(
-          result && typeof result === 'object' && typeof result[Symbol.iterator],
-          'function',
-          'Array input should create an Iterable output'
-        );
-
-        looseEqual(
-          [...result],
-          expected,
-          'Array should be permitted and filtered for unique strings'
-        );
-      });
-
-      [
-        [['a', 'b', 'c'][Symbol.iterator](), ['a', 'b', 'c']],
-        [[1, 2, 3][Symbol.iterator](), [1, 2, 3]],
-        [[1, 2, 3].keys(), [0, 1, 2]], // values() is unsupported until node v10.18.0
-        [(function* () { yield 'x'; yield 'y'; yield 'z'; })(), ['x', 'y', 'z']],
-      ].forEach(([input, expected]) =>
-        looseEqual(
-          [...sanitiseIterable(input)],
-          expected,
-          'Iterable should be permitted and unfiltered'
-        )
-      );
-
-      [
-        false,
-        123,
-        'hello',
-        {a:1, b:2}
-      ].forEach((input) =>
-        throws(
-          () => sanitiseIterable(input),
-          json`value ${input} should throw Error`
-        )
-      );
-
-      end2();
-    });
-
-    test(`${name} / formatJoinMessage()`, ({end: end2}) => {
-      [
-        // absolute within cwd
-        [
-          [resolve('my-source-file.js'), 'my-asset.png', [resolve('foo'), resolve('bar', 'baz')], true],
-          outdent`
-            resolve-url-loader: ./my-source-file.js: my-asset.png
-              ./foo
-              ./bar/baz
-              FOUND
-              `
-        ],
-        // absolute otherwise
-        [
-          ['/my-source-file.js', '#anything\\./goes', ['/foo', '/bar/baz'], false],
-          outdent`
-            resolve-url-loader: /my-source-file.js: #anything\\./goes
-              /foo
-              /bar/baz
-              NOT FOUND
-              `
-        ],
-        // presumed relative
-        [
-          ['my-source-file.js', 'my-asset.png', ['foo', 'bar/baz'], true],
-          outdent`
-            resolve-url-loader: ./my-source-file.js: my-asset.png
-              ./foo
-              ./bar/baz
-              FOUND
-              `
-        ],
-        // explicitly relative
-        [
-          ['./my-source-file.js', 'my-asset.png', ['./foo', './bar/baz'], true],
-          outdent`
-            resolve-url-loader: ./my-source-file.js: my-asset.png
-              ./foo
-              ./bar/baz
-              FOUND
-              `
-        ],
-        [
-          ['../my-source-file.js', 'my-asset.png', ['../foo', '../bar/baz'], false],
-          outdent`
-            resolve-url-loader: ../my-source-file.js: my-asset.png
-              ../foo
-              ../bar/baz
-              NOT FOUND
-              `
-        ],
-        // empty
-        [
-          ['./my-source-file.js', 'my-asset.png', [''], true],
-          outdent`
-            resolve-url-loader: ./my-source-file.js: my-asset.png
-              -empty-
-              FOUND
-              `
-        ],
-      ].forEach(([input, expected]) =>
-        equal(
-          formatJoinMessage(...input),
-          expected,
-          json`input ${input} should sanitise to ${expected}`
-        )
-      );
-
-      end2();
-    });
-
-    test(`${name} / createDebugLogger()`, ({name: name2, test: test2, end: end2}) => {
-      test2(`${name2} / false`, ({end: end3}) => {
-        const sandbox = sinon.createSandbox();
-        const factory = sandbox.fake.returns('foo');
-        const consoleLog = sandbox.stub(console, 'log');
-
-        const logger = createDebugLogger(false);
-        logger(factory);
-        sandbox.restore();
-
-        equal(consoleLog.callCount, 0, 'should not call console.log()');
-        equal(factory.callCount, 0, 'should not call underlying message factory');
-
-        end3();
-      });
-
-      test2(`${name2} / true`, ({end: end3}) => {
-        const sandbox = sinon.createSandbox();
-        const factory = sandbox.fake.returns('foo');
-        const consoleLog = sandbox.stub(console, 'log');
-
-        const logger = createDebugLogger(true);
-        logger(factory, ['bar', 1, false]);
-        logger(factory, ['baz', 2, undefined]);
-        sandbox.restore();
-
-        equal(factory.callCount, 2, 'should call underlying log message factory');
-        looseEqual(
-          factory.args,
-          [['bar', 1, false], ['baz', 2, undefined]],
-          'should call underlying message factory with expected arguments'
-        );
-
-        equal(consoleLog.callCount, 2, 'should call console.log()');
-        looseEqual(
-          consoleLog.args,
-          [['foo'], ['foo']],
-          'should log expected value'
-        );
-
-        end3();
-      });
-
-      test2(`${name2} / logFn`, ({end: end3}) => {
-        const sandbox = sinon.createSandbox();
-        const factory = sandbox.fake.returns('foo');
-        const consoleLog = sandbox.stub(console, 'log');
+      const setup = () => {
+        const generator = sandbox.stub();
         const logFn = sandbox.spy();
+        const isFile = sandbox.stub();
+        const isDirectory = sandbox.stub();
+        const fs = {statSync: () => ({isFile, isDirectory})};
+        const item = {uri: 'my-asset.png', isAbsolute: false, query: '', bases: {}};
+        const options = {debug: logFn};
+        const loader = {resourcePath: 'my-source-file.js', fs};
 
-        const logger = createDebugLogger(logFn);
-        logger(factory, ['bar', 1, false]);
-        logger(factory, ['baz', 2, undefined]);
-        sandbox.restore();
+        return {generator, item, options, loader, logFn, isFile, isDirectory};
+      };
 
-        equal(factory.callCount, 2, 'should call underlying log message factory');
+      test2(`${name2} / generator invocation`, ({end: end3}) => {
+        const {generator, item, options, loader} = setup();
+        generator.returns([][Symbol.iterator]());
+
+        createJoinImplementation(generator)(item, options, loader);
+
         looseEqual(
-          factory.args,
-          [['bar', 1, false], ['baz', 2, undefined]],
-          'should call underlying message factory with expected arguments'
+          generator.args[0],
+          [item, options, loader],
+          'should be called with expected arguments'
         );
 
-        equal(logFn.callCount, 2, 'should call logFn()');
-        looseEqual(
-          logFn.args,
-          [['foo'], ['foo']],
-          'should log expected value'
+        end3();
+      });
+
+      test2(`${name2} / generator validation`, ({end: end3}) => {
+        const {item, options, loader, isDirectory} = setup();
+
+        isDirectory.returns(true);
+        doesNotThrow(
+          () => createJoinImplementation(() => [[resolve('a'), 'b']][Symbol.iterator]())(item, options, loader),
+          'Iterator factory function is permitted'
         );
 
-        equal(consoleLog.callCount, 0, 'should not call console.log()');
+        doesNotThrow(
+          () => createJoinImplementation(function* () { yield [resolve('a'), 'b']; })(item, options, loader),
+          'Generator semantics are permitted'
+        );
+
+        doesNotThrow(
+          () => createJoinImplementation(asGenerator(() => [[resolve('a'), 'b']]))(item, options, loader),
+          'asGenerator of an Array factory function is permitted'
+        );
+
+        doesNotThrow(
+          () => createJoinImplementation(() => [][Symbol.iterator]())(item, options, loader),
+          'Empty iterator is permitted'
+        );
+
+        doesNotThrow(
+          () => [undefined, null, false, '', 0].forEach((v) => {
+            createJoinImplementation(() => [v][Symbol.iterator]())(item, options, loader);
+          }),
+          'Tuples may be falsey'
+        );
+
+        throws(
+          () => createJoinImplementation(() => [[]][Symbol.iterator]())(item, options, loader),
+          'Tuples may not be empty'
+        );
+
+        throws(
+          () => createJoinImplementation(() => [[resolve('a')]][Symbol.iterator]())(item, options, loader),
+          'Tuples may not contain 1 element'
+        );
+
+        throws(
+          () => createJoinImplementation(() => [[resolve('a'), 'b', 'c']][Symbol.iterator]())(item, options, loader),
+          'Tuples may not contain 3 elements'
+        );
+
+        throws(
+          () => [undefined, null, false, '', 0].forEach((v) => {
+            createJoinImplementation(() => [[v, 'b']][Symbol.iterator]())(item, options, loader);
+          }),
+          'Base may not be falsey'
+        );
+
+        doesNotThrow(
+          () =>
+            createJoinImplementation(() => [['', 'b']][Symbol.iterator]())
+            ({...item, isAbsolute: true}, {...options, root: ''}, loader),
+          'Base may be "" where isAbsolute=true and root=""'
+        );
+
+        doesNotThrow(
+          () => [undefined, null, false, '', 0].forEach((v) => {
+            createJoinImplementation(() => [[resolve('a'), v]][Symbol.iterator]())(item, options, loader);
+          }),
+          'Uri may be falsey'
+        );
+
+        throws(
+          () => createJoinImplementation(() => [[{}, 'b']][Symbol.iterator]())(item, options, loader),
+          'Thruthy base must be string'
+        );
+
+        throws(
+          () => createJoinImplementation(() => [[resolve('a'), {}]][Symbol.iterator]())(item, options, loader),
+          'Thruthy uri must be string'
+        );
+
+        throws(
+          () => createJoinImplementation(() => [['a', 'b']][Symbol.iterator]())(item, options, loader),
+          'Thruthy base must be absolute platform-specific path'
+        );
+
+        isDirectory.returns(false);
+        throws(
+          () => createJoinImplementation(() => [[resolve('a'), 'b']][Symbol.iterator]())(item, options, loader),
+          'Thruthy base must be a valid directory'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / immediate success`, ({end: end3}) => {
+        const {generator, item, options, loader, isDirectory, isFile} = setup();
+        generator.returns([[resolve('a'), 'b'], [resolve('c'), 'd']][Symbol.iterator]());
+        isDirectory.returns(true);
+        isFile.returns(true);
+
+        const result = createJoinImplementation(generator)(item, options, loader);
+
+        looseEqual(
+          result,
+          [
+            {
+              base: resolve('a'),
+              uri: 'b',
+              joined: resolve('a', 'b'),
+              isFallback: true,
+              isSuccess: true,
+            }
+          ],
+          'should return the expected attempts list'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / fail then success`, ({end: end3}) => {
+        const {generator, item, options, loader, isDirectory, isFile} = setup();
+        let callCount = 0;
+        generator.returns([[resolve('a'), 'b'], [resolve('c'), 'd']][Symbol.iterator]());
+        isDirectory.returns(true);
+        isFile.callsFake(() => (callCount++ > 0));
+
+        const result = createJoinImplementation(generator)(item, options, loader);
+
+        looseEqual(
+          result,
+          [
+            {
+              base: resolve('a'),
+              uri: 'b',
+              joined: resolve('a', 'b'),
+              isFallback: true,
+              isSuccess: false,
+            }, {
+              base: resolve('c'),
+              uri: 'd',
+              joined: resolve('c', 'd'),
+              isFallback: true,
+              isSuccess: true,
+            }
+          ],
+          'should return the expected attempts list'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / failure`, ({end: end3}) => {
+        const {generator, item, options, loader, isDirectory, isFile} = setup();
+        generator.returns([[resolve('a'), 'b'], [resolve('c'), 'd']][Symbol.iterator]());
+        isDirectory.returns(true);
+        isFile.returns(false);
+
+        const result = createJoinImplementation(generator)(item, options, loader);
+
+        looseEqual(
+          result,
+          [
+            {
+              base: resolve('a'),
+              uri: 'b',
+              joined: resolve('a', 'b'),
+              isFallback: true,
+              isSuccess: false,
+            }, {
+              base: resolve('c'),
+              uri: 'd',
+              joined: resolve('c', 'd'),
+              isFallback: true,
+              isSuccess: false,
+            }
+          ],
+          'should return the expected attempts list'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / empty`, ({end: end3}) => {
+        const {generator, item, options, loader, isDirectory, isFile} = setup();
+        generator.returns([][Symbol.iterator]());
+        isDirectory.returns(true);
+        isFile.returns(false);
+
+        const result = createJoinImplementation(generator)(item, options, loader);
+
+        looseEqual(
+          result,
+          [],
+          'should return empty attempts list'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / degenerate`, ({end: end3}) => {
+        const {generator, item, options, loader, isDirectory, isFile} = setup();
+        generator.returns([[null, 'b'], [resolve('c'), null], null][Symbol.iterator]());
+        isDirectory.returns(true);
+        isFile.returns(false);
+
+        const result = createJoinImplementation(generator)(item, options, loader);
+
+        looseEqual(
+          result,
+          [],
+          'should return empty attempts list'
+        );
 
         end3();
       });
@@ -222,232 +264,222 @@ tape(
     test(`${name} / createJoinFunction()`, ({name: name2, test: test2, end: end2}) => {
       const sandbox = sinon.createSandbox();
 
-      const setup = (scheme) => {
-        const generator = sandbox.stub();
-        const operation = sandbox.stub();
+      const setup = () => {
+        const implementation = sandbox.stub();
         const logFn = sandbox.spy();
-        const bases = {};
+        const item = {uri: 'my-asset.png', isAbsolute: false, query: '', bases: {}};
         const options = {debug: logFn};
+        const loader = {resourcePath: 'my-source-file.js'};
 
-        const sut = createJoinFunction({
-          name: 'foo',
-          scheme,
-          generator,
-          operation
-        });
-
-        return {sut, generator, operation, bases, options, logFn};
+        return {implementation, item, options, loader, logFn};
       };
 
-      test2(`${name2} / scheme`, ({end: end3}) => {
-        equal(
-          CURRENT_SCHEME,
-          CURRENT_SCHEME.toLowerCase(),
-          'package.json scheme value is lowercase'
-        );
+      test2(`${name2} / implementation invocation`, ({end: end3}) => {
+        const {implementation, item, options, loader} = setup();
+        implementation.returns([]);
 
-        doesNotThrow(
-          () => setup(CURRENT_SCHEME),
-          'should NOT throw on correct scheme'
-        );
+        createJoinFunction('some-name', implementation)(options, loader)(item);
 
-        doesNotThrow(
-          () => setup(CURRENT_SCHEME.toUpperCase()),
-          'should NOT throw on correct scheme (uppercase)'
-        );
-
-        throws(
-          () => setup('incorrect-scheme'),
-          'should throw on mismatched scheme'
-        );
-
-        end3();
-      });
-
-      test2(`${name2} / iterable`, ({end: end3}) => {
-        const {sut, generator, operation, bases, options} = setup(CURRENT_SCHEME);
-        generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
-        operation.returns(resolve('bar'));
-
-        sut(options)('my-source-file.js', 'my-asset.png', false, bases);
         looseEqual(
-          generator.args[0],
-          ['my-source-file.js', 'my-asset.png', false, bases, options],
+          implementation.args[0],
+          [item, options, loader],
           'should be called with expected arguments'
         );
 
         end3();
       });
 
-      test2(`${name2} / operation`, ({name: name3, test: test3, end: end3}) => {
-        const NEXT_ARG_INDEX = 3;
+      test2(`${name2} / implementation validation`, ({end: end3}) => {
+        const {item, options, loader} = setup();
 
-        const omitNextArg = (v) =>
-          [...v.slice(0, NEXT_ARG_INDEX), ...v.slice(NEXT_ARG_INDEX+1)];
+        throws(
+          () => createJoinFunction('some-name', () => 'foo')(options, loader)(item),
+          'String is not is permitted'
+        );
 
-        const setup2 = (fake) => {
-          const {sut, generator, operation, options, logFn} = setup(CURRENT_SCHEME);
-          let callCount = 0;
-          generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
-          operation.callsFake((...args) => fake(callCount++, args[NEXT_ARG_INDEX]));
-          return {sut, generator, operation, options, logFn};
-        };
+        doesNotThrow(
+          () => createJoinFunction('some-name', () => [])(options, loader)(item),
+          'Empty Array is permitted'
+        );
 
-        test3(`${name3} / next(fallback) then success`, ({end: end4}) => {
-          const {sut, operation, bases, options, logFn} = setup2(
-            (i, next) => i === 0 ? next(resolve('foo')) : resolve('bar')
-          );
+        throws(
+          () => createJoinFunction('some-name', () => [1])(options, loader)(item),
+          'Non-object elements is not permitted'
+        );
 
-          equal(
-            sut(options)('my-source-file.js', 'my-asset.png', false, bases),
-            resolve('bar'),
-            'should return the expected result'
-          );
+        doesNotThrow(
+          () => createJoinFunction('some-name', () => [
+            {base: 'string', uri: 'string', joined: 'string', isSuccess:false, isFallback:false}
+          ])(options, loader)(item),
+          'Object elements containing correct field types are permitted'
+        );
 
-          looseEqual(
-            operation.args.map(omitNextArg),
-            [
-              ['my-source-file.js', 'my-asset.png', resolve('a'), options],
-              ['my-source-file.js', 'my-asset.png', resolve('b'), options]
-            ],
-            'should be called with expected arguments'
-          );
+        throws(
+          () => createJoinFunction('some-name', () => [
+            {base: 1, uri: 'string', joined: 'string', isSuccess:false, isFallback:false}
+          ])(options, loader)(item),
+          'Object elements containing incorrect field type are not permitted'
+        );
 
-          looseEqual(
-            logFn.args,
-            [[outdent`
-              resolve-url-loader: ./my-source-file.js: my-asset.png
-                ./a
-                ./b
-                FOUND
-              `]],
-            'should produce the expected debug message'
-          );
+        throws(
+          () => createJoinFunction('some-name', () => [
+            {base: 'string', uri: 'string', joined: 'string', isSuccess:true, isFallback:false}
+          ])(options, loader)(item),
+          'Object elements with non-absolute joined paths not permitted when isSuccess'
+        );
 
-          end4();
-        });
+        throws(
+          () => createJoinFunction('some-name', () => [
+            {base: 'string', uri: 'string', joined: 'string', isSuccess:false, isFallback:true}
+          ])(options, loader)(item),
+          'Object elements with non-absolute joined paths are not permitted when isFallback'
+        );
 
-        test3(`${name3} / next() then success`, ({end: end4}) => {
-          const {sut, operation, bases, options, logFn} = setup2(
-            (i, next) => i === 0 ? next() : resolve('bar')
-          );
+        doesNotThrow(
+          () => [[false, false], [false, true], [true, false], [true, true]]
+            .forEach(([isSuccess, isFallback]) => createJoinFunction('some-name', () => [
+              {base: 'string', uri: 'string', joined: resolve('a'), isSuccess, isFallback}
+            ])(options, loader)(item)),
+          'Object elements with absolute joined paths are permitted'
+        );
 
-          equal(
-            sut(options)('my-source-file.js', 'my-asset.png', false, bases),
-            resolve('bar'),
-            'should return the expected result'
-          );
+        end3();
+      });
 
-          looseEqual(
-            operation.args.map(omitNextArg),
-            [
-              ['my-source-file.js', 'my-asset.png', resolve('a'), options],
-              ['my-source-file.js', 'my-asset.png', resolve('b'), options]
-            ],
-            'should be called with expected arguments'
-          );
+      test2(`${name2} / immediate success`, ({end: end3}) => {
+        const {implementation, item, options, loader, logFn} = setup();
+        implementation.returns([
+          {
+            base: resolve('a'),
+            uri: 'b',
+            joined: resolve('a', 'b'),
+            isFallback: true,
+            isSuccess: true,
+          }
+        ]);
 
-          looseEqual(
-            logFn.args,
-            [[outdent`
-              resolve-url-loader: ./my-source-file.js: my-asset.png
-                ./a
-                ./b
-                FOUND
-              `]],
-            'should produce the expected debug message'
-          );
+        looseEqual(
+          createJoinFunction('some-name', implementation)(options, loader)(item),
+          resolve('a', 'b'),
+          'should return the successful result'
+        );
 
-          end4();
-        });
-
-        test3(`${name3} / next(fallback) then next()`, ({end: end4}) => {
-          const {sut, operation, bases, options, logFn} = setup2(
-            (i, next) => i === 0 ? next(resolve('foo')) : next()
-          );
-
-          equal(
-            sut(options)('my-source-file.js', 'my-asset.png', false, bases),
-            resolve('foo'),
-            'should return the expected result'
-          );
-
-          looseEqual(
-            operation.args.map(omitNextArg),
-            [
-              ['my-source-file.js', 'my-asset.png', resolve('a'), options],
-              ['my-source-file.js', 'my-asset.png', resolve('b'), options],
-              ['my-source-file.js', 'my-asset.png', resolve('c'), options]
-            ],
-            'should be called with expected arguments'
-          );
-
-          looseEqual(
-            logFn.args,
-            [[outdent`
-              resolve-url-loader: ./my-source-file.js: my-asset.png
-                ./a
-                ./b
-                ./c
-                NOT FOUND
-              `]],
-            'should produce the expected debug message'
-          );
-
-          end4();
-        });
-
-        test3(`${name3} / immediate success`, ({end: end4}) => {
-          const {sut, generator, operation, bases, options, logFn} = setup(CURRENT_SCHEME);
-          generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
-          operation.callsFake(() => resolve('foo'));
-
-          equal(
-            sut(options)('my-source-file.js', 'my-asset.png', false, bases),
-            resolve('foo'),
-            'should return the expected result'
-          );
-
-          looseEqual(
-            operation.args.map(omitNextArg),
-            [
-              ['my-source-file.js', 'my-asset.png', resolve('a'), options]
-            ],
-            'should be called with expected arguments'
-          );
-
-          looseEqual(
-            logFn.args,
-            [[outdent`
-              resolve-url-loader: ./my-source-file.js: my-asset.png
-                ./a
-                FOUND
-              `]],
-            'should produce the expected debug message'
-          );
-
-          end4();
-        });
-
-        test3(`${name2} / output validation`, ({end: end4}) => {
+        looseEqual(
+          logFn.args[0],
           [
-            [resolve('bar'), true],
-            ['bar', false],
-            ['#bar', false],
-            ['~bar', false],
-            ['~/bar', false]
-          ].forEach(([output, isValid]) => {
-            const {sut, generator, operation, bases, options} = setup(CURRENT_SCHEME);
-            generator.returns(['a', 'b', 'c'].map(v => resolve(v)));
-            operation.returns(output);
-            (isValid ? doesNotThrow : throws)(
-              () => sut(options)('my-source-file.js', 'my-asset.png', false, bases),
-              isValid ? json`should not throw on output ${output}` : json`should throw on output ${output}`
-            );
-          });
+            outdent`
+            resolve-url-loader: ./my-source-file.js: my-asset.png
+              ./a --> ./a/b
+              FOUND
+            `
+          ],
+          'should log the expected string'
+        );
 
-          end4();
-        });
+        end3();
+      });
+
+      test2(`${name2} / fail then success`, ({end: end3}) => {
+        const {implementation, item, options, loader, logFn} = setup();
+        implementation.returns([
+          {
+            base: resolve('a'),
+            uri: 'b',
+            joined: resolve('a', 'b'),
+            isFallback: true,
+            isSuccess: false,
+          }, {
+            base: resolve('c'),
+            uri: 'd',
+            joined: resolve('c', 'd'),
+            isFallback: true,
+            isSuccess: true,
+          }
+        ]);
+
+        looseEqual(
+          createJoinFunction('some-name', implementation)(options, loader)(item),
+          resolve('c', 'd'),
+          'should return the successful result'
+        );
+
+        looseEqual(
+          logFn.args[0],
+          [
+            outdent`
+            resolve-url-loader: ./my-source-file.js: my-asset.png
+              ./a --> ./a/b
+              ./c --> ./c/d
+              FOUND
+            `
+          ],
+          'should log the expected string'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / failure`, ({end: end3}) => {
+        const {implementation, item, options, loader, logFn} = setup();
+        implementation.returns([
+          {
+            base: resolve('a'),
+            uri: 'b',
+            joined: resolve('a', 'b'),
+            isFallback: true,
+            isSuccess: false,
+          }, {
+            base: resolve('c'),
+            uri: 'd',
+            joined: resolve('c', 'd'),
+            isFallback: true,
+            isSuccess: false,
+          }
+        ]);
+
+        looseEqual(
+          createJoinFunction('some-name', implementation)(options, loader)(item),
+          resolve('a', 'b'),
+          'should return null'
+        );
+
+        looseEqual(
+          logFn.args[0],
+          [
+            outdent`
+            resolve-url-loader: ./my-source-file.js: my-asset.png
+              ./a --> ./a/b
+              ./c --> ./c/d
+              NOT FOUND
+            `
+          ],
+          'should log the expected string'
+        );
+
+        end3();
+      });
+
+      test2(`${name2} / empty`, ({end: end3}) => {
+        const {implementation, item, options, loader, logFn} = setup();
+        implementation.returns([]);
+
+        looseEqual(
+          createJoinFunction('some-name', implementation)(options, loader)(item),
+          null,
+          'should return the expected result'
+        );
+
+        looseEqual(
+          logFn.args[0],
+          [
+            outdent`
+            resolve-url-loader: ./my-source-file.js: my-asset.png
+              -empty-
+              NOT FOUND
+            `
+          ],
+          'should log the expected string'
+        );
 
         end3();
       });

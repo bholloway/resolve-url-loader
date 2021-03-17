@@ -52,6 +52,5 @@
     "rework-visit": {
       "optional": true
     }
-  },
-  "scheme": "alstroemeria"
+  }
 }

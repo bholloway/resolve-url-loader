@@ -12,9 +12,9 @@ var path              = require('path'),
 
 var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
-var valueProcessor   = require('./lib/value-processor');
-var joinFn           = require('./lib/join-function');
-var logToTestHarness = require('./lib/log-to-test-harness');
+var valueProcessor   = require('./lib/value-processor'),
+    joinFn           = require('./lib/join-function'),
+    logToTestHarness = require('./lib/log-to-test-harness');
 
 const DEPRECATED_OPTIONS = {
   engine: [
@@ -74,7 +74,6 @@ function resolveUrlLoader(content, sourceMap) {
   var rawOptions = loaderUtils.getOptions(loader),
       options    = Object.assign(
         {
-          fs       : loader.fs,
           sourceMap: loader.sourceMap,
           engine   : 'postcss',
           silent   : false,
@@ -106,10 +105,24 @@ function resolveUrlLoader(content, sourceMap) {
       'loader misconfiguration',
       '"join" option must be a Function'
     );
-  } else if (options.join.length !== 1) {
+  } else if (options.join.length !== 2) {
     return handleAsError(
       'loader misconfiguration',
-      '"join" Function must take exactly 1 arguments (options hash)'
+      '"join" Function must take exactly 2 arguments (options, loader)'
+    );
+  }
+
+  // validate the result of calling the join option
+  var joinProper = options.join(options, loader);
+  if (typeof joinProper !== 'function') {
+    return handleAsError(
+      'loader misconfiguration',
+      '"join" option must itself return a Function when it is called'
+    );
+  } else if (joinProper.length !== 1) {
+    return handleAsError(
+      'loader misconfiguration',
+      '"join" Function must create a function that takes exactly 1 arguments (item)'
     );
   }
 
@@ -198,10 +211,14 @@ function resolveUrlLoader(content, sourceMap) {
   Promise
     .resolve(engine(loader.resourcePath, content, {
       outputSourceMap     : !!options.sourceMap,
-      transformDeclaration: valueProcessor(loader.resourcePath, options),
       absSourceMap        : absSourceMap,
       sourceMapConsumer   : sourceMapConsumer,
-      removeCR            : options.removeCR
+      removeCR            : options.removeCR,
+      transformDeclaration: valueProcessor({
+        join     : joinProper,
+        root     : options.root,
+        directory: path.dirname(loader.resourcePath)
+      })
     }))
     .catch(onFailure)
     .then(onSuccess);
