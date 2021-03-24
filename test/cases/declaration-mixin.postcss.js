@@ -20,14 +20,14 @@ const {
 
 const assertIncludeMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
-  [ ]+${'./src/feature'}
-  [ ]+${'./src'}
+  [ ]+${'./src/feature'} --> ${'./src/feature/img.jpg'}
+  [ ]+${'./src'}         --> ${'./src/img.jpg'}
   [ ]+FOUND$
   `;
 
 const assertMixinMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
-  [ ]+${'./src/feature'}
+  [ ]+${'./src/feature'} --> ${'./src/feature/img.jpg'}
   [ ]+FOUND$
   `;
 

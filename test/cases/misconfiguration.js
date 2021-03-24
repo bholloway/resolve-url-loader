@@ -10,8 +10,8 @@ const {trim} = require('../lib/util');
 const {rebaseToCache} = require('../lib/higher-order');
 const {
   all, testDefault, testSilent, testKeepQuery, testAbsolute, testAttempts, testEngineFailInitialisation,
-  testEngineFailProcessing, testIncludeRoot, testFail, testNonFunctionJoin, testWrongArityJoin, testNonStringRoot,
-  testNonExistentRoot
+  testEngineFailProcessing, testIncludeRoot, testFail, testNonFunctionJoin1, testWrongArityJoin1, testNonFunctionJoin2,
+  testWrongArityJoin2, testNonStringRoot, testNonExistentRoot
 } = require('./common/test');
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
@@ -246,7 +246,7 @@ module.exports = test(
         )
       )
     ),
-    testNonFunctionJoin(
+    testNonFunctionJoin1(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
@@ -254,11 +254,27 @@ module.exports = test(
         )
       )
     ),
-    testWrongArityJoin(
+    testWrongArityJoin1(
       all(testDefault, testSilent)(
         all(buildDevNormal, buildProdNormal)(
           assertWebpackNotOk,
-          assertMisconfigError('"join" Function must take exactly 1 arguments (options hash)')
+          assertMisconfigError('"join" Function must take exactly 2 arguments (options, loader)')
+        )
+      )
+    ),
+    testNonFunctionJoin2(
+      all(testDefault, testSilent)(
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertMisconfigError('"join" option must itself return a Function when it is called')
+        )
+      )
+    ),
+    testWrongArityJoin2(
+      all(testDefault, testSilent)(
+        all(buildDevNormal, buildProdNormal)(
+          assertWebpackNotOk,
+          assertMisconfigError('"join" Function must create a function that takes exactly 1 arguments (item)')
         )
       )
     ),

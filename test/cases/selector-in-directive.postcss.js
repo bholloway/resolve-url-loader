@@ -22,12 +22,12 @@ const {
 const assertDebugMessages = sequence(
   assertStdout('debug')(4)`
     ^resolve-url-loader:[^:]+:[ ]*${'../fonts/font.'}\w+
-    [ ]+${'./src/feature'}
+    [ ]+${'./src/feature'} --> ${'./src/fonts/font.'}\w+
     [ ]+FOUND$
     `,
   assertStdout('debug')(1)`
     ^resolve-url-loader:[^:]+:[ ]*${'images/img.jpg'}
-    [ ]+${'./src'}
+    [ ]+${'./src'} --> ${'./src/images/img.jpg'}
     [ ]+FOUND$
     `
 );

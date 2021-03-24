@@ -71,29 +71,55 @@ exports.testFail = (...rest) =>
     )
   );
 
-exports.testNonFunctionJoin = (...rest) =>
+exports.testNonFunctionJoin1 = (...rest) =>
   test(
-    'join=!function',
+    'join1=!function',
     layer()(
       env({
         LOADER_JOIN: 'return 1;',
-        OUTPUT: 'non-function-join'
+        OUTPUT: 'non-function-join1'
       }),
       ...rest,
       test('validate', assertStderr('options.join')(1)`join: 1`)
     )
   );
 
-exports.testWrongArityJoin = (...rest) =>
+exports.testWrongArityJoin1 = (...rest) =>
   test(
-    'join=!arity1',
+    'join1=!arity2',
+    layer()(
+      env({
+        LOADER_JOIN: 'return (a) => (b) => undefined;',
+        OUTPUT: 'wrong-arity-join1'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.join')(1)`join: \(a\) => \(b\) => undefined`)
+    )
+  );
+
+exports.testNonFunctionJoin2 = (...rest) =>
+  test(
+    'join2=!function',
     layer()(
       env({
         LOADER_JOIN: 'return (a, b) => undefined;',
-        OUTPUT: 'wrong-arity-join'
+        OUTPUT: 'non-function-join2'
       }),
       ...rest,
       test('validate', assertStderr('options.join')(1)`join: \(a, b\) => undefined`)
+    )
+  );
+
+exports.testWrongArityJoin2 = (...rest) =>
+  test(
+    'join2=!arity',
+    layer()(
+      env({
+        LOADER_JOIN: 'return (a, b) => (c, d) => undefined;',
+        OUTPUT: 'wrong-arity-join2'
+      }),
+      ...rest,
+      test('validate', assertStderr('options.join')(1)`join: \(a, b\) => \(c, d\) => undefined`)
     )
   );
 

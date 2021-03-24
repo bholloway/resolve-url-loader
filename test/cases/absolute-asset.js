@@ -19,7 +19,7 @@ const {
 
 const assertDebugMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]+${process.cwd()}.*${join('images', 'img.jpg')}
-  [ ]+-empty-
+  [ ]+-empty- --> ./images/img.jpg
   [ ]+FOUND$
   `;
 
