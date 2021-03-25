@@ -10,16 +10,14 @@ var path        = require('path'),
 /**
  * Create a value processing function for a given file path.
  *
- * @param {string} filename The current file being processed
- * @param {{fs:Object, debug:function|boolean, join:function, root:string}} options Options hash
+ * @param {function(Object):string} join The inner join function
+ * @param {string} root The loader options.root value where given
+ * @param {string} directory The directory of the file webpack is currently processing
  * @return {function} value processing function
  */
-function valueProcessor(filename, options) {
+function valueProcessor({ join, root, directory }) {
   var URL_STATEMENT_REGEX = /(url\s*\(\s*)(?:(['"])((?:(?!\2).)*)(\2)|([^'"](?:(?!\)).)*[^'"]))(\s*\))/g,
       QUERY_REGEX         = /([?#])/g;
-
-  var directory  = path.dirname(filename),
-      joinProper = options.join(options);
 
   /**
    * Process the given CSS declaration value.
@@ -83,27 +81,29 @@ function valueProcessor(filename, options) {
             isQuoted  = (before === after) && ((before === '\'') || (before === '"')),
             unescaped = isQuoted ? element.replace(/\\{2}/g, '\\') : element;
 
-        // split into uri and query/hash and then find the absolute path to the uri
-        //  construct iterator as late as possible in case sourcemap is invalid at this location
-        var split    = unescaped.split(QUERY_REGEX),
-            uri      = split[0],
-            query    = split.slice(1).join(''),
-            absolute = testIsRelative(uri) && joinProper(filename, uri, false, getPathsAtChar(position)) ||
-                       testIsAbsolute(uri) && joinProper(filename, uri, true,  getPathsAtChar(position));
+        // split into uri and query/hash and then determine if the uri is some type of file
+        var split      = unescaped.split(QUERY_REGEX),
+            uri        = split[0],
+            query      = split.slice(1).join(''),
+            isRelative = testIsRelative(uri),
+            isAbsolute = testIsAbsolute(uri);
 
-        // not all URIs are files
-        if (!absolute) {
-          return element;
-        } else {
-          return loaderUtils.urlToRequest(
-            path.relative(directory, absolute).replace(/\\/g, '/') + query // #6 - backslashes are not legal in URI
-          );
+        // file like URIs are processed but not all URIs are files
+        if (isRelative || isAbsolute) {
+          var bases    = getPathsAtChar(position), // construct iterator as late as possible in case sourcemap invalid
+              absolute = join({ uri, query, isAbsolute, bases });
+
+          if (typeof absolute === 'string') {
+            var relative = path.relative(directory, absolute)
+              .replace(/\\/g, '/'); // #6 - backslashes are not legal in URI
+
+            return loaderUtils.urlToRequest(relative + query);
+          }
         }
       }
+
       // everything else, including parentheses and quotation (where present) and media statements
-      else {
-        return element;
-      }
+      return element;
     }
   };
 
@@ -128,7 +128,7 @@ function valueProcessor(filename, options) {
    * @return {boolean} True for absolute uri
    */
   function testIsAbsolute(uri) {
-    return !!uri && (typeof options.root === 'string') && loaderUtils.isUrlRequest(uri, options.root) &&
+    return !!uri && (typeof root === 'string') && loaderUtils.isUrlRequest(uri, root) &&
       (/^\//.test(uri) || path.isAbsolute(uri));
   }
 }

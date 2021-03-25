@@ -20,7 +20,7 @@ const {
 
 const assertDebugMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
-  [ ]+${'./src'}
+  [ ]+${'./src'} --> ${'./src/img.jpg'}
   [ ]+FOUND$
   `;
 

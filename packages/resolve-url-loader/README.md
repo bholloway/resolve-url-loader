@@ -59,6 +59,8 @@ With functions and mixins and multiple nesting it gets more complicated. Read mo
 
 ## Getting started
 
+> **Upgrading?** the [changelog](CHANGELOG.md) shows how to migrate your webpack config.
+
 ### Install
 
 via npm

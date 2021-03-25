@@ -20,22 +20,22 @@ const {
 
 const assertPropertyMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
-  [ ]+${'./src/value/substring'}
-  [ ]+${'./src/value'}
-  [ ]+${'./src'}
+  [ ]+${'./src/value/substring'} --> ${'./src/value/substring/img.jpg'}
+  [ ]+${'./src/value'}           --> ${'./src/value/img.jpg'}
+  [ ]+${'./src'}                 --> ${'./src/img.jpg'}
   [ ]+FOUND$
   `;
 
 const assertValueMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
-  [ ]+${'./src/value/substring'}
-  [ ]+${'./src/value'}
+  [ ]+${'./src/value/substring'} --> ${'./src/value/substring/img.jpg'}
+  [ ]+${'./src/value'}           --> ${'./src/value/img.jpg'}
   [ ]+FOUND$
   `;
 
 const assertSubstringMessages = assertStdout('debug')(1)`
   ^resolve-url-loader:[^:]+:[ ]*${'img.jpg'}
-  [ ]+${'./src/value/substring'}
+  [ ]+${'./src/value/substring'} --> ${'./src/value/substring/img.jpg'}
   [ ]+FOUND$
   `;
 

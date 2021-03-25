@@ -4,208 +4,232 @@
  */
 'use strict';
 
-var path = require('path');
+const path = require('path');
 
-var sanitiseIterable = require('./sanitise-iterable'),
-    debug            = require('./debug');
+const { createDebugLogger, formatJoinMessage } = require('./debug');
+const fsUtils = require('./fs-utils');
 
-/**
- * Generated name from "flower" series
- * @see https://gf.dev/sprintname
- */
-var CURRENT_SCHEME = require('../../package.json').scheme;
+const ITERATION_SAFETY_LIMIT = 100e3;
 
 /**
- * Webpack `fs` from `enhanced-resolve` doesn't support `existsSync()` so we shim using `statsSync()`.
+ * Wrap a function such that it always returns a generator of tuple elements.
  *
- * @param {{statSync:function(string):{isFile:function():boolean}}} webpackFs The webpack `fs` from `loader.fs`.
- * @param {string} absolutePath Absolute path to the file in question
- * @returns {boolean} True where file exists, else False
+ * @param {function({uri:string},...):(Array|Iterator)<[string,string]|string>} fn The function to wrap
+ * @returns {function({uri:string},...):(Array|Iterator)<[string,string]>} A function that always returns tuple elements
  */
-function webpackExistsSync(webpackFs, absolutePath) {
-  try {
-    return webpackFs.statSync(absolutePath).isFile();
-  } catch (e) {
-    return false;
-  }
-}
+const asGenerator = (fn) => {
+  const toTuple = (defaults) => (value) => {
+    const partial = [].concat(value);
+    return [...partial, ...defaults.slice(partial.length)];
+  };
 
-exports.webpackExistsSync = webpackExistsSync;
+  const isTupleUnique = (v, i, a) => {
+    const required = v.join(',');
+    return a.findIndex((vv) => vv.join(',') === required) === i;
+  };
+
+  return (item, ...rest) => {
+    const {uri} = item;
+    const mapTuple = toTuple([null, uri]);
+    const pending = fn(item, ...rest);
+    if (Array.isArray(pending)) {
+      return pending.map(mapTuple).filter(isTupleUnique)[Symbol.iterator]();
+    } else if (
+      pending &&
+      (typeof pending === 'object') &&
+      (typeof pending.next === 'function') &&
+      (pending.next.length === 0)
+    ) {
+      return pending;
+    } else {
+      throw new TypeError(`in "join" function expected "generator" to return Array|Iterator`);
+    }
+  };
+};
+
+exports.asGenerator = asGenerator;
+
+/**
+ * A high-level utility to create a join function.
+ *
+ * The `generator` is responsible for ordering possible base paths. The `operation` is responsible for joining a single
+ * `base` path with the given `uri`. The `predicate` is responsible for reporting whether the single joined value is
+ * successful as the overall result.
+ *
+ * Both the `generator` and `operation` may be `function*()` or simply `function(...):Array<string>`.
+ *
+ * @param {function({uri:string, isAbsolute:boolean, bases:{subString:string, value:string, property:string,
+ *  selector:string}}, {filename:string, fs:Object, debug:function|boolean, root:string}):
+ *  (Array<string>|Iterator<string>)} generator A function that takes the hash of base paths from the `engine` and
+ *  returns ordered iterable of paths to consider
+ * @returns {function({filename:string, fs:Object, debug:function|boolean, root:string}):
+ *  (function({uri:string, isAbsolute:boolean, bases:{subString:string, value:string, property:string,
+ *  selector:string}}):string)} join implementation
+ */
+const createJoinImplementation = (generator) => (item, options, loader) => {
+  const { isAbsolute } = item;
+  const { root } = options;
+  const { fs } = loader;
+
+  // generate the iterator
+  const iterator = generator(item, options, loader);
+  const isValidIterator = iterator && typeof iterator === 'object' && typeof iterator.next === 'function';
+  if (!isValidIterator) {
+    throw new Error('expected generator to return Iterator');
+  }
+
+  // run the iterator lazily and record attempts
+  const { isFileSync, isDirectorySync } = fsUtils(fs);
+  const attempts = [];
+  for (let i = 0; i < ITERATION_SAFETY_LIMIT; i++) {
+    const { value, done } = iterator.next();
+    if (done) {
+      break;
+    } else if (value) {
+      const tuple = Array.isArray(value) && value.length === 2 ? value : null;
+      if (!tuple) {
+        throw new Error('expected Iterator values to be tuple of [string,string], do you need asGenerator utility?');
+      }
+
+      // skip elements where base or uri is non-string
+      // noting that we need to support base="" when root=""
+      const [base, uri] = value;
+      if ((typeof base === 'string') && (typeof uri === 'string')) {
+
+        // validate
+        const isValidBase = (isAbsolute && base === root) || (path.isAbsolute(base) && isDirectorySync(base));
+        if (!isValidBase) {
+          throw new Error(`expected "base" to be absolute path to a valid directory, got "${base}"`);
+        }
+
+        // make the attempt
+        const joined = path.normalize(path.join(base, uri));
+        const isFallback = true;
+        const isSuccess = isFileSync(joined);
+        attempts.push({base, uri, joined, isFallback, isSuccess});
+
+        if (isSuccess) {
+          break;
+        }
+
+      // validate any non-strings are falsey
+      } else {
+        const isValidTuple = value.every((v) => (typeof v === 'string') || !v);
+        if (!isValidTuple) {
+          throw new Error('expected Iterator values to be tuple of [string,string]');
+        }
+      }
+    }
+  }
+
+  return attempts;
+};
+
+exports.createJoinImplementation = createJoinImplementation;
+
+/**
+ * A low-level utility to create a join function.
+ *
+ * The `implementation` function processes an individual `item` and returns an Array of attempts. Each attempt consists
+ * of a `base` and a `joined` value with `isSuccessful` and `isFallback` flags.
+ *
+ * In the case that any attempt `isSuccessful` then its `joined` value is the outcome. Otherwise the first `isFallback`
+ * attempt is used. If there is no successful or fallback attempts then `null` is returned indicating no change to the
+ * original URI in the CSS.
+ *
+ * The `attempts` Array is logged to console when in `debug` mode.
+ *
+ * @param {string} name Name for the resulting join function
+ * @param {function({uri:string, query:string, isAbsolute:boolean, bases:{subString:string, value:string,
+ *  property:string, selector:string}}, {filename:string, fs:Object, debug:function|boolean, root:string}):
+ *  Array<{base:string,joined:string,fallback?:string,result?:string}>} implementation A function accepts an item and
+ *  returns a list of attempts
+ * @returns {function({filename:string, fs:Object, debug:function|boolean, root:string}):
+ *  (function({uri:string, isAbsolute:boolean, bases:{subString:string, value:string, property:string,
+ *  selector:string}}):string)} join function
+ */
+const createJoinFunction = (name, implementation) => {
+  const assertAttempts = (value) => {
+    const isValid =
+      Array.isArray(value) && value.every((v) =>
+        v &&
+        (typeof v === 'object') &&
+        (typeof v.base === 'string') &&
+        (typeof v.uri === 'string') &&
+        (typeof v.joined === 'string') &&
+        (typeof v.isSuccess === 'boolean') &&
+        (typeof v.isFallback === 'boolean')
+      );
+    if (!isValid) {
+      throw new Error(`expected implementation to return Array of {base, uri, joined, isSuccess, isFallback}`);
+    } else {
+      return value;
+    }
+  };
+
+  const assertJoined = (value) => {
+    const isValid = value && (typeof value === 'string') && path.isAbsolute(value) || (value === null);
+    if (!isValid) {
+      throw new Error(`expected "joined" to be absolute path, got "${value}"`);
+    } else {
+      return value;
+    }
+  };
+
+  const join = (options, loader) => {
+    const { debug } = options;
+    const { resourcePath } = loader;
+    const log = createDebugLogger(debug);
+
+    return (item) => {
+      const { uri } = item;
+      const attempts = implementation(item, options, loader);
+      assertAttempts(attempts, !!debug);
+
+      const { joined: fallback } = attempts.find(({ isFallback }) => isFallback) || {};
+      const { joined: result } = attempts.find(({ isSuccess }) => isSuccess) || {};
+
+      log(formatJoinMessage, [resourcePath, uri, attempts]);
+
+      return assertJoined(result || fallback || null);
+    };
+  };
+
+  const toString = () => '[Function ' + name + ']';
+
+  return Object.assign(join, !!name && {
+    toString,
+    toJSON: toString
+  });
+};
+
+exports.createJoinFunction = createJoinFunction;
 
 /**
  * The default iterable factory will order `subString` then `value` then `property` then `selector`.
  *
- * @param {string} filename The absolute path of the file being processed
  * @param {string} uri The uri given in the file webpack is processing
  * @param {boolean} isAbsolute True for absolute URIs, false for relative URIs
- * @param {{subString:string, value:string, property:string, selector:string}} bases A hash of possible base paths
- * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
+ * @param {string} subString A possible base path
+ * @param {string} value A possible base path
+ * @param {string} property A possible base path
+ * @param {string} selector A possible base path
+ * @param {string} root The loader options.root value where given
  * @returns {Array<string>} An iterable of possible base paths in preference order
  */
-function defaultJoinGenerator(filename, uri, isAbsolute, bases, options) {
-  return  isAbsolute ? [options.root] : [bases.subString, bases.value, bases.property, bases.selector];
-}
+const defaultJoinGenerator = asGenerator(
+  ({ uri, isAbsolute, bases: { subString, value, property, selector } }, { root }) =>
+    isAbsolute ? [root] : [subString, value, property, selector]
+);
 
 exports.defaultJoinGenerator = defaultJoinGenerator;
 
 /**
- * The default operation simply joins the given base to the uri and returns it where it exists.
- *
- * The result of `next()` represents the eventual result and needs to be returned otherwise.
- *
- * If none of the expected files exist then any given `fallback` argument to `next()` is used even if it does not exist.
- *
- * @param {string} filename The absolute path of the file being processed
- * @param {string} uri The uri given in the file webpack is processing
- * @param {string} base A value from the iterator currently being processed
- * @param {function(?string):<string|Array<string>>} next Optionally set fallback then recurse next iteration
- * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
- * @returns {string|Array<string>} Result from the last iteration that occurred
+ * @type {function({filename:string, fs:Object, debug:function|boolean, root:string}):
+ *  (function({uri:string, isAbsolute:boolean, bases:{subString:string, value:string, property:string,
+ *  selector:string}}):string)} join function
  */
-function defaultJoinOperation(filename, uri, base, next, options) {
-  var absolute  = path.normalize(path.join(base, uri)),
-      isSuccess = webpackExistsSync(options.fs, absolute) && options.fs.statSync(absolute).isFile();
-  return isSuccess ? absolute : next(absolute);
-}
-
-exports.defaultJoinOperation = defaultJoinOperation;
-
-/**
- * The default join function iterates over possible base paths until a suitable join is found.
- *
- * The first base path is used as fallback for the case where none of the base paths can locate the actual file.
- *
- * @type {function}
- */
-exports.defaultJoin = createJoinFunction({
-  name     : 'defaultJoin',
-  scheme   : CURRENT_SCHEME,
-  generator: defaultJoinGenerator,
-  operation: defaultJoinOperation
-});
-
-/**
- * A utility to create a join function.
- *
- * Refer to implementation of `defaultJoinGenerator` and `defaultJoinOperation`.
- *
- * @param {string} name Name for the resulting join function
- * @param {string} scheme A keyword that confirms your implementation matches the current scheme.
- * @param {function(string, {subString:string, value:string, property:string, selector:string}, Object):
- *  (Array<string>|Iterator<string>)} generator A function that takes the hash of base paths from the `engine` and
- *  returns ordered iterable of paths to consider
- * @param {function({filename:string, uri:string, base:string}, function(?string):<string|Array<string>>,
- *  {fs:Object, root:string}):(string|Array<string>)} operation A function that tests values and returns joined paths
- * @returns {function(string, {fs:Object, debug:function|boolean, root:string}):
- *  (function(string, {subString:string, value:string, property:string, selector:string}):string)} join function factory
- */
-function createJoinFunction({ name, scheme, generator, operation }) {
-  if (typeof scheme !== 'string' || scheme.toLowerCase() !== CURRENT_SCHEME) {
-    throw new Error(`Custom join function has changed, please update to the latest scheme. Refer to the docs.`);
-  }
-
-  /**
-   * A factory for a join function with logging.
-   *
-   * Options are curried and a join function proper is returned.
-   *
-   * @param {{fs:Object, root:string, debug:boolean|function}} options The loader options including webpack file system
-   */
-  function join(options) {
-    var log = debug.createDebugLogger(options.debug);
-
-    /**
-     * Join function proper.
-     *
-     * For absolute uri only `uri` will be provided and no `bases`.
-     *
-     * @param {string} filename The current file being processed
-     * @param {string} uri A uri path, relative or absolute
-     * @param {boolean} isAbsolute True for absolute URIs, false for relative URIs
-     * @param {{subString:string, value:string, property:string, selector:string}} bases Hash of possible base paths
-     * @return {string} Just the uri where base is empty or the uri appended to the base
-     */
-    return function joinProper(filename, uri, isAbsolute, bases) {
-      var iterator   = sanitiseIterable(generator(filename, uri, isAbsolute, bases, options)),
-          result     = reduceIterator({inputs:[], outputs:[], isFound:false}, iterator),
-          lastOutput = result.outputs[result.outputs.length-1],
-          fallback   = result.outputs.find(Boolean) || uri;
-
-      log(debug.formatJoinMessage, [filename, uri, result.inputs, result.isFound]);
-
-      return result.isFound ? lastOutput : fallback;
-
-      /**
-       * Run the next iterator value.
-       *
-       * @param {Array<string>} accumulator Current result
-       * @returns {Array<string>} Updated result
-       */
-      function reduceIterator(accumulator) {
-        var inputs   = accumulator.inputs  || [],
-            outputs  = accumulator.outputs || [],
-            nextItem = iterator.next();
-
-        if (nextItem.done) {
-          return accumulator;
-        } else {
-          var base    = assertAbsolute(nextItem.value, 'expected Iterator<string> of absolute base path', ''),
-              pending = operation(filename, uri, base, next, options);
-          if (!!pending && typeof pending === 'object') {
-            return pending;
-          } else {
-            assertAbsolute(pending, 'operation must return an absolute path or the result of calling next()');
-            return {
-              inputs : inputs.concat(base),
-              outputs: outputs.concat(pending),
-              isFound: true
-            };
-          }
-        }
-
-        /**
-         * Provide a possible fallback but run the next iteration either way.
-         *
-         * @param {string} fallback? Optional absolute path as fallback value
-         * @returns {Array<string>} Nested result
-         */
-        function next(fallback) {
-          assertAbsolute(fallback, 'next() expects absolute path string or no argument', null, undefined);
-          return reduceIterator({
-            inputs : inputs.concat(base),
-            outputs: outputs.concat(fallback || []),
-            isFound: false
-          });
-        }
-
-        /**
-         * Assert that the given value is an absolute path or some other accepted literal.
-         *
-         * @param {*} candidate Possible result
-         * @param {string} message Error message
-         * @param {...*} alsoAcceptable? Any number of simple values that are also acceptable
-         * @throws An error with the given message where the candidate fails the assertion
-         */
-        function assertAbsolute(candidate, message, ...alsoAcceptable) {
-          var isValid = (alsoAcceptable.indexOf(candidate) >= 0) ||
-            (typeof candidate === 'string') && path.isAbsolute(candidate);
-          if (!isValid) {
-            throw new Error(message);
-          }
-          return candidate;
-        }
-      }
-    };
-  }
-
-  function toString() {
-    return '[Function ' + name + ']';
-  }
-
-  return Object.assign(join, !!name && {
-    toString: toString,
-    toJSON  : toString
-  });
-}
-
-exports.createJoinFunction = createJoinFunction;
+exports.defaultJoin = createJoinFunction(
+  'defaultJoin',
+  createJoinImplementation(defaultJoinGenerator)
+);
