@@ -14,7 +14,7 @@ The "join" function determines how CSS URIs are combined with one of the possibl
 
 ⚠️ **IMPORTANT** - First read how the [algorithm](./how-it-works.md#algorithm) works.
 
-The "join" function is higher-order function created using the `options` and `loader` reference. That gives a function that accepts a single `item` and synchronously returns an absolute asset path to substitute back into the original CSS.
+The "join" function is a higher-order function created using the `options` and `loader` reference. That gives a function that accepts a single `item` and synchronously returns an absolute asset path to substitute back into the original CSS.
 
 ```javascript
 (options:{}, loader:{}) =>
@@ -32,7 +32,7 @@ A custom `join` function from scratch is possible but we've provided some [build
 
 ## Building blocks
 
-There are number of utilities (defined in [`lib/join-function/index.js`](../lib/join-function/index.js)) to help construct a custom "join" function . These are conveniently re-exported as properties of the loader.
+There are a number of utilities (defined in [`lib/join-function/index.js`](../lib/join-function/index.js)) to help construct a custom "join" function . These are conveniently re-exported as properties of the loader.
 
 These utilities are used to create the `defaultJoin` as follows.
 
@@ -120,7 +120,7 @@ When using `asGenerator` you may return elements as either `base:string` **or** 
   
   That said there are cases where you might want to amend the `uri`. The solution is to make each element a tuple of `base` and `uri` representing a potential location to find the asset.
   
-  If you'e interested only in the `base` path and don't intend to vary the `uri` then the `asGenerator` utility saves you having to create repetiative tuples (and from using `function*` semantics).
+  If you're interested only in the `base` path and don't intend to vary the `uri` then the `asGenerator` utility saves you having to create repetative tuples (and from using `function*` semantics).
 
 * **Can I vary the `query` using the tuple?**
 
