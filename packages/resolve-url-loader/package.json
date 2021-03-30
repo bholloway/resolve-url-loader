@@ -32,7 +32,7 @@
   "files": [
     "index.js",
     "lib/**/+([a-z-]).js",
-    "docs/basic-problem.svg"
+    "docs/**/*.*"
   ],
   "dependencies": {
     "adjust-sourcemap-loader": "^4.0.0",
