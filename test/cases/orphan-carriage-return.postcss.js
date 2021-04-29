@@ -58,13 +58,15 @@ module.exports = test(
     env({
       ENTRY: join('src', 'index.scss')
     }),
-    testDefault(
-      all(buildDevNormal, buildProdNormal, buildDevNoUrl, buildProdNoUrl)(
-        assertWebpackNotOk,
-        assertCssError
+    testRemoveCR(false)(
+      testDefault(
+        all(buildDevNormal, buildProdNormal, buildDevNoUrl, buildProdNoUrl)(
+          assertWebpackNotOk,
+          assertCssError
+        )
       )
     ),
-    testRemoveCR(
+    testRemoveCR(true)(
       testDebug(
         buildDevNormal(
           assertWebpackOk,
