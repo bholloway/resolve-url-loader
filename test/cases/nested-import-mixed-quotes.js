@@ -121,7 +121,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.3ac503a6854beade957b.css'),
+          assertCssAndSourceMapContent('main.372dead7b35014067d7a.css'),
           outdent
         )`
           /src/index.scss                                                                                    
@@ -132,8 +132,8 @@ module.exports = test(
               ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ⏎                                            
               ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ⏎                                            
               ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     ⏎                                            
-              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     /*# sourceMappingURL=main.3ac503a6854beade957
-              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     b.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     /*# sourceMappingURL=main.372dead7b35014067d7
+              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░     a.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
           /src/feature/index.scss                                                                            
           ---------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.deb08f846b74d30fd0fe.css'),
+          assertCssAndSourceMapContent('main.0de225be0d103507fb2e.css'),
           outdent
         )`
           /src/index.scss                                                                                    
@@ -216,8 +216,8 @@ module.exports = test(
           2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎      
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.deb08f846b74d30fd
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       0fe.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.0de225be0d103507f
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       b2e.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
           `
       ),
       buildProdNormal(

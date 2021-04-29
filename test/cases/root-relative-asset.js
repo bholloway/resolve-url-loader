@@ -213,7 +213,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'),
-              assertCssAndSourceMapContent('main.f4c290f1d74cb2b8c4a0.css'),
+              assertCssAndSourceMapContent('main.86b6a10512f44483a9ef.css'),
               outdent
             )`
               /src/feature/index.scss                                                                             
@@ -242,8 +242,8 @@ module.exports = test(
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                            
-                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.f4c290f1d74cb2b8c4a
-                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.86b6a10512f44483a9e
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      f.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
               `,
             compose(
               onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
@@ -318,7 +318,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
-              assertCssAndSourceMapContent('main.e45f987dad470a64f369.css'),
+              assertCssAndSourceMapContent('main.d533b8a2f250d611b119.css'),
               outdent
             )`
               /src/feature/index.scss                                                                            
@@ -349,8 +349,8 @@ module.exports = test(
               3:17 ░░░░░░░░░░░░░░░░;⏎                           9:17 ░░░░░░░░░░░░░░░░; }⏎                        
                    }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.e45f987dad470a64f3
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      69.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.d533b8a2f250d611b1
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      19.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
               `
           ),
           buildProdNormal(
