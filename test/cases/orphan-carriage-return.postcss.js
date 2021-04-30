@@ -58,13 +58,15 @@ module.exports = test(
     env({
       ENTRY: join('src', 'index.scss')
     }),
-    testDefault(
-      all(buildDevNormal, buildProdNormal, buildDevNoUrl, buildProdNoUrl)(
-        assertWebpackNotOk,
-        assertCssError
+    testRemoveCR(false)(
+      testDefault(
+        all(buildDevNormal, buildProdNormal, buildDevNoUrl, buildProdNoUrl)(
+          assertWebpackNotOk,
+          assertCssError
+        )
       )
     ),
-    testRemoveCR(
+    testRemoveCR(true)(
       testDebug(
         buildDevNormal(
           assertWebpackOk,
@@ -138,7 +140,7 @@ module.exports = test(
             `,
           compose(
             onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.a66a64f774507001e5e0.css'),
+            assertCssAndSourceMapContent('main.924a084d68ea78d1c417.css'),
             outdent
           )`
             /src/index.scss                                                                                    
@@ -156,8 +158,8 @@ module.exports = test(
             8:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         5:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎    
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.a66a64f774507001e5
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      e0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.924a084d68ea78d1c4
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      17.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(

@@ -4,7 +4,8 @@
  */
 'use strict';
 
-var path              = require('path'),
+var os                = require('os'),
+    path              = require('path'),
     fs                = require('fs'),
     util              = require('util'),
     loaderUtils       = require('loader-utils'),
@@ -77,7 +78,7 @@ function resolveUrlLoader(content, sourceMap) {
           sourceMap: loader.sourceMap,
           engine   : 'postcss',
           silent   : false,
-          removeCR : false,
+          removeCR : os.EOL.includes('\r'),
           root     : false,
           debug    : false,
           join     : joinFn.defaultJoin

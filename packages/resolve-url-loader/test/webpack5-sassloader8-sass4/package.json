@@ -5,18 +5,18 @@
     "node": ">=10.0.0"
   },
   "dependencies": {
-    "css-loader": "^4.2.0",
-    "file-loader": "^6.0.0",
+    "css-loader": "^5.2.4",
+    "file-loader": "^6.2.0",
     "last-call-webpack-plugin": "^3.0.0",
-    "mini-css-extract-plugin": "^0.9.0",
-    "node-sass": "^4.14.0",
-    "optimize-css-assets-webpack-plugin": "^5.0.3",
-    "sass-loader": "^8.0.2",
-    "webpack": "next",
-    "webpack-cli": "^3.3.12"
+    "mini-css-extract-plugin": "^1.5.1",
+    "node-sass": "^5.0.0",
+    "optimize-css-assets-webpack-plugin": "^5.0.4",
+    "sass-loader": "^11.0.1",
+    "webpack": "^5.36.1",
+    "webpack-cli": "^4.6.0"
   },
   "scripts": {
-    "webpack-d": "webpack --debug --output-pathinfo --mode=development",
-    "webpack-p": "webpack -p --mode=production"
+    "webpack-d": "webpack --no-color --output-pathinfo --mode=development",
+    "webpack-p": "webpack --no-color --mode=production"
   }
 }

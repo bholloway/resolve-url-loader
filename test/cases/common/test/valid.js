@@ -53,16 +53,16 @@ exports.testDebug = (...elements) =>
     )
   );
 
-exports.testRemoveCR = (...elements) =>
+exports.testRemoveCR = (removeCR) => (...elements) =>
   test(
-    'removeCR=true',
+    `removeCR=${removeCR}`,
     layer()(
       env({
-        LOADER_OPTIONS: {removeCR: true},
-        OUTPUT: 'remove-cr'
+        LOADER_OPTIONS: {removeCR},
+        OUTPUT: `remove-cr-${removeCR}`
       }),
       ...elements,
-      test('validate', assertStderr('options.removeCR')(1)`removeCR: true`)
+      test('validate', assertStderr('options.removeCR')(1)`removeCR: ${String(removeCR)}`)
     )
   );
 
