@@ -62,7 +62,7 @@ Some users find the node-sass `linefeed` option solves the problem.
 
 **Work arounds**
 
-* Enable `removeCR` option [here](../README.md#options).
+* Enable `removeCR` option [here](../README.md#options) (enabled by default on Window OS).
 * Remove linebreaks in declarations in your `.scss` sources.
 
 **Diagnosis**

@@ -11,6 +11,7 @@
 
 * The `engine` option is deprecated which means the old `rework` engine is deprecated.
 * The `keepQuery` behaviour is now the default, the `keepQuery` option has been removed.
+* The `removeCR` option defaults to `true` when executing on Windows OS.
 * The `absolute` option has been removed.
 * The `join` option has changed.
 

@@ -113,15 +113,15 @@ rules: [
 
 The loader should work without options but use these as required.
 
-| option      | type                       | default     |            |  description                                                                                                                                                                     |
-|-------------|----------------------------|-------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sourceMap` | boolean                    | `false`     |            | Generate an outgoing source-map.                                                                                                                                                 |
-| `removeCR`  | boolean                    | `false`     |            | Convert orphan CR to whitespace.<br/>See known issues below.                                                                                                                     |
-| `debug`     | boolean                    | `false`     |            | Display debug information.                                                                                                                                                       |
-| `silent`    | boolean                    | `false`     |            | Do **not** display warnings or deprecation messages.                                                                                                                             |
-| `root`      | string                     | _unset_     |            | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
-| `join`      | function                   | _inbuilt_   | advanced   | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the [advanced features](docs/advanced-features.md) docs.                    |
-| `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'` | deprecated | The css parser engine.<br/>Using this option produces a deprecation warning.                                                                                                     |
+| option      | type                       | default                                 |            |  description                                                                                                                                                                     |
+|-------------|----------------------------|-----------------------------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sourceMap` | boolean                    | `false`                                 |            | Generate an outgoing source-map.                                                                                                                                                 |
+| `removeCR`  | boolean                    | `true` Windows OS<br/>`false` otherwise |            | Convert orphan CR to whitespace.<br/>See known issues below.                                                                                                                     |
+| `debug`     | boolean                    | `false`                                 |            | Display debug information.                                                                                                                                                       |
+| `silent`    | boolean                    | `false`                                 |            | Do **not** display warnings or deprecation messages.                                                                                                                             |
+| `root`      | string                     | _unset_                                 |            | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
+| `join`      | function                   | _inbuilt_                               | advanced   | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the [advanced features](docs/advanced-features.md) docs.                    |
+| `engine`    | `'rework'`<br/>`'postcss'` | `'postcss'`                             | deprecated | The css parser engine.<br/>Using this option produces a deprecation warning.                                                                                                     |
 
 ## Limitations
 
