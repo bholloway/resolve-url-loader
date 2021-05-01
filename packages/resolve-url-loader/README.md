@@ -1,3 +1,9 @@
+> **I M P O R T A N T**
+>
+> Version 4 release is imminent. Please try it. More info on the [homepage](https://github.com/bholloway/resolve-url-loader).
+>
+> Version 3 is now in maintenance mode.
+
 # Resolve URL Loader
 
 [![NPM](https://nodei.co/npm/resolve-url-loader.png)](https://www.npmjs.com/package/resolve-url-loader)
