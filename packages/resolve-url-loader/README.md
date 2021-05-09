@@ -41,7 +41,7 @@ When you use **fully relative paths** in `url()` statements then Webpack expects
 
 To illustrate here are 3 simple examples of SASS and Webpack _without_ `resolve-url-loader`.
 
-[![the basic problem](https://raw.githubusercontent.com/bholloway/resolve-url-loader/master/packages/resolve-url-loader/docs/basic-problem.svg)](docs/basic-problem.svg)
+[![the basic problem](https://raw.githubusercontent.com/bholloway/resolve-url-loader/v4-maintenance/packages/resolve-url-loader/docs/basic-problem.svg)](docs/basic-problem.svg)
 
 The first 2 cases are trivial and work fine. The asset is specified in the root SCSS file and Webpack finds it.
 
