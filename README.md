@@ -1,17 +1,23 @@
 # Resolve URL Loader
 
-The **version 4** is in **beta** on `master` branch. 🥳
+We're working on **version 5** right now.
+* Update `node` to recent LTS.
+* Update `postcss` to latest
+* Remove `rework` completely
 
-Install `resolve-url-loader@next` in your project!
-
-* Better resolution of the original source location - You can more successfully use url() in variables and mixins. 🎉
-* Dependencies now accept a wider range and explicit dependency on `rework` and `rework-visit` has been removed. 😌
-* Tested for webpack 5. 👍
-
-Read the [improved documentation](packages/resolve-url-loader/README.md).
-
-Migrate using the [changelog](packages/resolve-url-loader/CHANGELOG.md).
+Stay tuned for a `resolve-url-loader@next` coming soon.
 
 ----
 
-The **version 3** is now maintenance only, refer to [v3-maintenance](../v3-maintenance/packages/resolve-url-loader/README.md) branch.
+The **version 4** is released. 🥳
+
+Install `resolve-url-loader@latest` in your project!
+
+Read the [documentation](../v4-maintenance/packages/resolve-url-loader/README.md). 
+Migrate using the [changelog](../v4-maintenance/packages/resolve-url-loader/CHANGELOG.md).
+
+----
+
+The **version 3** is now maintenance only.
+
+Refer to [v3-maintenance](../v3-maintenance/packages/resolve-url-loader/README.md) branch.
