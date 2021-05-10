@@ -2,7 +2,6 @@
 
 const {readdirSync} = require('fs');
 const {join, basename} = require('path');
-const {promisify} = require('es6-promisify');
 const mkdirp = require('mkdirp');
 const {keys, entries, assign} = Object;
 
@@ -125,6 +124,6 @@ exports.create = (options) => {
     onActivity,
     assertTape(`${NAME}() expected tape Test instance, ensure ${NAME} occurs once as first item`),
     (test) => ({test, config, layer}),
-    lens('layer', null)(({root}) => promisify(mkdirp)(root))
+    lens('layer', null)(({root}) => mkdirp(root))
   );
 };

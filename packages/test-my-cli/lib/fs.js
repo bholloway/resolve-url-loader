@@ -61,7 +61,7 @@ exports.MkDirOp = class MkDirOp {
 
   exec() {
     return withCatch(this.log, `mkdir: ${this.path}`)(
-      () => promisify(mkdirp)(this.path)
+      () => mkdirp(this.path)
         .then((created) => {this.created = created;})
         .then(constant(this))
     );

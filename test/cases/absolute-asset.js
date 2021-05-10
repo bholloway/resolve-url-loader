@@ -13,7 +13,7 @@ const {
 } = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
 const {
-  onlyOS, onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
+  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
   assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertAssetError
 } = require('../lib/assert');
 
@@ -57,16 +57,8 @@ module.exports = test(
       // absolute urls are not processed
       testRoot(false)(
         all(buildDevNormal, buildProdNormal)(
-          compose(onlyOS('posix'), onlyMeta('meta.version.webpack < 5'))(
-            assertWebpackOk
-          ),
-          all(
-            compose(onlyOS('posix'), onlyMeta('meta.version.webpack >= 5')),
-            onlyOS('windows')
-          )(
-            assertWebpackNotOk,
-            assertAssetError
-          )
+          assertWebpackNotOk,
+          assertAssetError
         ),
         all(buildDevNoUrl, buildProdNoUrl)(
           assertWebpackOk
@@ -98,22 +90,14 @@ module.exports = test(
         // if webpack passes it is incidental but lets check anyway
         testDebug(
           all(buildDevNormal, buildProdNormal)(
-            onlyOS('posix')(
+            onlyMeta('meta.version.webpack == 4')(
+              assertWebpackNotOk,
+              assertAssetError
+            ),
+            onlyMeta('meta.version.webpack >= 5')(
               assertWebpackOk,
               assertNoErrors,
               assertNoMessages
-            ),
-            onlyOS('windows')(
-              onlyMeta('meta.version.webpack != 4')(
-                assertWebpackOk,
-                assertNoErrors,
-                assertNoMessages
-              ),
-              // windows paths are not supported
-              onlyMeta('meta.version.webpack == 4')(
-                assertWebpackNotOk,
-                assertAssetError
-              )
             )
           ),
           all(buildDevNoUrl, buildProdNoUrl)(

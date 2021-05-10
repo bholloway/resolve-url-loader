@@ -48,7 +48,7 @@ console.log(`timestamp: ${epoch}`);
 // platforms, engines, cases
 const tests = permute(
   readdirSync(PLATFORMS_DIR),
-  ['rework', 'postcss'],
+  ['postcss'],
   readdirSync(CASES_DIR).filter((v) => v.endsWith('.js')).map((v) => v.split('.').slice(0, -1).join('.'))
 )
   .filter(testCaseVsEngine)
