@@ -115,32 +115,6 @@ module.exports = test(
             assertNoErrors,
             assertDebugMessages,
             assertCssSourceMapComment(true),
-            compose(onlyMeta('meta.engine == "rework" && meta.version.webpack < 5'), assertCssContent, outdent)`
-              .some-class-name {
-                single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                double-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                unquoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                query: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                hash: url(d68e763c825dc0e388929ae1b375ce18.jpg#hash);
-              }
-              
-              .another-class-name {
-                display: block;
-              }
-              `,
-            compose(onlyMeta('meta.engine == "rework" && meta.version.webpack >= 5'), assertCssContent, outdent)`
-              .some-class-name {
-                single-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
-                double-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
-                unquoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
-                query: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
-                hash: url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash);
-              }
-              
-              .another-class-name {
-                display: block;
-              }
-              `,
             compose(onlyMeta('meta.engine == "postcss" && meta.version.webpack < 5'), assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
@@ -169,19 +143,6 @@ module.exports = test(
             assertNoErrors,
             assertDebugMessages,
             assertCssSourceMapComment(true),
-            compose(onlyMeta('meta.engine == "rework"'), assertCssContent, outdent)`
-              .some-class-name {
-                single-quoted: url("../images/img.jpg");
-                double-quoted: url("../images/img.jpg");
-                unquoted: url(../images/img.jpg);
-                query: url(../images/img.jpg?query);
-                hash: url(../images/img.jpg#hash);
-              }
-              
-              .another-class-name {
-                display: block;
-              }
-              `,
             compose(onlyMeta('meta.engine == "postcss"'), assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url("../images/img.jpg");
