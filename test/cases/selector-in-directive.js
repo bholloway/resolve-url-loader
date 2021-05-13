@@ -90,27 +90,7 @@ module.exports = test(
           assertNoErrors,
           assertDebugMessages,
           assertCssSourceMapComment(true),
-          compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, outdent)`
-            @font-face {
-              .some-class-name {
-                src: ${
-                  trim`
-                    url(d68e763c825dc0e388929ae1b375ce18.eot#iefix) format("embedded-opentype")
-                    , url(d68e763c825dc0e388929ae1b375ce18.ttf) format("truetype")
-                    , url(d68e763c825dc0e388929ae1b375ce18.woff) format(woff)
-                    , url(d68e763c825dc0e388929ae1b375ce18.svg#iefix) format(svg)
-                    `
-                  }; } }
-            
-            @media only screen {
-              .another-class-name {
-                single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                double-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                unquoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                query: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                hash: url(d68e763c825dc0e388929ae1b375ce18.jpg#hash); } }
-            `,
-          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+          compose(assertCssContent, outdent)`
             @font-face {
               .some-class-name {
                 src: ${
@@ -138,10 +118,10 @@ module.exports = test(
           assertCssSourceMapComment(true),
           compose(
             onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.844d34240f4c1ad0b8eb.css', {sourceRoot: 'src'}),
+            assertCssAndSourceMapContent('main.206d76989e078b87f572.css'),
             outdent
           )`
-            feature/index.scss                                                                                  
+            ./src/feature/index.scss                                                                            
             ----------------------------------------------------------------------------------------------------
             01:01 @font-face {⏎                               01:001 @font-face {⏎                              
                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -156,7 +136,7 @@ module.exports = test(
             05:48 ░░░░;⏎                                      03:207 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; } ░░░░░
                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                 
-            index.scss                                                                                          
+            ./src/index.scss                                                                                    
             ----------------------------------------------------------------------------------------------------
             01:01 .some-class-name { ⏎                        02:003 ░░.some-class-name {⏎                      
                     @import "feature/index.scss";⏎                       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -186,15 +166,15 @@ module.exports = test(
             11:04 ░░░⏎                                        11:041 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}⏎ 
                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ⏎                                          
-                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        /*# sourceMappingURL=main.844d34240f4c1ad0b
-                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        8eb.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        /*# sourceMappingURL=main.206d76989e078b87f
+                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        572.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `,
           compose(
             onlyMeta('meta.version.webpack >= 5'),
             assertCssAndSourceMapContent('main.f0dfbe5f728d06bc202b.css'),
             outdent
           )`
-            /src/feature/index.scss                                                                             
+            ./src/feature/index.scss                                                                            
             ----------------------------------------------------------------------------------------------------
             01:01 @font-face {⏎                               01:001 @font-face {⏎                              
                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -209,7 +189,7 @@ module.exports = test(
             05:48 ░░░░;⏎                                      03:207 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; } ░░░░░
                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                 
-            /src/index.scss                                                                                     
+            ./src/index.scss                                                                                    
             ----------------------------------------------------------------------------------------------------
             01:01 .some-class-name { ⏎                        02:003 ░░.some-class-name {⏎                      
                     @import "feature/index.scss";⏎                       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -248,16 +228,7 @@ module.exports = test(
           assertNoErrors,
           assertDebugMessages,
           assertCssSourceMapComment(false),
-          compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, trim)`
-            @font-face{.some-class-name{src:url(d68e763c825dc0e388929ae1b375ce18.eot#iefix) format("embedded-opentype"),
-            url(d68e763c825dc0e388929ae1b375ce18.ttf) format("truetype"),
-            url(d68e763c825dc0e388929ae1b375ce18.woff) format(woff),
-            url(d68e763c825dc0e388929ae1b375ce18.svg#iefix) format(svg)}}
-            @media only screen{.another-class-name{single-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);
-            double-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);unquoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);
-            query:url(d68e763c825dc0e388929ae1b375ce18.jpg);hash:url(d68e763c825dc0e388929ae1b375ce18.jpg#hash)}}
-            `,
-          compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+          compose(assertCssContent, trim)`
             @font-face{.some-class-name{src:url(9eb57a84abbf8abc636d0faa71f9a800.eot#iefix) format("embedded-opentype"),
             url(9eb57a84abbf8abc636d0faa71f9a800.ttf) format("truetype"),
             url(9eb57a84abbf8abc636d0faa71f9a800.woff) format(woff),
@@ -274,10 +245,10 @@ module.exports = test(
           assertCssSourceMapComment(false),
           compose(
             onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.452c075bf6e432b8fc1c.css', {sourceRoot: 'src'}),
+            assertCssAndSourceMapContent('main.afa2eb6cb9f65e7e1a7b.css'),
             outdent
           )`
-            feature/index.scss                                                                                 
+            ./src/feature/index.scss                                                                           
             ---------------------------------------------------------------------------------------------------
             01:01 @font-face {⏎                               1:001 @font-face{░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -292,7 +263,7 @@ module.exports = test(
             05:48 ░░░░;⏎                                      1:215 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}
                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                
-            index.scss                                                                                         
+            ./src/index.scss                                                                                   
             ---------------------------------------------------------------------------------------------------
             01:01 .some-class-name { ⏎                        1:012 ░░░░░░░░░░░.some-class-name{░░░░░░░░░░░░░░░
                     @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -329,7 +300,7 @@ module.exports = test(
             assertCssAndSourceMapContent('main.9a84e059d13225129139.css'),
             outdent
           )`
-            /src/feature/index.scss                                                                            
+            ./src/feature/index.scss                                                                           
             ---------------------------------------------------------------------------------------------------
             01:01 @font-face {⏎                               1:001 @font-face{░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -344,7 +315,7 @@ module.exports = test(
             05:48 ░░░░;⏎                                      1:215 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}
                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                                
-            /src/index.scss                                                                                    
+            ./src/index.scss                                                                                   
             ---------------------------------------------------------------------------------------------------
             01:01 .some-class-name { ⏎                        1:012 ░░░░░░░░░░░.some-class-name{░░░░░░░░░░░░░░░
                     @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░

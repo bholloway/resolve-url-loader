@@ -115,18 +115,7 @@ module.exports = test(
             assertNoErrors,
             assertDebugMessages,
             assertCssSourceMapComment(true),
-            compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, outdent)`
-              .some-class-name {
-                single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                double-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                unquoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                query: url(d68e763c825dc0e388929ae1b375ce18.jpg);
-                hash: url(d68e763c825dc0e388929ae1b375ce18.jpg#hash); }
-              
-              .another-class-name {
-                display: block; }
-              `,
-            compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
+            compose(assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
                 double-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
@@ -159,16 +148,8 @@ module.exports = test(
             assertWebpackOk,
             assertNoErrors,
             assertDebugMessages,
-            onlyMeta('meta.version.webpack >= 4')(
-              assertCssSourceMapComment(false)
-            ),
-            compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, trim)`
-              .some-class-name{single-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);double-quoted:
-              url(d68e763c825dc0e388929ae1b375ce18.jpg);unquoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);query:
-              url(d68e763c825dc0e388929ae1b375ce18.jpg);hash:url(d68e763c825dc0e388929ae1b375ce18.jpg#hash)}
-              .another-class-name{display:block}
-              `,
-            compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, trim)`
+            assertCssSourceMapComment(false),
+            compose(assertCssContent, trim)`
               .some-class-name{single-quoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);double-quoted:
               url(9eb57a84abbf8abc636d0faa71f9a800.jpg);unquoted:url(9eb57a84abbf8abc636d0faa71f9a800.jpg);query:
               url(9eb57a84abbf8abc636d0faa71f9a800.jpg);hash:url(9eb57a84abbf8abc636d0faa71f9a800.jpg#hash)}

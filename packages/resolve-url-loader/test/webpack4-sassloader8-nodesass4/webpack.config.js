@@ -4,13 +4,13 @@ const path = require('path');
 const LastCallWebpackPlugin = require('last-call-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const processFn = require('adjust-sourcemap-loader/lib/process');
 
 module.exports = {
   entry: path.join(__dirname, process.env.ENTRY),
   output: {
     path: path.join(__dirname, process.env.OUTPUT),
     filename: '[name].js',
+    publicPath: '',
     devtoolModuleFilenameTemplate: '[resource-path]',
     devtoolFallbackModuleFilenameTemplate: '[resource-path]',
   },
@@ -26,6 +26,12 @@ module.exports = {
         {
           loader: 'css-loader',
           options: JSON.parse(process.env.CSS_OPTIONS)
+        }, {
+          loader: 'adjust-sourcemap-loader',
+          options: {
+            debug: true,
+            format: 'projectRelative'
+          }
         }, {
           loader: 'resolve-url-loader',
           options: Object.assign(
@@ -61,8 +67,11 @@ module.exports = {
         phase: LastCallWebpackPlugin.PHASES.EMIT,
         regExp: /\.css\.map/,
         processor: (assetName, asset) => Promise.resolve(JSON.parse(asset.source()))
-          .then(obj => processFn({}, {format: 'projectRootRelative'}, obj))
-          .then(obj => JSON.stringify(obj))
+          .then((obj) => ({
+            ...obj,
+            sources: obj.sources.map((source) => source.replace('webpack://', ''))
+          }))
+          .then((obj) => JSON.stringify(obj))
       }]
     })
   ],

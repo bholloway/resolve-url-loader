@@ -52,7 +52,7 @@ module.exports = test(
         assertNoErrors,
         assertNoMessages,
         assertCssSourceMapComment(true),
-        compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, outdent)`
+        compose(assertCssContent, outdent)`
           .some-class-name .another-class-name {
             background-image: url("data:image/svg+xml;charset=utf8,${iconSvgXml}"); }
           `
@@ -64,16 +64,16 @@ module.exports = test(
         assertCssSourceMapComment(true),
         compose(
           onlyMeta('meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.043905a16f1a10c6c6c7.css', {sourceRoot: 'src'}),
+          assertCssAndSourceMapContent('main.a69e0714fec5375da4d0.css'),
           outdent
         )`
-          index.scss                                                                                         
+          ./src/index.scss                                                                                   
           ---------------------------------------------------------------------------------------------------
           1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name {⏎    
                   @import "feature/index.scss";⏎                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          feature/index.scss                                                                                 
+          ./src/feature/index.scss                                                                           
           ---------------------------------------------------------------------------------------------------
           2:003 ░░background-image: url("data:image/svg+xml 2:003 ░░background-image: url("data:image/svg+xml
                 ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm
@@ -84,21 +84,21 @@ module.exports = test(
           2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎      
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.043905a16f1a10c6c
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       6c7.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.a69e0714fec5375da
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       4d0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
           `,
         compose(
           onlyMeta('meta.version.webpack >= 5'),
           assertCssAndSourceMapContent('main.0de225be0d103507fb2e.css'),
           outdent
         )`
-          /src/index.scss                                                                                    
+          ./src/index.scss                                                                                   
           ---------------------------------------------------------------------------------------------------
           1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name {⏎    
                   @import "feature/index.scss";⏎                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          /src/feature/index.scss                                                                            
+          ./src/feature/index.scss                                                                           
           ---------------------------------------------------------------------------------------------------
           2:003 ░░background-image: url("data:image/svg+xml 2:003 ░░background-image: url("data:image/svg+xml
                 ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm
@@ -129,16 +129,16 @@ module.exports = test(
         assertCssSourceMapComment(false),
         compose(
           onlyMeta('meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.c91f9447fb9b4556134b.css', {sourceRoot: 'src'}),
+          assertCssAndSourceMapContent('main.e412140a3a03ab5a8aa0.css'),
           outdent
         )`
-          index.scss                                                                                         
+          ./src/index.scss                                                                                   
           ---------------------------------------------------------------------------------------------------
           1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name{░░░░░░
                   @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          feature/index.scss                                                                                 
+          ./src/feature/index.scss                                                                           
           ---------------------------------------------------------------------------------------------------
           2:003 ░░background-image: url("data:image/svg+xml 1:038 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░backgr
                 ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ound-image:url("data:image/svg+xml;charset=
@@ -155,13 +155,13 @@ module.exports = test(
           assertCssAndSourceMapContent('main.b720d3274f34b01a782e.css'),
           outdent
         )`
-          /src/index.scss                                                                                    
+          ./src/index.scss                                                                                   
           ---------------------------------------------------------------------------------------------------
           1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name{░░░░░░
                   @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
                                                                                                              
-          /src/feature/index.scss                                                                            
+          ./src/feature/index.scss                                                                           
           ---------------------------------------------------------------------------------------------------
           2:003 ░░background-image: url("data:image/svg+xml 1:038 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░backgr
                 ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ound-image:url("data:image/svg+xml;charset=
