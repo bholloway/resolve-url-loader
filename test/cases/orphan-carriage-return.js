@@ -73,7 +73,7 @@ module.exports = test(
           assertNoErrors,
           assertDebugMessages,
           assertCssSourceMapComment(true),
-          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, outdent)`
+          compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, outdent)`
             .some-class-name {
               font-size: calc(  ( 1px )); }
             
@@ -93,28 +93,6 @@ module.exports = test(
           assertNoErrors,
           assertDebugMessages,
           assertCssSourceMapComment(true),
-          compose(
-            onlyMeta('meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.093ee3cbdee124bd5a8f7c7d42686778.css', {sanitiseSources: true}),
-            outdent
-          )`
-            /src/index.scss                                                                                    
-            ---------------------------------------------------------------------------------------------------
-            1:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            2:03 ░░font-size: calc(⏎                          2:03 ░░font-size: calc(  ( 1px ));░░░░░░░░░░░░░░░
-                     (⇦1px⇦)⏎                                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                   )░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            4:04 ░░░;⏎                                        2:30 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ }⏎            
-                 }⏎                                                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            7:01 .another-class-name {⏎                       4:01 .another-class-name {⏎                      
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            8:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 5:03 ░░background-image: url("./img.jpg");░░░░░░░
-            8:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         5:38 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ }⏎    
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.093ee3cbdee124bd5a
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      8f7c7d42686778.css.map*/░░░░░░░░░░░░░░░░░░░░
-            `,
           compose(
             onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.6e4443dd51c28c07ae5c.css', {sourceRoot: 'src'}),
@@ -166,13 +144,8 @@ module.exports = test(
           assertWebpackOk,
           assertNoErrors,
           assertDebugMessages,
-          onlyMeta('meta.version.webpack < 4')(
-            assertCssSourceMapComment(true)
-          ),
-          onlyMeta('meta.version.webpack >= 4')(
-            assertCssSourceMapComment(false)
-          ),
-          compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
+          assertCssSourceMapComment(false),
+          compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, trim)`
             .some-class-name{font-size:1px}.another-class-name{background-image:
             url(d68e763c825dc0e388929ae1b375ce18.jpg)}
             `,
@@ -185,35 +158,7 @@ module.exports = test(
           assertWebpackOk,
           assertNoErrors,
           assertDebugMessages,
-          onlyMeta('meta.version.webpack < 4')(
-            assertCssSourceMapComment(true)
-          ),
-          onlyMeta('meta.version.webpack >= 4')(
-            assertCssSourceMapComment(false)
-          ),
-          compose(
-            onlyMeta('meta.version.webpack < 4'),
-            assertCssAndSourceMapContent('main.c5f2af008d44d3422725753ad64da0cb.css', {sanitiseSources: true}),
-            outdent
-          )`
-            /src/index.scss                                                                                    
-            ---------------------------------------------------------------------------------------------------
-            1:01 .some-class-name {⏎                          1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            2:03 ░░font-size: calc(⏎                          1:18 ░░░░░░░░░░░░░░░░░font-size:1px░░░░░░░░░░░░░░
-                     (⇦1px⇦)⏎                                      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                   )░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            4:04 ░░░;⏎                                        1:31 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            5:02 ░⏎                                           1:32 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░.another-clas
-                 ⏎                                                 s-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 .another-class-name {⏎                            ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            8:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 1:52 ░░░░░░░background-image:url("./img.jpg")░░░░
-            8:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         1:85 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░}⏎  
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.c5f2af008d44d34227
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      25753ad64da0cb.css.map*/░░░░░░░░░░░░░░░░░░░░
-            `,
+          assertCssSourceMapComment(false),
           compose(
             onlyMeta('meta.version.webpack == 4'),
             assertCssAndSourceMapContent('main.86ba9bacab12ac06aa0b.css', {sourceRoot: 'src'}),

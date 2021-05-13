@@ -88,7 +88,7 @@ const assertChildCompilationWarning = exports.assertStdout('webpack warning')(1)
   `;
 
 exports.assertMisconfigWarning = (message) => sequence(
-  onlyMeta('meta.version.webpack < 5')(assertMisconfigWarningWithMessage(message)),
+  onlyMeta('meta.version.webpack == 4')(assertMisconfigWarningWithMessage(message)),
   onlyMeta('meta.version.webpack >= 5')(assertChildCompilationWarning)
 );
 

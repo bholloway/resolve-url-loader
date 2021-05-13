@@ -55,7 +55,7 @@ module.exports = test(
       // root-relative urls are not processed
       testRoot(false)(
         all(buildDevNormal, buildProdNormal)(
-          onlyMeta('meta.version.webpack < 5')(
+          onlyMeta('meta.version.webpack == 4')(
             assertWebpackOk
           ),
           onlyMeta('meta.version.webpack >= 5')(
@@ -90,7 +90,7 @@ module.exports = test(
             assertNoErrors,
             assertDebugMessages,
             assertCssSourceMapComment(true),
-            compose(onlyMeta('meta.engine == "postcss" && meta.version.webpack < 5'), assertCssContent, outdent)`
+            compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
                 double-quoted: url(d68e763c825dc0e388929ae1b375ce18.jpg);
@@ -101,7 +101,7 @@ module.exports = test(
               .another-class-name {
                 display: block; }
               `,
-            compose(onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'), assertCssContent, outdent)`
+            compose(onlyMeta('meta.version.webpack >= 5'), assertCssContent, outdent)`
               .some-class-name {
                 single-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
                 double-quoted: url(9eb57a84abbf8abc636d0faa71f9a800.jpg);
@@ -119,42 +119,7 @@ module.exports = test(
             assertDebugMessages,
             assertCssSourceMapComment(true),
             compose(
-              onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
-              assertCssAndSourceMapContent('main.4574dcc1af6189fe3463fbac2bc0bf8e.css', {sanitiseSources: true}),
-              outdent
-            )`
-              /src/feature/index.scss                                                                            
-              ---------------------------------------------------------------------------------------------------
-              1:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              2:03 ░░single-quoted: url('/images/img.jpg')░░░░░ 2:03 ░░single-quoted: url("../images/img.jpg");░░
-              2:40 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎    2:43 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░⏎ 
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              3:03 ░░double-quoted: url("/images/img.jpg")░░░░░ 3:03 ░░double-quoted: url("../images/img.jpg");░░
-              3:40 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎    3:43 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░⏎ 
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              4:03 ░░unquoted: url(/images/img.jpg)░░░░░░░░░░░░ 4:03 ░░unquoted: url(../images/img.jpg);░░░░░░░░░
-              4:33 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎           4:36 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░⏎        
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              5:03 ░░query: url(/images/img.jpg?query)░░░░░░░░░ 5:03 ░░query: url(../images/img.jpg?query);░░░░░░
-              5:36 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎        5:39 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░⏎     
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              6:03 ░░hash: url(/images/img.jpg#hash)░░░░░░░░░░░ 6:03 ░░hash: url(../images/img.jpg#hash);░░░░░░░░
-              6:34 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎          6:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ }⏎     
-                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                                 
-              /src/index.scss                                                                                    
-              ---------------------------------------------------------------------------------------------------
-              2:01 .another-class-name {⏎                       8:01 .another-class-name {⏎                      
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░        ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              3:03 ░░display: block░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 9:03 ░░display: block;░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              3:17 ░░░░░░░░░░░░░░░░;⏎                           9:18 ░░░░░░░░░░░░░░░░░ }⏎                        
-                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.4574dcc1af6189fe34
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      63fbac2bc0bf8e.css.map*/░░░░░░░░░░░░░░░░░░░░
-              `,
-            compose(
-              onlyMeta('meta.engine == "postcss" && meta.version.webpack == 4'),
+              onlyMeta('meta.version.webpack == 4'),
               assertCssAndSourceMapContent('main.0e7db4d90a70d13fd992.css', {sourceRoot: 'src'}),
               outdent
             )`
@@ -190,7 +155,7 @@ module.exports = test(
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      92.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
               `,
             compose(
-              onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
+              onlyMeta('meta.version.webpack >= 5'),
               assertCssAndSourceMapContent('main.d533b8a2f250d611b119.css'),
               outdent
             )`
@@ -230,13 +195,8 @@ module.exports = test(
             assertWebpackOk,
             assertNoErrors,
             assertDebugMessages,
-            onlyMeta('meta.version.webpack < 4')(
-              assertCssSourceMapComment(true)
-            ),
-            onlyMeta('meta.version.webpack >= 4')(
-              assertCssSourceMapComment(false)
-            ),
-            compose(onlyMeta('meta.version.webpack < 5'), assertCssContent, trim)`
+            assertCssSourceMapComment(false),
+            compose(onlyMeta('meta.version.webpack == 4'), assertCssContent, trim)`
               .some-class-name{single-quoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);double-quoted:
               url(d68e763c825dc0e388929ae1b375ce18.jpg);unquoted:url(d68e763c825dc0e388929ae1b375ce18.jpg);query:
               url(d68e763c825dc0e388929ae1b375ce18.jpg);hash:url(d68e763c825dc0e388929ae1b375ce18.jpg#hash)}
@@ -253,46 +213,9 @@ module.exports = test(
             assertWebpackOk,
             assertNoErrors,
             assertDebugMessages,
-            onlyMeta('meta.version.webpack < 4')(
-              assertCssSourceMapComment(true)
-            ),
-            onlyMeta('meta.version.webpack >= 4')(
-              assertCssSourceMapComment(false)
-            ),
+            assertCssSourceMapComment(false),
             compose(
-              onlyMeta('meta.engine == "postcss" && meta.version.webpack < 4'),
-              assertCssAndSourceMapContent('main.b9fc2983490593a91246c92a19004337.css', {sanitiseSources: true}),
-              outdent
-            )`
-              /src/feature/index.scss                                                                             
-              ----------------------------------------------------------------------------------------------------
-              1:01 .some-class-name {⏎                          1:001 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              2:03 ░░single-quoted: url('/images/img.jpg');⏎    1:018 ░░░░░░░░░░░░░░░░░single-quoted:url("../image
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       s/img.jpg");░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              3:03 ░░double-quoted: url("/images/img.jpg");⏎    1:057 ░░░░░░░░░░░░double-quoted:url("../images/img
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       .jpg");░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              4:03 ░░unquoted: url(/images/img.jpg);⏎           1:096 ░░░░░░░unquoted:url(../images/img.jpg);░░░░░
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              5:03 ░░query: url(/images/img.jpg?query);⏎        1:128 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░query
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       :url(../images/img.jpg?query);░░░░░░░░░░░░░░
-              6:03 ░░hash: url(/images/img.jpg#hash)░░░░░░░░░░░ 1:163 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░hash:url(../im
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ages/img.jpg#hash)░░░░░░░░░░░░░░░░░░░░░░░░░░
-              6:34 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎          1:195 ░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░░░░
-                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                                  
-              /src/index.scss                                                                                     
-              ----------------------------------------------------------------------------------------------------
-              2:01 .another-class-name {⏎                       1:196 ░░░░░░░░░░░░░░░░░░░.another-class-name{░░░░░
-                     ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              3:03 ░░display: block░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 1:216 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░displ
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ay:block░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-              3:17 ░░░░░░░░░░░░░░░░;⏎                           1:229 ░░░░░░░░}⏎                                  
-                   }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.b9fc2983490593a912
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       46c92a19004337.css.map*/░░░░░░░░░░░░░░░░░░░░
-              `,
-            compose(
-              onlyMeta('meta.engine == "postcss" && meta.version.webpack == 4'),
+              onlyMeta('meta.version.webpack == 4'),
               assertCssAndSourceMapContent('main.06d3c235ca5ec72703e6.css', {sourceRoot: 'src'}),
               outdent
             )`
@@ -330,7 +253,7 @@ module.exports = test(
                    }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
               `,
             compose(
-              onlyMeta('meta.engine == "postcss" && meta.version.webpack >= 5'),
+              onlyMeta('meta.version.webpack >= 5'),
               assertCssAndSourceMapContent('main.b7fbfbe03a106de8b226.css'),
               outdent
             )`
