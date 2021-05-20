@@ -22,7 +22,7 @@ const pathToString = (absolutePath) => {
     const segments =
       (relative[0] !== '..') ? ['.'].concat(relative).filter(Boolean) :
         (relative.lastIndexOf('..') < 2) ? relative :
-          absolutePath.split(path.sep);
+          absolutePath.replace(/^[A-Z]\:/, '').split(path.sep);
     return segments.join('/');
   }
 };
