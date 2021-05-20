@@ -1,16 +1,16 @@
 {
-  "name": "webpack4-sassloader7-sass4",
+  "name": "webpack4-sassloader8-nodesass4",
   "version": "1.0.0",
   "engines": {
-    "node": ">=8.9"
+    "node": ">=12.0.0"
   },
   "dependencies": {
-    "css-loader": "^3.2.0",
-    "file-loader": "^4.2.0",
+    "css-loader": "^5.2.4",
+    "file-loader": "^6.2.0",
     "last-call-webpack-plugin": "^3.0.0",
-    "mini-css-extract-plugin": "^0.8.0",
-    "node-sass": "^4.12.0",
-    "optimize-css-assets-webpack-plugin": "^5.0.3",
+    "mini-css-extract-plugin": "^1.6.0",
+    "node-sass": "^4.14.1",
+    "optimize-css-assets-webpack-plugin": "^5.0.4",
     "sass-loader": "^8.0.0",
     "webpack": "^4.41.0",
     "webpack-cli": "^3.3.9"

@@ -88,15 +88,9 @@ const assertChildCompilationWarning = exports.assertStdout('webpack warning')(1)
   `;
 
 exports.assertMisconfigWarning = (message) => sequence(
-  onlyMeta('meta.version.webpack < 5')(assertMisconfigWarningWithMessage(message)),
+  onlyMeta('meta.version.webpack == 4')(assertMisconfigWarningWithMessage(message)),
   onlyMeta('meta.version.webpack >= 5')(assertChildCompilationWarning)
 );
-
-// Webpack may repeat errors with a header line taken from the parent loader so we allow range 1-2
-const assertModuleNotFoundError = exports.assertStdout('webpack "Module not found" error')([1, 2])`
-  ^[ ]*ERROR[^\n]*
-  [ ]*Module build failed(:|[^\n]*\n)[ ]*ModuleNotFoundError: Module not found:
-  `;
 
 const assertCantResolveError = exports.assertStdout('webpack "Can\'t resolve" error')(1)`
   ^[ ]*ERROR[^\n]*
@@ -105,7 +99,5 @@ const assertCantResolveError = exports.assertStdout('webpack "Can\'t resolve" er
   [ ]*Error: Can't resolve[^\n]*
   `;
 
-exports.assertAssetError = sequence(
-  onlyMeta('meta.version.webpack < 5')(assertModuleNotFoundError),
-  onlyMeta('meta.version.webpack >= 5')(assertCantResolveError)
-);
+// TODO inline this
+exports.assertAssetError = assertCantResolveError;

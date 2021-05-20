@@ -20,7 +20,7 @@ var valueProcessor   = require('./lib/value-processor'),
 const DEPRECATED_OPTIONS = {
   engine: [
     'DEP_RESOLVE_URL_LOADER_OPTION_ENGINE',
-    'the "engine" option is deprecated, "postcss" engine is the default, using "rework" engine is not advised'
+    'the "engine" option is deprecated, "postcss" engine is the default, there are no other available engines'
   ],
   keepQuery: [
     'DEP_RESOLVE_URL_LOADER_OPTION_KEEP_QUERY',

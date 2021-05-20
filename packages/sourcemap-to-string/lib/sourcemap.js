@@ -6,7 +6,6 @@
 
 const vlq = require('vlq');
 const compose = require('compose-function');
-require('array.prototype.flatmap').shim();
 
 const table = require('./table');
 const {formatInt, formatSourceText, formatMultilineText} = require('./text');

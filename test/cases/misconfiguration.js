@@ -16,21 +16,14 @@ const {
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
 const {
-  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout,
+  assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout,
   assertSilence, assertMisconfigWarning, assertDeprecationWarning,
 } = require('../lib/assert');
 
-const assertContentDev = sequence(
-  compose(onlyMeta('meta.engine == "rework"'), assertCssContent, outdent)`
-    .some-class-name {
-      display: none;
-    }
-    `,
-  compose(onlyMeta('meta.engine == "postcss"'), assertCssContent, outdent)`
-    .some-class-name {
-      display: none; }
-    `
-);
+const assertContentDev = compose(assertCssContent, outdent)`
+  .some-class-name {
+    display: none; }
+  `;
 
 const assertContentProd = compose(assertCssContent, trim)`
   .some-class-name{display:none}

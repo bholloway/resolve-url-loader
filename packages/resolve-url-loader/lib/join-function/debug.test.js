@@ -4,7 +4,8 @@
  */
 'use strict';
 
-const {resolve} = require('path');
+const {resolve, sep} = require('path');
+const {platform} = require('os');
 const tape = require('blue-tape');
 const sinon = require('sinon');
 const outdent = require('outdent');
@@ -17,6 +18,15 @@ const json = (strings, ...substitutions) =>
     ...substitutions.map(v => JSON.stringify(v, (_, vv) => Number.isNaN(vv) ? 'NaN' : vv))
   );
 
+const cwd = (...args) =>
+  resolve(...String.raw(...args).split('/'));
+
+const root = (...args) =>
+  resolve(
+    platform() === 'win32' ? (process.cwd().split(sep).shift() + sep) : sep,
+    ...String.raw(...args).split('/')
+  );
+
 tape(
   'debug',
   ({name, test, end: end1, equal, looseEqual}) => {
@@ -25,16 +35,16 @@ tape(
         // absolute within cwd
         [
           [
-            resolve('my-source-file.js'),
+            cwd`my-source-file.js`,
             'my-asset.png',
             [
               {
-                base: resolve('foo'),
-                joined: resolve('foo', 'my-asset.png'),
+                base: cwd`foo`,
+                joined: cwd`foo/my-asset.png`,
                 isSuccess: false
               }, {
-                base: resolve('bar', 'baz'),
-                joined: resolve('bar', 'baz', 'my-asset.png'),
+                base: cwd`bar/baz`,
+                joined: cwd`bar/baz/my-asset.png`,
                 isSuccess: true
               }
             ]
@@ -49,24 +59,24 @@ tape(
         // absolute otherwise
         [
           [
-            '/my-source-file.js',
-            '#anything\\./goes',
+            root`my-source-file.js`,
+            '#anything@./goes',
             [
               {
-                base: '/foo',
-                joined: '/foo/#anything\\./goes',
+                base: root`foo`,
+                joined: root`foo/#anything@./goes`,
                 isSuccess: false
               }, {
-                base: '/bar/baz',
-                joined: '/bar/baz/#anything\\./goes',
+                base: root`bar/baz`,
+                joined: root`bar/baz/#anything@./goes`,
                 isSuccess: false
               }
             ]
           ],
           outdent`
-            resolve-url-loader: /my-source-file.js: #anything\\./goes
-              /foo     --> /foo/#anything\\./goes
-              /bar/baz --> /bar/baz/#anything\\./goes
+            resolve-url-loader: /my-source-file.js: #anything@./goes
+              /foo     --> /foo/#anything@./goes
+              /bar/baz --> /bar/baz/#anything@./goes
               NOT FOUND
             `
         ],

@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/bholloway/resolve-url-loader/tree/v4-maintenance/packages/resolve-url-loader",
   "engines": {
-    "node": "^10 || ^12 || >=14"
+    "node": ">=12"
   },
   "files": [
     "index.js",
@@ -38,19 +38,7 @@
     "adjust-sourcemap-loader": "^4.0.0",
     "convert-source-map": "^1.7.0",
     "loader-utils": "^2.0.0",
-    "postcss": "^8.1.9",
+    "postcss": "^8.2.14",
     "source-map": "0.6.1"
-  },
-  "peerDependencies": {
-    "rework": "1.0.1",
-    "rework-visit": "1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "rework": {
-      "optional": true
-    },
-    "rework-visit": {
-      "optional": true
-    }
   }
 }
