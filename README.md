@@ -1,11 +1,14 @@
 # Resolve URL Loader
 
-We're working on **version 5** right now.
+We're working on **version 5** right now. 
 * Update `node` to recent LTS.
-* Update `postcss` to latest
-* Remove `rework` completely
+* Update `postcss` to latest (resolves security vulnerabilities).
+* Remove `rework` completely.
 
-Stay tuned for a `resolve-url-loader@next` coming soon.
+Install `resolve-url-loader@next` today! 🤓
+
+Read the [documentation](../v5/packages/resolve-url-loader/README.md).
+Migrate using the [changelog](../v5/packages/resolve-url-loader/CHANGELOG.md).
 
 ----
 
