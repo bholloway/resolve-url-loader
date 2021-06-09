@@ -53,6 +53,36 @@ module.exports = test(
     env({
       ENTRY: join('src', 'index.scss')
     }),
+    testWithOption({ engine: 'postcss' })(
+      testDefault(
+        buildDevNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertDeprecationWarning('"engine" option has been removed'),
+          assertContentDev
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertDeprecationWarning('"engine" option has been removed'),
+          assertContentProd
+        )
+      ),
+      testSilent(
+        buildDevNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertSilence,
+          assertContentDev
+        ),
+        buildProdNormal(
+          assertWebpackOk,
+          assertNoErrors,
+          assertSilence,
+          assertContentProd
+        )
+      )
+    ),
     testWithOption({ attempts: 1 })(
       testDefault(
         buildDevNormal(

@@ -20,7 +20,7 @@ const logToTestHarness = require('./lib/log-to-test-harness');
 const DEPRECATED_OPTIONS = {
   engine: [
     'DEP_RESOLVE_URL_LOADER_OPTION_ENGINE',
-    'the "engine" option has been removed, "postcss" is the only available parser'
+    '"engine" option has been removed, postcss is the only parser used'
   ],
   keepQuery: [
     'DEP_RESOLVE_URL_LOADER_OPTION_KEEP_QUERY',
