@@ -10,7 +10,7 @@ const tape = require('blue-tape');
 const {init, layer, cwd, fs, env, meta, exec} = require('test-my-cli');
 const {assign} = Object;
 
-const {assertExitCodeZero, bail} = require('./lib/assert');
+const {assertExitCodeZero, bail, saveOutput} = require('./lib/assert');
 const {testBase} = require('./cases/common/test');
 
 // tests are located in resolve-url-loader package which might differ from package under test
@@ -88,9 +88,11 @@ filterTests()
             PATH: dirname(process.execPath)
           }),
           exec('enforce-node-version'),
+          saveOutput('enforce-node-version'),
           assertExitCodeZero('enforce node version'),
           bail,
           exec('npm install'),
+          saveOutput('npm-install'),
           assertExitCodeZero('npm install'),
           bail
         )
