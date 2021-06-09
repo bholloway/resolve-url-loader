@@ -1,5 +1,21 @@
 # resolve-url-loader
 
+## Version 5
+
+**Features**
+
+* Update `postcss` and completely remove `rework` parser.
+
+**Breaking Changes**
+
+* Require `node@>=12`.
+* Support `webpack@>=4` (no longer tested for earlier versions).
+* The `engine` option has been removed.
+
+**Migrating**
+
+Remove the `engine` option if you are using it.
+
 ## Version 4
 
 **Features**
