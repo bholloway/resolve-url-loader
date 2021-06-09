@@ -2,15 +2,13 @@
 
 const {join} = require('path');
 const outdent = require('outdent');
-const sequence = require('promise-compose');
 const compose = require('compose-function');
 const {test, layer, fs, env, cwd} = require('test-my-cli');
 
 const {trim} = require('../lib/util');
 const {rebaseToCache} = require('../lib/higher-order');
 const {
-  all, testDefault, testSilent, testKeepQuery, testAbsolute, testAttempts, testEngineFailInitialisation,
-  testEngineFailProcessing, testIncludeRoot, testFail, testNonFunctionJoin1, testWrongArityJoin1, testNonFunctionJoin2,
+  all, testWithOption, testDefault, testSilent, testNonFunctionJoin1, testWrongArityJoin1, testNonFunctionJoin2,
   testWrongArityJoin2, testNonStringRoot, testNonExistentRoot
 } = require('./common/test');
 const {buildDevNormal, buildProdNormal} = require('./common/exec');
@@ -38,24 +36,6 @@ const assertMisconfigError = (message) => assertStdout('error')([1, 4])`
   [ ]+${message}
   `;
 
-// Allow 1-4 errors
-//  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
-//  - webpack may repeat errors with a header line taken from the parent loader
-const assertInitialisationError = assertStdout('error')([1, 4])`
-  ^[ ]*ERROR[^\n]*
-  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*error initialising
-  [ ]+This "engine" is designed to fail at require time, for testing purposes only
-  `;
-
-// Allow 1-4 errors
-//  - known-issue in extract-text-plugin, failed loaders will rerun webpack>=2
-//  - webpack may repeat errors with a header line taken from the parent loader
-const assertProcessingError = assertStdout('error')([1, 4])`
-  ^[ ]*ERROR[^\n]*
-  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*error processing CSS
-  [ ]+This "engine" is designed to fail at processing time, for testing purposes only
-  `;
-
 module.exports = test(
   'misconfiguration',
   layer('misconfiguration')(
@@ -73,23 +53,7 @@ module.exports = test(
     env({
       ENTRY: join('src', 'index.scss')
     }),
-    testEngineFailInitialisation(
-      all(testDefault, testSilent)(
-        all(buildDevNormal, buildProdNormal)(
-          assertWebpackNotOk,
-          assertInitialisationError
-        )
-      )
-    ),
-    testEngineFailProcessing(
-      all(testDefault, testSilent)(
-        all(buildDevNormal, buildProdNormal)(
-          assertWebpackNotOk,
-          assertProcessingError
-        )
-      )
-    ),
-    testAttempts(
+    testWithOption({ attempts: 1 })(
       testDefault(
         buildDevNormal(
           assertWebpackOk,
@@ -119,7 +83,7 @@ module.exports = test(
         )
       )
     ),
-    testKeepQuery(
+    testWithOption({ keepQuery: true })(
       testDefault(
         buildDevNormal(
           assertWebpackOk,
@@ -149,7 +113,7 @@ module.exports = test(
         )
       )
     ),
-    testAbsolute(
+    testWithOption({ absolute: true })(
       testDefault(
         buildDevNormal(
           assertWebpackOk,
@@ -179,7 +143,7 @@ module.exports = test(
         )
       )
     ),
-    testIncludeRoot(
+    testWithOption({ includeRoot: true })(
       testDefault(
         buildDevNormal(
           assertWebpackOk,
@@ -209,7 +173,7 @@ module.exports = test(
         )
       )
     ),
-    testFail(
+    testWithOption({ fail: true })(
       testDefault(
         buildDevNormal(
           assertWebpackOk,

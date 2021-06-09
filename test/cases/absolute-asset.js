@@ -13,7 +13,7 @@ const {
 } = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
 const {
-  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
+  onlyOS, onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
   assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertAssetError
 } = require('../lib/assert');
 
@@ -90,11 +90,14 @@ module.exports = test(
         // if webpack passes it is incidental but lets check anyway
         testDebug(
           all(buildDevNormal, buildProdNormal)(
-            onlyMeta('meta.version.webpack == 4')(
+            compose(onlyOS('posix'), onlyMeta('meta.version.webpack == 4'))(
               assertWebpackNotOk,
               assertAssetError
             ),
-            onlyMeta('meta.version.webpack >= 5')(
+            all(
+              onlyOS('windows'),
+              compose(onlyOS('posix'), onlyMeta('meta.version.webpack >= 5'))
+            )(
               assertWebpackOk,
               assertNoErrors,
               assertNoMessages

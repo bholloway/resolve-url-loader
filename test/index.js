@@ -10,17 +10,12 @@ const tape = require('blue-tape');
 const {init, layer, cwd, fs, env, meta, exec} = require('test-my-cli');
 const {assign} = Object;
 
-const {assertExitCodeZero, bail} = require('./lib/assert');
+const {assertExitCodeZero, bail, saveOutput} = require('./lib/assert');
 const {testBase} = require('./cases/common/test');
 
 // tests are located in resolve-url-loader package which might differ from package under test
 const PLATFORMS_DIR = compose(normalize, join)(__dirname, '..', 'packages', 'resolve-url-loader', 'test');
 const CASES_DIR = join(__dirname, 'cases');
-
-const testCaseVsEngine = ([_, engineName, caseName]) => {
-  const split = caseName.split('.');
-  return (split.length === 1) || (split[1] === engineName);
-};
 
 const testIncluded = process.env.ONLY ?
   (arr) => {
@@ -45,13 +40,13 @@ const getVersionHash = platform =>
 const epoch = Math.round(Date.now() / 1000).toString().padStart(10, 0);
 console.log(`timestamp: ${epoch}`);
 
-// platforms, engines, cases
+// platforms, cases
 const tests = permute(
   readdirSync(PLATFORMS_DIR),
-  ['postcss'],
-  readdirSync(CASES_DIR).filter((v) => v.endsWith('.js')).map((v) => v.split('.').slice(0, -1).join('.'))
+  readdirSync(CASES_DIR)
+    .filter((v) => v.endsWith('.js'))
+    .map((v) => v.split('.').slice(0, -1).join('.'))
 )
-  .filter(testCaseVsEngine)
   .filter(testIncluded);
 
 const filterTests = (...terms) =>
@@ -93,9 +88,11 @@ filterTests()
             PATH: dirname(process.execPath)
           }),
           exec('enforce-node-version'),
+          saveOutput('enforce-node-version'),
           assertExitCodeZero('enforce node version'),
           bail,
           exec('npm install'),
+          saveOutput('npm-install'),
           assertExitCodeZero('npm install'),
           bail
         )
@@ -128,18 +125,16 @@ filterTests()
             debug: (process.env.DEBUG === 'exec')
           }
         }),
-        ...filterTests(platform).map(engine =>
-          testBase(engine)(
-            env({
-              PATH: dirname(process.execPath),
-              RESOLVE_URL_LOADER_TEST_HARNESS: 'stderr'
-            }),
-            meta({
-              cacheDir: join(process.cwd(), 'tmp', '.cache', platform),
-              version: getVersionHash(platform)
-            }),
-            ...filterTests(platform, engine).map(caseName => require(join(CASES_DIR, caseName)))
-          )
+        testBase(
+          env({
+            PATH: dirname(process.execPath),
+            RESOLVE_URL_LOADER_TEST_HARNESS: 'stderr'
+          }),
+          meta({
+            cacheDir: join(process.cwd(), 'tmp', '.cache', platform),
+            version: getVersionHash(platform)
+          }),
+          ...filterTests(platform).map(caseName => require(join(CASES_DIR, caseName)))
         )
       )
     );

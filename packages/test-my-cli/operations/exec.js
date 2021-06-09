@@ -63,7 +63,7 @@ exports.create = (command) => {
     )),
     withTime(({index, root, caller, cwd, env, meta}, {onActivity}) =>
       new Promise((resolve) => {
-        let stdout = '', stderr = '', interval = 0;
+        let stdout = '', stderr = '', interval = 0, caughtError = null;
         const child = spawn(cmd, args, {cwd, env, shell: true, stdio: 'pipe'});
         addOrRemove(true);
 
@@ -72,8 +72,8 @@ exports.create = (command) => {
           const field = isAdd ? 'addListener' : 'removeListener';
           child.stdout[field]('data', onStdout);
           child.stderr[field]('data', onStderr);
-          child.on('exit', onExit);
-          child.on('error', onError);
+          child[field]('error', onError);
+          child[field]('close', onClose);
 
           if (isAdd) {
             child.stdout.setEncoding('utf8');
@@ -92,14 +92,16 @@ exports.create = (command) => {
           stderr += data;
         }
 
-        function onExit(code) {
-          addOrRemove(false);
-          resolve({index, root, caller, cwd, env, meta, code, stdout, stderr});
+        function onError(error) {
+          caughtError = error;
         }
 
-        function onError(error) {
+        function onClose(code) {
           addOrRemove(false);
-          resolve({index, root, caller, cwd, env, meta, code: 1, stdout, stderr: error.toString()});
+          resolve({
+            index, root, caller, cwd, env, meta, code, stdout,
+            stderr: caughtError ? caughtError.toString() : stderr
+          });
         }
       })
     ),

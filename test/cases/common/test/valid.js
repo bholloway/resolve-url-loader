@@ -1,30 +1,23 @@
 'use strict';
 
 const sequence = require('promise-compose');
-const {test, layer, meta, env} = require('test-my-cli');
+const {test, layer, env} = require('test-my-cli');
 
 const {assertStderr} = require('../../../lib/assert');
 const {escapeStr} = require('../../../lib/util');
 
-exports.testBase = (engine) => (...elements) =>
-  test(
-    `engine=${engine}`,
-    layer(engine)(
-      meta({
-        engine
-      }),
-      env({
-        DEVTOOL: true,
-        LOADER_OPTIONS: (engine === 'postcss') ? {sourceMap: true} : {sourceMap: true, engine},
-        LOADER_JOIN: '',
-        CSS_OPTIONS: {sourceMap: true}
-      }),
-      ...elements,
-      test('validate', sequence(
-        assertStderr('options.sourceMap')(1)`sourceMap: true`,
-        assertStderr('options.engine')(1)`engine: "${engine}"`
-      ))
-    )
+exports.testBase = (...elements) =>
+  layer()(
+    env({
+      DEVTOOL: true,
+      LOADER_OPTIONS: {sourceMap: true},
+      LOADER_JOIN: '',
+      CSS_OPTIONS: {sourceMap: true}
+    }),
+    ...elements,
+    test('validate', sequence(
+      assertStderr('options.sourceMap')(1)`sourceMap: true`,
+    ))
   );
 
 exports.testWithLabel = (label) => (...elements) =>
@@ -38,7 +31,25 @@ exports.testWithLabel = (label) => (...elements) =>
     )
   );
 
+exports.testWithOption = (option) => {
+  const [key] = Object.keys(option);
+  const value = option[key];
+  return (...rest) =>
+    test(
+      `${key}=${JSON.stringify(value)}`,
+      layer()(
+        env({
+          LOADER_OPTIONS: {[key]: value},
+          OUTPUT: key
+        }),
+        ...rest,
+        test('validate', assertStderr(`options.${key}`)(1)`${key}: ${JSON.stringify(value)}`)
+      )
+    );
+};
+
 exports.testDefault = exports.testWithLabel('default');
+exports.testSilent = exports.testWithOption({ silent: true });
 
 exports.testDebug = (...elements) =>
   test(
