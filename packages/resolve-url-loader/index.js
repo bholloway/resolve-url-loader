@@ -4,23 +4,23 @@
  */
 'use strict';
 
-var os                = require('os'),
-    path              = require('path'),
-    fs                = require('fs'),
-    util              = require('util'),
-    loaderUtils       = require('loader-utils'),
-    SourceMapConsumer = require('source-map').SourceMapConsumer;
+const os                = require('os');
+const path              = require('path');
+const fs                = require('fs');
+const util              = require('util');
+const loaderUtils       = require('loader-utils');
+const SourceMapConsumer = require('source-map').SourceMapConsumer;
 
-var adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
+const adjustSourceMap = require('adjust-sourcemap-loader/lib/process');
 
-var valueProcessor   = require('./lib/value-processor'),
-    joinFn           = require('./lib/join-function'),
-    logToTestHarness = require('./lib/log-to-test-harness');
+const valueProcessor  = require('./lib/value-processor');
+const joinFn           = require('./lib/join-function');
+const logToTestHarness = require('./lib/log-to-test-harness');
 
 const DEPRECATED_OPTIONS = {
   engine: [
     'DEP_RESOLVE_URL_LOADER_OPTION_ENGINE',
-    'the "engine" option is deprecated, "postcss" engine is the default, there are no other available engines'
+    'the "engine" option has been removed, "postcss" is the only available parser'
   ],
   keepQuery: [
     'DEP_RESOLVE_URL_LOADER_OPTION_KEEP_QUERY',
@@ -55,7 +55,7 @@ function resolveUrlLoader(content, sourceMap) {
   /* jshint validthis:true */
 
   // details of the file being processed
-  var loader = this;
+  const loader = this;
 
   // a relative loader.context is a problem
   if (/^\./.test(loader.context)) {
@@ -66,24 +66,20 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // infer webpack version from new loader features
-  var isWebpackGte5 = 'getOptions' in loader && typeof loader.getOptions === 'function';
+  const isWebpackGte5 = 'getOptions' in loader && typeof loader.getOptions === 'function';
 
-  // webpack 1: prefer loader query, else options object
-  // webpack 2: prefer loader options
-  // webpack 3: deprecate loader.options object
-  // webpack 4: loader.options no longer defined
-  var rawOptions = loaderUtils.getOptions(loader),
-      options    = Object.assign(
+  // use loader.getOptions where available otherwise use loaderUtils
+  const rawOptions = isWebpackGte5 ? loader.getOptions() : loaderUtils.getOptions(loader);
+  const options = Object.assign(
         {
           sourceMap: loader.sourceMap,
-          engine   : 'postcss',
           silent   : false,
           removeCR : os.EOL.includes('\r'),
           root     : false,
           debug    : false,
           join     : joinFn.defaultJoin
         },
-        rawOptions
+        rawOptions,
       );
 
   // maybe log options for the test harness
@@ -95,7 +91,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // deprecated options
-  var deprecatedItems = Object.entries(DEPRECATED_OPTIONS).filter(([key]) => key in rawOptions);
+  const deprecatedItems = Object.entries(DEPRECATED_OPTIONS).filter(([key]) => key in rawOptions);
   if (deprecatedItems.length) {
     deprecatedItems.forEach(([, value]) => handleAsDeprecated(...value));
   }
@@ -114,7 +110,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // validate the result of calling the join option
-  var joinProper = options.join(options, loader);
+  const joinProper = options.join(options, loader);
   if (typeof joinProper !== 'function') {
     return handleAsError(
       'loader misconfiguration',
@@ -129,7 +125,7 @@ function resolveUrlLoader(content, sourceMap) {
 
   // validate root option
   if (typeof options.root === 'string') {
-    var isValid = (options.root === '') ||
+    const isValid = (options.root === '') ||
       (path.isAbsolute(options.root) && fs.existsSync(options.root) && fs.statSync(options.root).isDirectory());
 
     if (!isValid) {
@@ -149,7 +145,8 @@ function resolveUrlLoader(content, sourceMap) {
   loader.cacheable();
 
   // incoming source-map
-  var sourceMapConsumer, absSourceMap;
+  let absSourceMap = null;
+  let sourceMapConsumer = null;
   if (sourceMap) {
 
     // support non-standard string encoded source-map (per less-loader)
@@ -186,20 +183,10 @@ function resolveUrlLoader(content, sourceMap) {
     );
   }
 
-  // choose a CSS engine
-  var enginePath    = /^[\w-]+$/.test(options.engine) && path.join(__dirname, 'lib', 'engine', options.engine + '.js');
-  var isValidEngine = fs.existsSync(enginePath);
-  if (!isValidEngine) {
-    return handleAsError(
-      'loader misconfiguration',
-      '"engine" option is not valid'
-    );
-  }
-
   // allow engine to throw at initialisation
-  var engine;
+  let engine = null;
   try {
-    engine = require(enginePath);
+    engine = require('./lib/engine/postcss');
   } catch (error) {
     return handleAsError(
       'error initialising',
@@ -208,7 +195,7 @@ function resolveUrlLoader(content, sourceMap) {
   }
 
   // process async
-  var callback = loader.async();
+  const callback = loader.async();
   Promise
     .resolve(engine(loader.resourcePath, content, {
       outputSourceMap     : !!options.sourceMap,
@@ -234,7 +221,7 @@ function resolveUrlLoader(content, sourceMap) {
       //  webpack4 and earlier: source-map sources are relative to the file being processed
       //  webpack5: source-map sources are relative to the project root but without a leading slash
       if (options.sourceMap) {
-        var finalMap = adjustSourceMap(loader, {
+        const finalMap = adjustSourceMap(loader, {
           format: isWebpackGte5 ? 'projectRelative' : 'sourceRelative'
         }, result.map);
         callback(null, result.content, finalMap);
