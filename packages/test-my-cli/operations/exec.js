@@ -100,7 +100,7 @@ exports.create = (command) => {
           addOrRemove(false);
           resolve({
             index, root, caller, cwd, env, meta, code, stdout,
-            stderr: caughtError ? caughtError.toString() : stderr
+            stderr: [ stderr, caughtError ].filter(Boolean).map(String).join('\n')
           });
         }
       })
