@@ -43,7 +43,7 @@
     "convert-source-map": "1.7.0",
     "es6-iterator": "2.0.3",
     "loader-utils": "1.2.3",
-    "postcss": "7.0.21",
+    "postcss": "7.0.36",
     "rework": "1.0.1",
     "rework-visit": "1.0.0",
     "source-map": "0.6.1"
