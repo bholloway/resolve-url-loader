@@ -94,7 +94,7 @@ module.exports = test(
             assertCssSourceMapComment(true),
             compose(
               onlyMeta('meta.version.webpack == 4'),
-              assertCssAndSourceMapContent('main.15cdc6770015605aca94.css'),
+              assertCssAndSourceMapContent(),
               outdent
             )`
               ./src/feature/index.scss                                                                           
@@ -125,12 +125,12 @@ module.exports = test(
               3:17 ░░░░░░░░░░░░░░░░;⏎                           9:17 ░░░░░░░░░░░░░░░░; }⏎                        
                    }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.15cdc6770015605aca
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      94.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□□
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      □□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
               `,
             compose(
               onlyMeta('meta.version.webpack >= 5'),
-              assertCssAndSourceMapContent('main.d533b8a2f250d611b119.css'),
+              assertCssAndSourceMapContent(),
               outdent
             )`
               ./src/feature/index.scss                                                                           
@@ -161,8 +161,8 @@ module.exports = test(
               3:17 ░░░░░░░░░░░░░░░░;⏎                           9:17 ░░░░░░░░░░░░░░░░; }⏎                        
                    }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.d533b8a2f250d611b1
-                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      19.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□□
+                   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      □□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
               `
           ),
           buildProdNormal(
@@ -184,7 +184,7 @@ module.exports = test(
             assertCssSourceMapComment(false),
             compose(
               onlyMeta('meta.version.webpack == 4'),
-              assertCssAndSourceMapContent('main.cbae83e074020d68d621.css'),
+              assertCssAndSourceMapContent(),
               outdent
             )`
               ./src/feature/index.scss                                                                            
@@ -222,7 +222,7 @@ module.exports = test(
               `,
             compose(
               onlyMeta('meta.version.webpack >= 5'),
-              assertCssAndSourceMapContent('main.b7fbfbe03a106de8b226.css'),
+              assertCssAndSourceMapContent(),
               outdent
             )`
               ./src/feature/index.scss                                                                            

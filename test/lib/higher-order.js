@@ -11,11 +11,16 @@ const {assign} = Object;
 exports.sanitisePath = v =>
   v.replace(/\\/g, '/');
 
-exports.rebaseTo = (fn) => (listOrString) => (context) => {
-  const transform = compose(exports.sanitisePath, normalize, join);
-  return Array.isArray(listOrString) ?
-    listOrString.map((v) => transform(fn(context), v)) :
-    transform(fn(context), listOrString);
+exports.rebaseTo = (fn) => (listOrStringOrJoinFn) => (context) => {
+  const transform = compose(exports.sanitisePath, normalize);
+  return (
+    Array.isArray(listOrStringOrJoinFn) && listOrStringOrJoinFn.map((v) => transform(fn(context), v)) ||
+    typeof listOrStringOrJoinFn === 'string' && join(fn(context), listOrStringOrJoinFn) ||
+    typeof listOrStringOrJoinFn === 'function' && compose(transform, listOrStringOrJoinFn, fn)(context) ||
+    (() => {
+      throw new Error('expected string|Array<string>|function');
+    })
+  );
 };
 
 exports.rebaseToCwd = exports.rebaseTo(({root, cwd}) => isAbsolute(cwd) ? cwd : join(root, cwd));

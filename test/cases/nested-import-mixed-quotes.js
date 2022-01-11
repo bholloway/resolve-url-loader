@@ -64,7 +64,7 @@ module.exports = test(
         assertCssSourceMapComment(true),
         compose(
           onlyMeta('meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.a69e0714fec5375da4d0.css'),
+          assertCssAndSourceMapContent(),
           outdent
         )`
           ./src/index.scss                                                                                   
@@ -84,12 +84,12 @@ module.exports = test(
           2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎      
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.a69e0714fec5375da
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       4d0.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       □□□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
           `,
         compose(
           onlyMeta('meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.0de225be0d103507fb2e.css'),
+          assertCssAndSourceMapContent(),
           outdent
         )`
           ./src/index.scss                                                                                   
@@ -109,8 +109,8 @@ module.exports = test(
           2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎      
                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.0de225be0d103507f
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       b2e.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□
+                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       □□□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
           `
       ),
       buildProdNormal(
@@ -129,7 +129,7 @@ module.exports = test(
         assertCssSourceMapComment(false),
         compose(
           onlyMeta('meta.version.webpack == 4'),
-          assertCssAndSourceMapContent('main.e412140a3a03ab5a8aa0.css'),
+          assertCssAndSourceMapContent(),
           outdent
         )`
           ./src/index.scss                                                                                   
@@ -152,7 +152,7 @@ module.exports = test(
           `,
         compose(
           onlyMeta('meta.version.webpack >= 5'),
-          assertCssAndSourceMapContent('main.b720d3274f34b01a782e.css'),
+          assertCssAndSourceMapContent(),
           outdent
         )`
           ./src/index.scss                                                                                   
