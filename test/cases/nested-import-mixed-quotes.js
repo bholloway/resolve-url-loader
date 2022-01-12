@@ -63,32 +63,6 @@ module.exports = test(
         assertNoMessages,
         assertCssSourceMapComment(true),
         compose(
-          onlyMeta('meta.version.webpack == 4'),
-          assertCssAndSourceMapContent(),
-          outdent
-        )`
-          ./src/index.scss                                                                                   
-          ---------------------------------------------------------------------------------------------------
-          1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name {⏎    
-                  @import "feature/index.scss";⏎                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                             
-          ./src/feature/index.scss                                                                           
-          ---------------------------------------------------------------------------------------------------
-          2:003 ░░background-image: url("data:image/svg+xml 2:003 ░░background-image: url("data:image/svg+xml
-                ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm
-                lns='http://www.w3.org/2000/svg'%3E%3Cpath        lns='http://www.w3.org/2000/svg'%3E%3Cpath 
-                stroke='red' stroke-width='2' stroke-lineca       stroke='red' stroke-width='2' stroke-lineca
-                p='round' stroke-miterlimit='10' d='M4 7h22       p='round' stroke-miterlimit='10' d='M4 7h22
-                M4 15h22M4 23h22'/%3E%3C/svg%3E")░░░░░░░░░░       M4 15h22M4 23h22'/%3E%3C/svg%3E")░░░░░░░░░░
-          2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎      
-                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ⏎                                          
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       □□□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-          `,
-        compose(
-          onlyMeta('meta.version.webpack >= 5'),
           assertCssAndSourceMapContent(),
           outdent
         )`
@@ -128,30 +102,6 @@ module.exports = test(
         assertNoMessages,
         assertCssSourceMapComment(false),
         compose(
-          onlyMeta('meta.version.webpack == 4'),
-          assertCssAndSourceMapContent(),
-          outdent
-        )`
-          ./src/index.scss                                                                                   
-          ---------------------------------------------------------------------------------------------------
-          1:001 .some-class-name {⏎                         1:001 .some-class-name .another-class-name{░░░░░░
-                  @import "feature/index.scss";⏎                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                             
-          ./src/feature/index.scss                                                                           
-          ---------------------------------------------------------------------------------------------------
-          2:003 ░░background-image: url("data:image/svg+xml 1:038 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░backgr
-                ;charset=utf8,%3Csvg viewBox='0 0 30 30' xm       ound-image:url("data:image/svg+xml;charset=
-                lns='http://www.w3.org/2000/svg'%3E%3Cpath        utf8,%3Csvg viewBox='0 0 30 30' xmlns='http
-                stroke='red' stroke-width='2' stroke-lineca       ://www.w3.org/2000/svg'%3E%3Cpath stroke='r
-                p='round' stroke-miterlimit='10' d='M4 7h22       ed' stroke-width='2' stroke-linecap='round'
-                M4 15h22M4 23h22'/%3E%3C/svg%3E")░░░░░░░░░░        stroke-miterlimit='10' d='M4 7h22M4 15h22M
-                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       4 23h22'/%3E%3C/svg%3E")░░░░░░░░░░░░░░░░░░░
-          2:249 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         1:283 ░░░░░░░░░░░░░░░░░░░░░░░░}░░░░░░░░░░░░░░░░░░
-                }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░       ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-          `,
-        compose(
-          onlyMeta('meta.version.webpack >= 5'),
           assertCssAndSourceMapContent(),
           outdent
         )`
