@@ -14,7 +14,7 @@ const {
 const {assertCssAndSourceMapContent} = require('./common/assert');
 const {assertCssContent} = require('../lib/assert');
 const {
-  onlyMeta, assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
+  assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertNoMessages, assertStdout,
   assertCssSourceMapComment, assertCssFile, assertSourceMapFile, assertAssetError
 } = require('../lib/assert');
 
@@ -85,8 +85,7 @@ module.exports = test(
           assertIncludeMessages,
           assertCssSourceMapComment(true),
           compose(
-            onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.52cfa9838af1696e9321.css'),
+            assertCssAndSourceMapContent(),
             outdent
           )`
             ./src/index.scss                                                                                   
@@ -101,28 +100,8 @@ module.exports = test(
             2:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎    
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.52cfa9838af1696e93
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      21.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            `,
-          compose(
-            onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.00abd28f6856af6b42c9.css'),
-            outdent
-          )`
-            ./src/index.scss                                                                                   
-            ---------------------------------------------------------------------------------------------------
-            2:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
-                   @include feature;⏎                                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                               
-            ./src/feature/mixins.scss                                                                          
-            ---------------------------------------------------------------------------------------------------
-            2:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 2:03 ░░background-image: url("./img.jpg")░░░░░░░░
-            2:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:37 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░; }⏎    
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.00abd28f6856af6b42
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      c9.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□□
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      □□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -140,26 +119,7 @@ module.exports = test(
           assertIncludeMessages,
           assertCssSourceMapComment(false),
           compose(
-            onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.dde052fd081dda9c864c.css'),
-            outdent
-          )`
-            ./src/index.scss                                                                                   
-            ---------------------------------------------------------------------------------------------------
-            2:01 .some-class-name {⏎                          1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                   @include feature;⏎                              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                               
-            ./src/feature/mixins.scss                                                                          
-            ---------------------------------------------------------------------------------------------------
-            2:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 1:18 ░░░░░░░░░░░░░░░░░background-image:url(img.jp
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      g)░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            2:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         1:47 ░░}░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            `,
-          compose(
-            onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.c7a39e4f9127e1c6b77d.css'),
+            assertCssAndSourceMapContent(),
             outdent
           )`
             ./src/index.scss                                                                                   
@@ -217,8 +177,7 @@ module.exports = test(
           assertMixinMessages,
           assertCssSourceMapComment(true),
           compose(
-            onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.1534ff5cd1402fb725ce.css'),
+            assertCssAndSourceMapContent(),
             outdent
           )`
             ./src/index.scss                                                                                   
@@ -233,28 +192,8 @@ module.exports = test(
             2:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:45 ; }⏎                                        
                  }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
                  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.1534ff5cd1402fb725
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ce.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            `,
-          compose(
-            onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.613c31543a6423df814a.css'),
-            outdent
-          )`
-            ./src/index.scss                                                                                   
-            ---------------------------------------------------------------------------------------------------
-            2:01 .some-class-name {⏎                          1:01 .some-class-name {⏎                         
-                   @include feature;⏎                                ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                               
-            ./src/feature/mixins.scss                                                                          
-            ---------------------------------------------------------------------------------------------------
-            2:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 2:03 ░░background-image: url("./feature/img.jpg")
-            2:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         2:45 ; }⏎                                        
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ⏎                                           
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.613c31543a6423df81
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      4a.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      /*# sourceMappingURL=main.□□□□□□□□□□□□□□□□□□
+                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      □□.css.map*/░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
             `
         ),
         buildProdNormal(
@@ -272,26 +211,7 @@ module.exports = test(
           assertMixinMessages,
           assertCssSourceMapComment(false),
           compose(
-            onlyMeta('meta.version.webpack == 4'),
-            assertCssAndSourceMapContent('main.de970111de16ddcf4132.css'),
-            outdent
-          )`
-            ./src/index.scss                                                                                   
-            ---------------------------------------------------------------------------------------------------
-            2:01 .some-class-name {⏎                          1:01 .some-class-name{░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                   @include feature;⏎                              ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                                                                                                               
-            ./src/feature/mixins.scss                                                                          
-            ---------------------------------------------------------------------------------------------------
-            2:03 ░░background-image: url('img.jpg')░░░░░░░░░░ 1:18 ░░░░░░░░░░░░░░░░░background-image:url(featur
-                 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      e/img.jpg)░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            2:35 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░;⏎         1:55 ░░░░░░░░░░}░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-                 }░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░      ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-            `,
-          compose(
-            onlyMeta('meta.version.webpack >= 5'),
-            assertCssAndSourceMapContent('main.9da305b887718db0f8b1.css'),
+            assertCssAndSourceMapContent(),
             outdent
           )`
             ./src/index.scss                                                                                   
