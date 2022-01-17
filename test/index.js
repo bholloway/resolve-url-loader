@@ -2,7 +2,7 @@
 
 const {dirname, normalize, join} = require('path');
 const {readdirSync} = require('fs');
-const {platform: os} = require('process');
+const {platform: os, version} = require('process');
 const compose = require('compose-function');
 const sequence = require('promise-compose');
 const micromatch = require('micromatch');
@@ -16,6 +16,7 @@ const {testBase} = require('./cases/common/test');
 // tests are located in resolve-url-loader package which might differ from package under test
 const PLATFORMS_DIR = compose(normalize, join)(__dirname, '..', 'packages', 'resolve-url-loader', 'test');
 const CASES_DIR = join(__dirname, 'cases');
+const VERSION_MAJOR = version.match(/\d+/).shift();
 
 const testIncluded = process.env.ONLY ?
   (arr) => {
@@ -69,7 +70,7 @@ filterTests()
       platform,
       sequence(
         init({
-          directory: [process.cwd(), join('tmp', '.cache'), platform],
+          directory: [process.cwd(), join('tmp', '.cache'), `node${VERSION_MAJOR}-${platform}`],
           ttl: false,
           debug: (process.env.DEBUG === 'true'),
           env: {
@@ -131,7 +132,7 @@ filterTests()
             RESOLVE_URL_LOADER_TEST_HARNESS: 'stderr'
           }),
           meta({
-            cacheDir: join(process.cwd(), 'tmp', '.cache', platform),
+            cacheDir: join(process.cwd(), join('tmp', '.cache'), `node${VERSION_MAJOR}-${platform}`),
             version: getVersionHash(platform)
           }),
           ...filterTests(platform).map(caseName => require(join(CASES_DIR, caseName)))
