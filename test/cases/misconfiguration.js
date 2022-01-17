@@ -15,7 +15,7 @@ const {buildDevNormal, buildProdNormal} = require('./common/exec');
 const {assertCssContent} = require('../lib/assert');
 const {
   assertWebpackOk, assertWebpackNotOk, assertNoErrors, assertStdout,
-  assertSilence, assertMisconfigWarning, assertDeprecationWarning,
+  assertNoMessages, assertMisconfigWarning, assertDeprecationWarning,
 } = require('../lib/assert');
 
 const assertContentDev = compose(assertCssContent, outdent)`
@@ -72,13 +72,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
@@ -102,13 +102,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
@@ -132,13 +132,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
@@ -162,13 +162,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
@@ -192,13 +192,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
@@ -222,13 +222,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
@@ -284,13 +284,13 @@ module.exports = test(
         buildDevNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentDev
         ),
         buildProdNormal(
           assertWebpackOk,
           assertNoErrors,
-          assertSilence,
+          assertNoMessages,
           assertContentProd
         )
       )
