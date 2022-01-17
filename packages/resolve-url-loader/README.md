@@ -41,7 +41,7 @@ When you use **fully relative paths** in `url()` statements then Webpack expects
 
 To illustrate here are 3 simple examples of SASS and Webpack _without_ `resolve-url-loader`.
 
-[![the basic problem](https://raw.githubusercontent.com/bholloway/resolve-url-loader/v4-maintenance/packages/resolve-url-loader/docs/basic-problem.svg)](docs/basic-problem.svg)
+[![the basic problem](https://raw.githubusercontent.com/bholloway/resolve-url-loader/v5/packages/resolve-url-loader/docs/basic-problem.svg)](docs/basic-problem.svg)
 
 The first 2 cases are trivial and work fine. The asset is specified in the root SCSS file and Webpack finds it.
 
@@ -99,8 +99,7 @@ rules: [
       }, {
         loader: 'sass-loader',
         options: {
-          sourceMap: true,
-          sourceMapContents: false
+          sourceMap: true, // <-- !!IMPORTANT!!
         }
       }
     ]
@@ -113,14 +112,14 @@ rules: [
 
 The loader should work without options but use these as required.
 
-| option      | type     | default                                 |            |  description                                                                                                                                                                     |
-|-------------|----------|-----------------------------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sourceMap` | boolean  | `false`                                 |            | Generate an outgoing source-map.                                                                                                                                                 |
-| `removeCR`  | boolean  | `true` Windows OS<br/>`false` otherwise |            | Convert orphan CR to whitespace.<br/>See known issues below.                                                                                                                     |
-| `debug`     | boolean  | `false`                                 |            | Display debug information.                                                                                                                                                       |
-| `silent`    | boolean  | `false`                                 |            | Do **not** display warnings or deprecation messages.                                                                                                                             |
-| `root`      | string   | _unset_                                 |            | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
-| `join`      | function | _inbuilt_                               | advanced   | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the [advanced features](docs/advanced-features.md) docs.                    |
+| option      | type     | default                                 |          |  description                                                                                                                                                                     |
+|-------------|----------|-----------------------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sourceMap` | boolean  | `false`                                 |          | Generate an outgoing source-map.                                                                                                                                                 |
+| `removeCR`  | boolean  | `true` Windows OS<br/>`false` otherwise |          | Convert orphan CR to whitespace.<br/>See known issues below.                                                                                                                     |
+| `debug`     | boolean  | `false`                                 |          | Display debug information.                                                                                                                                                       |
+| `silent`    | boolean  | `false`                                 |          | Do **not** display warnings or deprecation messages.                                                                                                                             |
+| `root`      | string   | _unset_                                 |          | Similar to the (now defunct) option in `css-loader`.<br/>This string, possibly empty, is prepended to absolute URIs.<br/>Absolute URIs are only processed if this option is set. |
+| `join`      | function | _inbuilt_                               | advanced | Custom join function.<br/>Use custom javascript to fix asset paths on a per-case basis.<br/>Refer to the [advanced features](docs/advanced-features.md) docs.                    |
 
 ## Limitations
 
