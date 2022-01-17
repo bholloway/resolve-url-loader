@@ -48,56 +48,33 @@ exports.assertStdout = assertStream('stdout');
 
 exports.assertStderr = assertStream('stderr');
 
-exports.assertSilence = sequence(
+exports.assertNoMessages = sequence(
   exports.assertStdout('console')(0)`resolve-url-loader:`,
   exports.assertStderr('node deprecation warning')(0)`\[DEP_RESOLVE_URL_LOADER[A-Z_]+\]`
 );
 
-// TODO v5 - assertNoMessages becomes the same as assertSilence when we remove rework engine
-exports.assertNoMessages = sequence(
-  exports.assertStdout('console')(0)`resolve-url-loader:`,
-  onlyMeta('meta.engine == "rework"')(
-    exports.assertStderr('node deprecation warning')(1)`\[DEP_RESOLVE_URL_LOADER[A-Z_]+\]`
-  ),
-  onlyMeta('meta.engine == "postcss"')(
-    exports.assertStderr('node deprecation warning')(0)`\[DEP_RESOLVE_URL_LOADER[A-Z_]+\]`
-  )
-);
-
-const assertDeprecationWarning = (message= '') => exports.assertStderr('node deprecation warning')(1)`
+exports.assertDeprecationWarning = (message= '') => exports.assertStderr('node deprecation warning')(1)`
   ^[^\n]*\[DEP_RESOLVE_URL_LOADER[A-Z_]+\][ ]DeprecationWarning:[ ]${message}
-  `;
-// TODO v5 - this becomes the same as the internal method when we remove rework engine
-exports.assertDeprecationWarning = (message) => sequence(
-  onlyMeta('meta.engine == "rework"')(
-    assertDeprecationWarning(
-      'the "engine" option is deprecated, "postcss" engine is the default, using "rework" engine is not advised'
-    )
-  ),
-  assertDeprecationWarning(message)
-);
-
-const assertMisconfigWarningWithMessage = (message) => exports.assertStdout('webpack warning')(1)`
-  ^[ ]*WARNING[^\n]*
-  ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
-  [ ]+${message}
-  `;
-
-const assertChildCompilationWarning = exports.assertStdout('webpack warning')(1)`
-  1 WARNING in child compilations
   `;
 
 exports.assertMisconfigWarning = (message) => sequence(
-  onlyMeta('meta.version.webpack == 4')(assertMisconfigWarningWithMessage(message)),
-  onlyMeta('meta.version.webpack >= 5')(assertChildCompilationWarning)
+  onlyMeta('meta.version.webpack == 4')(
+    exports.assertStdout('webpack warning')(1)`
+      ^[ ]*WARNING[^\n]*
+      ([^\n]+\n){0,2}[^\n]*resolve-url-loader:[ ]*loader misconfiguration
+      [ ]+${message}
+      `
+  ),
+  onlyMeta('meta.version.webpack >= 5')(
+    exports.assertStdout('webpack warning')(1)`
+      1 WARNING in child compilations
+      `
+  )
 );
 
-const assertCantResolveError = exports.assertStdout('webpack "Can\'t resolve" error')(1)`
+exports.assertAssetError = exports.assertStdout('webpack "Can\'t resolve" error')(1)`
   ^[ ]*ERROR[^\n]*
   [ ]*Module build failed[^\n]*
   [ ]*ModuleBuildError: Module build failed[^\n]*
   [ ]*Error: Can't resolve[^\n]*
   `;
-
-// TODO inline this
-exports.assertAssetError = assertCantResolveError;
