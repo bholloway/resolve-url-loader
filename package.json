@@ -20,7 +20,7 @@
     "compose-function": "^3.0.3",
     "cross-env": "^7.0.3",
     "enforce-node-version": "^0.1.0",
-    "es6-promisify": "^6.0.2",
+    "es6-promisify": "^7.0.0",
     "escape-string-regexp": "^4.0.0",
     "get-value": "^3.0.1",
     "has-prop": "^0.1.2",
@@ -32,8 +32,7 @@
     "promise-compose": "^1.1.2",
     "recursive-readdir": "^2.2.2",
     "sinon": "^10.0.0",
-    "tap-diff": "^0.1.1",
-    "vlq": "^1.0.1"
+    "tap-diff": "^0.1.1"
   },
   "engines": {
     "node": ">=12"

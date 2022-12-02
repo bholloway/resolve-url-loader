@@ -5,6 +5,7 @@
     "node": ">=12.0.0 <16.0.0"
   },
   "dependencies": {
+    "adjust-sourcemap-loader": "^4.0.0",
     "css-loader": "^5.2.4",
     "file-loader": "^6.2.0",
     "last-call-webpack-plugin": "^3.0.0",
